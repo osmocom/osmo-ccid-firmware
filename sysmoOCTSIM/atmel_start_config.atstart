@@ -68,16 +68,16 @@ middlewares:
       usb_cdcd_acm_epaddr: EndpointAddress = 0x82
       usb_cdcd_acm_iconfig_en: false
       usb_cdcd_acm_iconfig_str: ''
-      usb_cdcd_acm_idproduct: 9220
-      usb_cdcd_acm_idvender: 1003
-      usb_cdcd_acm_imanufact_en: false
-      usb_cdcd_acm_imanufact_str: Atmel
-      usb_cdcd_acm_iproduct_en: false
-      usb_cdcd_acm_iproduct_str: CDC ACM Serial Bridge Demo
+      usb_cdcd_acm_idproduct: 24897
+      usb_cdcd_acm_idvender: 7504
+      usb_cdcd_acm_imanufact_en: true
+      usb_cdcd_acm_imanufact_str: sysmocom
+      usb_cdcd_acm_iproduct_en: true
+      usb_cdcd_acm_iproduct_str: sysmoOCTSIM
       usb_cdcd_acm_iserialnum_en: false
       usb_cdcd_acm_iserialnum_str: 123456789ABCDEF
       usb_cdcd_acm_langid: '0x0409'
-      usb_cdcd_acm_str_en: false
+      usb_cdcd_acm_str_en: true
     definition: Atmel:USB:0.0.1::USB_Device_CDC_ACM
     functionality: USB_Device_CDC_ACM
     api: USB:Device:CDC_ACM

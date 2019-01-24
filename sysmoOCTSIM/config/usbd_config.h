@@ -19,7 +19,7 @@
 // <e> Enable String Descriptors
 // <id> usb_cdcd_acm_str_en
 #ifndef CONF_USB_CDCD_ACM_STR_EN
-#define CONF_USB_CDCD_ACM_STR_EN 0
+#define CONF_USB_CDCD_ACM_STR_EN 1
 #endif
 // <s> Language IDs
 // <i> Language IDs in c format, split by comma (E.g., 0x0409 ...)
@@ -29,7 +29,7 @@
 #endif
 
 #ifndef CONF_USB_CDCD_ACM_LANGID_DESC
-#define CONF_USB_CDCD_ACM_LANGID_DESC
+#define CONF_USB_CDCD_ACM_LANGID_DESC 4, 0x03, 0x09, 0x04,
 #endif
 // </e>
 
@@ -56,13 +56,13 @@
 // <o> idVender <0x0000-0xFFFF>
 // <id> usb_cdcd_acm_idvender
 #ifndef CONF_USB_CDCD_ACM_IDVENDER
-#define CONF_USB_CDCD_ACM_IDVENDER 0x3eb
+#define CONF_USB_CDCD_ACM_IDVENDER 0x1d50
 #endif
 
 // <o> idProduct <0x0000-0xFFFF>
 // <id> usb_cdcd_acm_idproduct
 #ifndef CONF_USB_CDCD_ACM_IDPRODUCT
-#define CONF_USB_CDCD_ACM_IDPRODUCT 0x2404
+#define CONF_USB_CDCD_ACM_IDPRODUCT 0x6141
 #endif
 
 // <o> bcdDevice <0x0000-0xFFFF>
@@ -74,7 +74,7 @@
 // <e> Enable string descriptor of iManufact
 // <id> usb_cdcd_acm_imanufact_en
 #ifndef CONF_USB_CDCD_ACM_IMANUFACT_EN
-#define CONF_USB_CDCD_ACM_IMANUFACT_EN 0
+#define CONF_USB_CDCD_ACM_IMANUFACT_EN 1
 #endif
 
 #ifndef CONF_USB_CDCD_ACM_IMANUFACT
@@ -84,11 +84,12 @@
 // <s> Unicode string of iManufact
 // <id> usb_cdcd_acm_imanufact_str
 #ifndef CONF_USB_CDCD_ACM_IMANUFACT_STR
-#define CONF_USB_CDCD_ACM_IMANUFACT_STR "Atmel"
+#define CONF_USB_CDCD_ACM_IMANUFACT_STR "sysmocom"
 #endif
 
 #ifndef CONF_USB_CDCD_ACM_IMANUFACT_STR_DESC
-#define CONF_USB_CDCD_ACM_IMANUFACT_STR_DESC
+#define CONF_USB_CDCD_ACM_IMANUFACT_STR_DESC                                                                           \
+	18, 0x03, 's', 0x00, 'y', 0x00, 's', 0x00, 'm', 0x00, 'o', 0x00, 'c', 0x00, 'o', 0x00, 'm', 0x00,
 #endif
 
 // </e>
@@ -96,7 +97,7 @@
 // <e> Enable string descriptor of iProduct
 // <id> usb_cdcd_acm_iproduct_en
 #ifndef CONF_USB_CDCD_ACM_IPRODUCT_EN
-#define CONF_USB_CDCD_ACM_IPRODUCT_EN 0
+#define CONF_USB_CDCD_ACM_IPRODUCT_EN 1
 #endif
 
 #ifndef CONF_USB_CDCD_ACM_IPRODUCT
@@ -107,11 +108,13 @@
 // <s> Unicode string of iProduct
 // <id> usb_cdcd_acm_iproduct_str
 #ifndef CONF_USB_CDCD_ACM_IPRODUCT_STR
-#define CONF_USB_CDCD_ACM_IPRODUCT_STR "CDC ACM Serial Bridge Demo"
+#define CONF_USB_CDCD_ACM_IPRODUCT_STR "sysmoOCTSIM"
 #endif
 
 #ifndef CONF_USB_CDCD_ACM_IPRODUCT_STR_DESC
-#define CONF_USB_CDCD_ACM_IPRODUCT_STR_DESC
+#define CONF_USB_CDCD_ACM_IPRODUCT_STR_DESC                                                                            \
+	24, 0x03, 's', 0x00, 'y', 0x00, 's', 0x00, 'm', 0x00, 'o', 0x00, 'O', 0x00, 'C', 0x00, 'T', 0x00, 'S', 0x00, 'I',  \
+	    0x00, 'M', 0x00,
 #endif
 
 // </e>
