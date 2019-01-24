@@ -80,7 +80,7 @@ hal/src/hal_sleep.o \
 hal/src/hal_cache.o \
 hpl/cmcc/hpl_cmcc.o \
 atmel_start.o \
-usb_cdc_echo_main.o \
+main.o \
 usb/device/usbdc.o \
 hal/src/hal_atomic.o
 
@@ -117,7 +117,7 @@ OBJS_AS_ARGS +=  \
 "hal/src/hal_cache.o" \
 "hpl/cmcc/hpl_cmcc.o" \
 "atmel_start.o" \
-"usb_cdc_echo_main.o" \
+"main.o" \
 "usb/device/usbdc.o" \
 "hal/src/hal_atomic.o"
 
@@ -146,7 +146,7 @@ DEPS_AS_ARGS +=  \
 "hpl/dmac/hpl_dmac.d" \
 "hal/src/hal_init.d" \
 "hal/src/hal_usart_sync.d" \
-"usb_cdc_echo_main.d" \
+"main.d" \
 "hpl/mclk/hpl_mclk.d" \
 "driver_init.d" \
 "hpl/osc32kctrl/hpl_osc32kctrl.d" \
