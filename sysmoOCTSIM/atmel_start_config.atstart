@@ -1044,6 +1044,13 @@ drivers:
         configuration:
           usb_gclk_selection: Generic clock generator 1
 pads:
+  LED_system:
+    name: PC18
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::pad::PC18
+    mode: Digital output
+    user_label: LED_system
+    configuration:
+      pad_initial_level: High
   PA24:
     name: PA24
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::pad::PA24
