@@ -17,14 +17,14 @@
 // <i> This defines the clock source for RTC
 // <id> rtc_source_oscillator
 #ifndef CONF_RTCCTRL_SRC
-#define CONF_RTCCTRL_SRC GCLK_GENCTRL_SRC_OSCULP32K
+#define CONF_RTCCTRL_SRC GCLK_GENCTRL_SRC_XOSC32K
 #endif
 
 // <q> Use 1 kHz output
 // <id> rtc_1khz_selection
 #ifndef CONF_RTCCTRL_1KHZ
 
-#define CONF_RTCCTRL_1KHZ 1
+#define CONF_RTCCTRL_1KHZ 0
 
 #endif
 
