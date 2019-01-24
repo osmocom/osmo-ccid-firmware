@@ -1,44 +1,46 @@
-/**
- * \file
- *
- * \brief Application implement
- *
- * Copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
- *
- * \asf_license_start
- *
- * \page License
- *
- * Subject to your compliance with these terms, you may use Microchip
- * software and any derivatives exclusively with Microchip products.
- * It is your responsibility to comply with third party license terms applicable
- * to your use of third party software (including open source software) that
- * may accompany Microchip software.
- *
- * THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS".  NO WARRANTIES,
- * WHETHER EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE,
- * INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY,
- * AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT WILL MICROCHIP BE
- * LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, INCIDENTAL OR CONSEQUENTIAL
- * LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND WHATSOEVER RELATED TO THE
- * SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS BEEN ADVISED OF THE
- * POSSIBILITY OR THE DAMAGES ARE FORESEEABLE.  TO THE FULLEST EXTENT
- * ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN ANY WAY
- * RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
- * THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
- *
- * \asf_license_stop
- *
- */
 /*
- * Support and FAQ: visit <a href="https://www.microchip.com/support/">Microchip Support</a>
- */
+ * Copyright (C) 2019 sysmocom -s.f.m.c. GmbH, Author: Kevin Redon <kredon@sysmocom.de>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
 
+volatile static uint32_t data_arrived = 0;
+
+static void tx_cb_UART_debug(const struct usart_async_descriptor *const io_descr)
+{
+	/* Transfer completed */
+	gpio_toggle_pin_level(LED_system);
+}
+
+static void rx_cb_UART_debug(const struct usart_async_descriptor *const io_descr)
+{
+	/* Receive completed */
+	gpio_toggle_pin_level(LED_system);
+	data_arrived = 1;
+}
+
 int main(void)
 {
 	atmel_start_init();
+
+	usart_async_register_callback(&UART_debug, USART_ASYNC_TXC_CB, tx_cb_UART_debug);
+	usart_async_register_callback(&UART_debug, USART_ASYNC_RXC_CB, rx_cb_UART_debug);
+	usart_async_enable(&UART_debug);
+
 	cdcd_acm_example();
 }
