@@ -37,11 +37,12 @@ hpl/mclk \
 usb \
 armcc/arm_addon/armcc/arm \
 hal/utils/src \
-armcc/arm_addon/armcc \
+hpl/sercom \
 examples \
 hpl/gclk \
 usb/device \
 hpl/oscctrl \
+armcc/arm_addon/armcc \
 hpl/usb \
 hpl/core \
 hpl/cmcc
@@ -62,6 +63,7 @@ hal/utils/src/utils_list.o \
 hal/utils/src/utils_assert.o \
 usb_start.o \
 hpl/oscctrl/hpl_oscctrl.o \
+hal/src/hal_usart_sync.o \
 hpl/mclk/hpl_mclk.o \
 hpl/ramecc/hpl_ramecc.o \
 usb/usb_protocol.o \
@@ -70,6 +72,7 @@ hal/src/hal_usb_device.o \
 hpl/osc32kctrl/hpl_osc32kctrl.o \
 examples/driver_examples.o \
 driver_init.o \
+hpl/sercom/hpl_sercom.o \
 hal/src/hal_gpio.o \
 hal/utils/src/utils_event.o \
 hal/src/hal_sleep.o \
@@ -96,6 +99,7 @@ OBJS_AS_ARGS +=  \
 "hal/utils/src/utils_assert.o" \
 "usb_start.o" \
 "hpl/oscctrl/hpl_oscctrl.o" \
+"hal/src/hal_usart_sync.o" \
 "hpl/mclk/hpl_mclk.o" \
 "hpl/ramecc/hpl_ramecc.o" \
 "usb/usb_protocol.o" \
@@ -104,6 +108,7 @@ OBJS_AS_ARGS +=  \
 "hpl/osc32kctrl/hpl_osc32kctrl.o" \
 "examples/driver_examples.o" \
 "driver_init.o" \
+"hpl/sercom/hpl_sercom.o" \
 "hal/src/hal_gpio.o" \
 "hal/utils/src/utils_event.o" \
 "hal/src/hal_sleep.o" \
@@ -138,6 +143,7 @@ DEPS_AS_ARGS +=  \
 "hal/src/hal_usb_device.d" \
 "hpl/dmac/hpl_dmac.d" \
 "hal/src/hal_init.d" \
+"hal/src/hal_usart_sync.d" \
 "usb_cdc_echo_main.d" \
 "hpl/mclk/hpl_mclk.d" \
 "driver_init.d" \
@@ -145,6 +151,7 @@ DEPS_AS_ARGS +=  \
 "examples/driver_examples.d" \
 "hal/src/hal_cache.d" \
 "hal/src/hal_sleep.d" \
+"hpl/sercom/hpl_sercom.d" \
 "hal/src/hal_gpio.d" \
 "hal/src/hal_atomic.d" \
 "usb/device/usbdc.d" \
@@ -186,7 +193,7 @@ $(OBJS_AS_ARGS)
 	@echo Building file: $<
 	@echo ARMCC Compiler
 	$(QUOTE)armcc$(QUOTE) --c99 -c -DDEBUG -O1 -g --apcs=interwork --split_sections --cpu Cortex-M4 -D__SAME54P20A__ \
--I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
+-I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
 --depend "$@"  -o "$@" "$<"
 
 	@echo Finished building: $<
@@ -195,7 +202,7 @@ $(OBJS_AS_ARGS)
 	@echo Building file: $<
 	@echo ARMCC Assembler
 	$(QUOTE)armasm$(QUOTE) -g --apcs=interwork --cpu Cortex-M4 --pd "D__SAME54P20A__ SETA 1" \
--I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
+-I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
 --depend "$(@:%.o=%.d)" -o "$@" "$<"
 
 	@echo Finished building: $<
@@ -204,7 +211,7 @@ $(OBJS_AS_ARGS)
 	@echo Building file: $<
 	@echo ARMCC Preprocessing Assembler
 	$(QUOTE)armcc$(QUOTE) --c99 -c -DDEBUG -O1 -g --apcs=interwork --split_sections --cpu Cortex-M4 -D__SAME54P20A__ \
--I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
+-I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
 --depend "$@"  -o "$@" "$<"
 
 	@echo Finished building: $<

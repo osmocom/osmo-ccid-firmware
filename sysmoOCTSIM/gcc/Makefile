@@ -36,6 +36,7 @@ hal/src \
 hpl/mclk \
 usb \
 hal/utils/src \
+hpl/sercom \
 examples \
 hpl/gclk \
 usb/device \
@@ -62,6 +63,7 @@ hal/utils/src/utils_list.o \
 hal/utils/src/utils_assert.o \
 usb_start.o \
 hpl/oscctrl/hpl_oscctrl.o \
+hal/src/hal_usart_sync.o \
 hpl/mclk/hpl_mclk.o \
 hpl/ramecc/hpl_ramecc.o \
 usb/usb_protocol.o \
@@ -71,6 +73,7 @@ hal/src/hal_usb_device.o \
 hpl/osc32kctrl/hpl_osc32kctrl.o \
 examples/driver_examples.o \
 driver_init.o \
+hpl/sercom/hpl_sercom.o \
 hal/src/hal_gpio.o \
 hal/utils/src/utils_event.o \
 hal/src/hal_sleep.o \
@@ -97,6 +100,7 @@ OBJS_AS_ARGS +=  \
 "hal/utils/src/utils_assert.o" \
 "usb_start.o" \
 "hpl/oscctrl/hpl_oscctrl.o" \
+"hal/src/hal_usart_sync.o" \
 "hpl/mclk/hpl_mclk.o" \
 "hpl/ramecc/hpl_ramecc.o" \
 "usb/usb_protocol.o" \
@@ -106,6 +110,7 @@ OBJS_AS_ARGS +=  \
 "hpl/osc32kctrl/hpl_osc32kctrl.o" \
 "examples/driver_examples.o" \
 "driver_init.o" \
+"hpl/sercom/hpl_sercom.o" \
 "hal/src/hal_gpio.o" \
 "hal/utils/src/utils_event.o" \
 "hal/src/hal_sleep.o" \
@@ -140,6 +145,7 @@ DEPS_AS_ARGS +=  \
 "hal/src/hal_usb_device.d" \
 "hpl/dmac/hpl_dmac.d" \
 "hal/src/hal_init.d" \
+"hal/src/hal_usart_sync.d" \
 "usb_cdc_echo_main.d" \
 "hpl/mclk/hpl_mclk.d" \
 "driver_init.d" \
@@ -147,6 +153,7 @@ DEPS_AS_ARGS +=  \
 "examples/driver_examples.d" \
 "hal/src/hal_cache.d" \
 "hal/src/hal_sleep.d" \
+"hpl/sercom/hpl_sercom.d" \
 "hal/src/hal_gpio.d" \
 "hal/src/hal_atomic.d" \
 "usb/device/usbdc.d" \
@@ -199,7 +206,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo ARM/GNU C Compiler
 	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
 -D__SAME54P20A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
--I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
+-I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
@@ -208,7 +215,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo ARM/GNU Assembler
 	$(QUOTE)arm-none-eabi-as$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
 -D__SAME54P20A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
--I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
+-I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
@@ -217,7 +224,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo ARM/GNU Preprocessing Assembler
 	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
 -D__SAME54P20A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
--I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
+-I"../" -I"../config" -I"../examples" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/device" -I"../" -I"../CMSIS/Include" -I"../include"  \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 

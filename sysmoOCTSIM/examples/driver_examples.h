@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+void UART_debug_example(void);
+
 #ifdef __cplusplus
 }
 #endif

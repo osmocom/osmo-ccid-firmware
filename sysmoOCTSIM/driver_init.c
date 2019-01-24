@@ -11,6 +11,31 @@
 #include <utils.h>
 #include <hal_init.h>
 
+struct usart_sync_descriptor UART_debug;
+
+void UART_debug_PORT_init(void)
+{
+
+	gpio_set_pin_function(PB25, PINMUX_PB25D_SERCOM2_PAD0);
+
+	gpio_set_pin_function(PB24, PINMUX_PB24D_SERCOM2_PAD1);
+}
+
+void UART_debug_CLOCK_init(void)
+{
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_CORE, CONF_GCLK_SERCOM2_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_SLOW, CONF_GCLK_SERCOM2_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBBMASK_SERCOM2_bit(MCLK);
+}
+
+void UART_debug_init(void)
+{
+	UART_debug_CLOCK_init();
+	usart_sync_init(&UART_debug, SERCOM2, (void *)NULL);
+	UART_debug_PORT_init();
+}
+
 void USB_DEVICE_INSTANCE_PORT_init(void)
 {
 
@@ -129,6 +154,8 @@ void USB_DEVICE_INSTANCE_init(void)
 void system_init(void)
 {
 	init_mcu();
+
+	UART_debug_init();
 
 	USB_DEVICE_INSTANCE_init();
 }
