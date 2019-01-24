@@ -1,5 +1,5 @@
 format_version: '2'
-name: USB CDC Echo
+name: sysmoOCTSIM
 versions:
   api: '1.0'
   backend: 1.4.93
