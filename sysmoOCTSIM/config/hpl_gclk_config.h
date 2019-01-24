@@ -218,7 +218,7 @@
 // <i> Indicates whether Generic Clock Generator Enable is enabled or not
 // <id> gclk_arch_gen_2_enable
 #ifndef CONF_GCLK_GEN_2_GENEN
-#define CONF_GCLK_GEN_2_GENEN 1
+#define CONF_GCLK_GEN_2_GENEN 0
 #endif
 // </h>
 
@@ -843,7 +843,7 @@
 // <i> Indicates whether generic clock 11 configuration is enabled or not
 // <id> enable_gclk_gen_11
 #ifndef CONF_GCLK_GENERATOR_11_CONFIG
-#define CONF_GCLK_GENERATOR_11_CONFIG 1
+#define CONF_GCLK_GENERATOR_11_CONFIG 0
 #endif
 
 // <h> Generic Clock Generator Control

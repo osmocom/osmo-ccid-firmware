@@ -507,7 +507,7 @@
 // <i> Indicates whether configuration for FDPLL1 is enabled or not
 // <id> enable_fdpll1
 #ifndef CONF_FDPLL1_CONFIG
-#define CONF_FDPLL1_CONFIG 0
+#define CONF_FDPLL1_CONFIG 1
 #endif
 
 // <y> Reference Clock Source
@@ -529,7 +529,7 @@
 // <i> Select the clock source.
 // <id> fdpll1_ref_clock
 #ifndef CONF_FDPLL1_GCLK
-#define CONF_FDPLL1_GCLK GCLK_PCHCTRL_GEN_GCLK11_Val
+#define CONF_FDPLL1_GCLK GCLK_GENCTRL_SRC_XOSC1
 #endif
 
 // <h> Digital Phase Locked Loop Control
