@@ -21,11 +21,11 @@ extern "C" {
 #include <hal_io.h>
 #include <hal_sleep.h>
 
-#include <hal_usart_sync.h>
+#include <hal_usart_async.h>
 
 #include "hal_usb_device.h"
 
-extern struct usart_sync_descriptor UART_debug;
+extern struct usart_async_descriptor UART_debug;
 
 void UART_debug_PORT_init(void);
 void UART_debug_CLOCK_init(void);

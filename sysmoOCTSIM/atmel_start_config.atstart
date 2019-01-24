@@ -959,9 +959,9 @@ drivers:
       domain_group: null
   UART_debug:
     user_label: UART_debug
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::SERCOM2::driver_config_definition::UART::HAL:Driver:USART.Sync
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::SERCOM2::driver_config_definition::UART::HAL:Driver:USART.Async
     functionality: USART
-    api: HAL:Driver:USART_Sync
+    api: HAL:Driver:USART_Async
     configuration:
       usart_advanced: false
       usart_arch_clock_mode: USART with internal clock

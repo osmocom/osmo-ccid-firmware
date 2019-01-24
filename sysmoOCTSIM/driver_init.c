@@ -11,9 +11,33 @@
 #include <utils.h>
 #include <hal_init.h>
 
-struct usart_sync_descriptor UART_debug;
+/*! The buffer size for USART */
+#define UART_DEBUG_BUFFER_SIZE 16
 
-void UART_debug_PORT_init(void)
+struct usart_async_descriptor UART_debug;
+
+static uint8_t UART_debug_buffer[UART_DEBUG_BUFFER_SIZE];
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void UART_debug_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_CORE, CONF_GCLK_SERCOM2_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_SLOW, CONF_GCLK_SERCOM2_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBBMASK_SERCOM2_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void UART_debug_PORT_init()
 {
 
 	gpio_set_pin_function(PB25, PINMUX_PB25D_SERCOM2_PAD0);
@@ -21,18 +45,15 @@ void UART_debug_PORT_init(void)
 	gpio_set_pin_function(PB24, PINMUX_PB24D_SERCOM2_PAD1);
 }
 
-void UART_debug_CLOCK_init(void)
-{
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_CORE, CONF_GCLK_SERCOM2_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_SLOW, CONF_GCLK_SERCOM2_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-
-	hri_mclk_set_APBBMASK_SERCOM2_bit(MCLK);
-}
-
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
 void UART_debug_init(void)
 {
 	UART_debug_CLOCK_init();
-	usart_sync_init(&UART_debug, SERCOM2, (void *)NULL);
+	usart_async_init(&UART_debug, SERCOM2, UART_debug_buffer, UART_DEBUG_BUFFER_SIZE, (void *)NULL);
 	UART_debug_PORT_init();
 }
 
