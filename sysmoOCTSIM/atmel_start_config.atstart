@@ -647,7 +647,7 @@ drivers:
       enable_gclk_gen_1: true
       enable_gclk_gen_10: false
       enable_gclk_gen_11: true
-      enable_gclk_gen_2: false
+      enable_gclk_gen_2: true
       enable_gclk_gen_3: true
       enable_gclk_gen_4: false
       enable_gclk_gen_5: false
@@ -675,7 +675,7 @@ drivers:
       gclk_arch_gen_1_oe: false
       gclk_arch_gen_1_oov: false
       gclk_arch_gen_1_runstdby: false
-      gclk_arch_gen_2_enable: false
+      gclk_arch_gen_2_enable: true
       gclk_arch_gen_2_idc: false
       gclk_arch_gen_2_oe: false
       gclk_arch_gen_2_oov: false
@@ -728,8 +728,8 @@ drivers:
       gclk_gen_1_div_sel: false
       gclk_gen_1_oscillator: Digital Frequency Locked Loop (DFLL48M)
       gclk_gen_2_div: 1
-      gclk_gen_2_div_sel: true
-      gclk_gen_2_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_2_div_sel: false
+      gclk_gen_2_oscillator: Digital Phase Locked Loop (DPLL1)
       gclk_gen_3_div: 1
       gclk_gen_3_div_sel: false
       gclk_gen_3_oscillator: 32kHz External Crystal Oscillator (XOSC32K)
@@ -830,7 +830,7 @@ drivers:
       dfll_ref_clock: Generic clock generator 3
       enable_dfll: true
       enable_fdpll0: true
-      enable_fdpll1: false
+      enable_fdpll1: true
       enable_xosc0: false
       enable_xosc1: true
       fdpll0_arch_dcoen: false
@@ -848,19 +848,19 @@ drivers:
       fdpll0_ldrfrac: 0
       fdpll0_ref_clock: Generic clock generator 11
       fdpll1_arch_dcoen: false
-      fdpll1_arch_enable: false
+      fdpll1_arch_enable: true
       fdpll1_arch_filter: 0
       fdpll1_arch_lbypass: false
       fdpll1_arch_ltime: No time-out, automatic lock
       fdpll1_arch_ondemand: false
-      fdpll1_arch_refclk: XOSC32K clock reference
+      fdpll1_arch_refclk: XOSC1 clock reference
       fdpll1_arch_runstdby: false
       fdpll1_arch_wuf: false
       fdpll1_clock_dcofilter: 0
-      fdpll1_clock_div: 0
-      fdpll1_ldr: 1463
-      fdpll1_ldrfrac: 13
-      fdpll1_ref_clock: 32kHz External Crystal Oscillator (XOSC32K)
+      fdpll1_clock_div: 6
+      fdpll1_ldr: 49
+      fdpll1_ldrfrac: 0
+      fdpll1_ref_clock: Generic clock generator 11
       xosc0_arch_cfden: false
       xosc0_arch_enable: false
       xosc0_arch_enalc: false

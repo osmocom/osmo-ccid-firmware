@@ -42,6 +42,7 @@
 #include <hal_cache.h>
 
 /* Referenced GCLKs (out of 0~11), should be initialized firstly
+ * - GCLK 11 for FDPLL1
  * - GCLK 11 for FDPLL0
  */
 #define _GCLK_INIT_1ST 0x00000800
