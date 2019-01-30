@@ -1030,6 +1030,46 @@ drivers:
         configuration:
           usb_gclk_selection: Generic clock generator 1
 pads:
+  SIMCLK_20MHZ:
+    name: PA11
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA11
+    mode: Advanced
+    user_label: SIMCLK_20MHZ
+    configuration:
+      pad_direction: Out
+      pad_function: M
+      pad_initial_level: Low
+      pad_pull_config: 'Off'
+  SWITCH:
+    name: PC14
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC14
+    mode: Digital input
+    user_label: SWITCH
+    configuration: null
+  VB0:
+    name: PA20
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA20
+    mode: Digital input
+    user_label: VB0
+    configuration: null
+  VB1:
+    name: PA21
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA21
+    mode: Digital input
+    user_label: VB1
+    configuration: null
+  VB2:
+    name: PA22
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA22
+    mode: Digital input
+    user_label: VB2
+    configuration: null
+  VB3:
+    name: PA23
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA23
+    mode: Digital input
+    user_label: VB3
+    configuration: null
   USBUP_D_N:
     name: PA24
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA24
@@ -1042,11 +1082,11 @@ pads:
     mode: Advanced
     user_label: USBUP_D_P
     configuration: null
-  LED_system:
+  USER_LED:
     name: PC26
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC26
     mode: Digital output
-    user_label: LED_system
+    user_label: USER_LED
     configuration: null
   UART_TX:
     name: PB30

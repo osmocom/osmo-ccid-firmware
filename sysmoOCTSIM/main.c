@@ -30,7 +30,7 @@ static void tx_cb_UART_debug(const struct usart_async_descriptor *const io_descr
 static void rx_cb_UART_debug(const struct usart_async_descriptor *const io_descr)
 {
 	/* Receive completed */
-	gpio_toggle_pin_level(LED_system);
+	gpio_toggle_pin_level(USER_LED);
 	data_arrived = true;
 }
 

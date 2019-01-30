@@ -176,9 +176,131 @@ void system_init(void)
 {
 	init_mcu();
 
+	// GPIO on PA11
+
+	gpio_set_pin_direction(SIMCLK_20MHZ,
+	                       // <y> Pin direction
+	                       // <id> pad_direction
+	                       // <GPIO_DIRECTION_OFF"> Off
+	                       // <GPIO_DIRECTION_IN"> In
+	                       // <GPIO_DIRECTION_OUT"> Out
+	                       GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_level(SIMCLK_20MHZ,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	gpio_set_pin_pull_mode(SIMCLK_20MHZ,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIMCLK_20MHZ,
+	                      // <y> Pin function
+	                      // <id> pad_function
+	                      // <i> Auto : use driver pinmux if signal is imported by driver, else turn off function
+	                      // <GPIO_PIN_FUNCTION_OFF"> Auto
+	                      // <GPIO_PIN_FUNCTION_OFF"> Off
+	                      // <GPIO_PIN_FUNCTION_A"> A
+	                      // <GPIO_PIN_FUNCTION_B"> B
+	                      // <GPIO_PIN_FUNCTION_C"> C
+	                      // <GPIO_PIN_FUNCTION_D"> D
+	                      // <GPIO_PIN_FUNCTION_E"> E
+	                      // <GPIO_PIN_FUNCTION_F"> F
+	                      // <GPIO_PIN_FUNCTION_G"> G
+	                      // <GPIO_PIN_FUNCTION_H"> H
+	                      // <GPIO_PIN_FUNCTION_I"> I
+	                      // <GPIO_PIN_FUNCTION_J"> J
+	                      // <GPIO_PIN_FUNCTION_K"> K
+	                      // <GPIO_PIN_FUNCTION_L"> L
+	                      // <GPIO_PIN_FUNCTION_M"> M
+	                      // <GPIO_PIN_FUNCTION_N"> N
+	                      GPIO_PIN_FUNCTION_M);
+
+	// GPIO on PA20
+
+	// Set pin direction to input
+	gpio_set_pin_direction(VB0, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(VB0,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(VB0, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PA21
+
+	// Set pin direction to input
+	gpio_set_pin_direction(VB1, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(VB1,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(VB1, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PA22
+
+	// Set pin direction to input
+	gpio_set_pin_direction(VB2, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(VB2,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(VB2, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PA23
+
+	// Set pin direction to input
+	gpio_set_pin_direction(VB3, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(VB3,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(VB3, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PC14
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SWITCH, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SWITCH,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SWITCH, GPIO_PIN_FUNCTION_OFF);
+
 	// GPIO on PC26
 
-	gpio_set_pin_level(LED_system,
+	gpio_set_pin_level(USER_LED,
 	                   // <y> Initial level
 	                   // <id> pad_initial_level
 	                   // <false"> Low
@@ -186,9 +308,9 @@ void system_init(void)
 	                   false);
 
 	// Set pin direction to output
-	gpio_set_pin_direction(LED_system, GPIO_DIRECTION_OUT);
+	gpio_set_pin_direction(USER_LED, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(LED_system, GPIO_PIN_FUNCTION_OFF);
+	gpio_set_pin_function(USER_LED, GPIO_PIN_FUNCTION_OFF);
 
 	UART_debug_init();
 
