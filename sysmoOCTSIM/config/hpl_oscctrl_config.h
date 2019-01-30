@@ -404,6 +404,7 @@
 // <i> Select the clock source.
 // <id> fdpll0_ref_clock
 #ifndef CONF_FDPLL0_GCLK
+// directly use XOSC1 as clock input (no need to use an additional GCLK)
 #define CONF_FDPLL0_GCLK GCLK_GENCTRL_SRC_XOSC1
 #endif
 
@@ -438,13 +439,15 @@
 // <o> Loop Divider Ratio Integer Part <0x0-0x1FFF>
 // <id> fdpll0_ldr
 #ifndef CONF_FDPLL0_LDR
-#define CONF_FDPLL0_LDR 0x3b
+// 2 MHz input clock * ( <59> + 1 = 60 ) = 120 MHz output clock
+#define CONF_FDPLL0_LDR 59
 #endif
 
 // <o> Clock Divider <0x0-0x7FF>
 // <id> fdpll0_clock_div
 #ifndef CONF_FDPLL0_DIV
-#define CONF_FDPLL0_DIV 0x6
+// XOSC1 = 12 MHz, divide by 2 * ( <2> + 1 ) = 6 to have a 2 MHz clock input (maximum is 3.4 MHz)
+#define CONF_FDPLL0_DIV 2
 #endif
 
 // <q> DCO Filter Enable
@@ -485,6 +488,7 @@
 // <0x3=>XOSC1 clock reference
 // <id> fdpll0_arch_refclk
 #ifndef CONF_FDPLL0_REFCLK
+// XOSC1 is used as input signal, thus also use it as reference
 #define CONF_FDPLL0_REFCLK 0x3
 #endif
 
@@ -529,6 +533,7 @@
 // <i> Select the clock source.
 // <id> fdpll1_ref_clock
 #ifndef CONF_FDPLL1_GCLK
+// directly use XOSC1 as clock input (no need to use an additional GCLK)
 #define CONF_FDPLL1_GCLK GCLK_GENCTRL_SRC_XOSC1
 #endif
 
@@ -563,13 +568,15 @@
 // <o> Loop Divider Ratio Integer Part <0x0-0x1FFF>
 // <id> fdpll1_ldr
 #ifndef CONF_FDPLL1_LDR
-#define CONF_FDPLL1_LDR 0x31
+// 2 MHz input clock * ( <49> + 1 = 50 ) = 100 MHz output clock
+#define CONF_FDPLL1_LDR 49
 #endif
 
 // <o> Clock Divider <0x0-0x7FF>
 // <id> fdpll1_clock_div
 #ifndef CONF_FDPLL1_DIV
-#define CONF_FDPLL1_DIV 0x6
+// XOSC1 = 12 MHz, divide by 2 * ( <2> + 1 ) = 6 to have a 2 MHz clock input (maximum is 3.4 MHz)
+#define CONF_FDPLL1_DIV 2
 #endif
 
 // <q> DCO Filter Enable
@@ -610,6 +617,7 @@
 // <0x3=>XOSC1 clock reference
 // <id> fdpll1_arch_refclk
 #ifndef CONF_FDPLL1_REFCLK
+// XOSC1 is used as input signal, thus also use it as reference
 #define CONF_FDPLL1_REFCLK 0x3
 #endif
 
