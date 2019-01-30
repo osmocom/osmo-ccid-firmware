@@ -12,7 +12,7 @@
   <generators>
     <generator id="AtmelStart">
       <description>Atmel Start</description>
-      <select Dname="ATSAME54P20A" Dvendor="Atmel:3"/>
+      <select Dname="ATSAME54N19A" Dvendor="Atmel:3"/>
       <command>http://start.atmel.com/</command>
       <files>
         <file category="generator" name="atmel_start_config.atstart"/>
@@ -27,13 +27,13 @@
       <require Cclass="Device" Cgroup="Startup" Cversion="1.0.0"/>
     </condition>
     <condition id="ARMCC, GCC, IAR">
-      <require Dname="ATSAME54P20A"/>
+      <require Dname="ATSAME54N19A"/>
       <accept Tcompiler="ARMCC"/>
       <accept Tcompiler="GCC"/>
       <accept Tcompiler="IAR"/>
     </condition>
     <condition id="GCC">
-      <require Dname="ATSAME54P20A"/>
+      <require Dname="ATSAME54N19A"/>
       <accept Tcompiler="GCC"/>
     </condition>
   </conditions>
@@ -160,8 +160,7 @@
         <file category="header" condition="ARMCC, GCC, IAR" name="usb/usb_includes.h"/>
         <file category="source" condition="ARMCC, GCC, IAR" name="usb/usb_protocol.c"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="usb/usb_protocol.h"/>
-        <file category="source" condition="ARMCC, GCC, IAR" name="usb_cdc_echo_main.c"/>
-        <file category="doc" condition="ARMCC, GCC, IAR" name="documentation/usb_cdc_echo.rst"/>
+        <file category="source" condition="ARMCC, GCC, IAR" name="main.c"/>
         <file category="source" condition="ARMCC, GCC, IAR" name="driver_init.c"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="driver_init.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="atmel_start_pins.h"/>

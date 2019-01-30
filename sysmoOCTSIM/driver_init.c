@@ -26,10 +26,10 @@ static uint8_t UART_debug_buffer[UART_DEBUG_BUFFER_SIZE];
 void UART_debug_CLOCK_init()
 {
 
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_CORE, CONF_GCLK_SERCOM2_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_SLOW, CONF_GCLK_SERCOM2_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_CORE, CONF_GCLK_SERCOM7_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_SLOW, CONF_GCLK_SERCOM7_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
 
-	hri_mclk_set_APBBMASK_SERCOM2_bit(MCLK);
+	hri_mclk_set_APBDMASK_SERCOM7_bit(MCLK);
 }
 
 /**
@@ -40,9 +40,9 @@ void UART_debug_CLOCK_init()
 void UART_debug_PORT_init()
 {
 
-	gpio_set_pin_function(PB25, PINMUX_PB25D_SERCOM2_PAD0);
+	gpio_set_pin_function(UART_TX, PINMUX_PB30C_SERCOM7_PAD0);
 
-	gpio_set_pin_function(PB24, PINMUX_PB24D_SERCOM2_PAD1);
+	gpio_set_pin_function(UART_RX, PINMUX_PB31C_SERCOM7_PAD1);
 }
 
 /**
@@ -53,14 +53,14 @@ void UART_debug_PORT_init()
 void UART_debug_init(void)
 {
 	UART_debug_CLOCK_init();
-	usart_async_init(&UART_debug, SERCOM2, UART_debug_buffer, UART_DEBUG_BUFFER_SIZE, (void *)NULL);
+	usart_async_init(&UART_debug, SERCOM7, UART_debug_buffer, UART_DEBUG_BUFFER_SIZE, (void *)NULL);
 	UART_debug_PORT_init();
 }
 
 void USB_DEVICE_INSTANCE_PORT_init(void)
 {
 
-	gpio_set_pin_direction(PA24,
+	gpio_set_pin_direction(USBUP_D_N,
 	                       // <y> Pin direction
 	                       // <id> pad_direction
 	                       // <GPIO_DIRECTION_OFF"> Off
@@ -68,14 +68,14 @@ void USB_DEVICE_INSTANCE_PORT_init(void)
 	                       // <GPIO_DIRECTION_OUT"> Out
 	                       GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_level(PA24,
+	gpio_set_pin_level(USBUP_D_N,
 	                   // <y> Initial level
 	                   // <id> pad_initial_level
 	                   // <false"> Low
 	                   // <true"> High
 	                   false);
 
-	gpio_set_pin_pull_mode(PA24,
+	gpio_set_pin_pull_mode(USBUP_D_N,
 	                       // <y> Pull configuration
 	                       // <id> pad_pull_config
 	                       // <GPIO_PULL_OFF"> Off
@@ -83,7 +83,7 @@ void USB_DEVICE_INSTANCE_PORT_init(void)
 	                       // <GPIO_PULL_DOWN"> Pull-down
 	                       GPIO_PULL_OFF);
 
-	gpio_set_pin_function(PA24,
+	gpio_set_pin_function(USBUP_D_N,
 	                      // <y> Pin function
 	                      // <id> pad_function
 	                      // <i> Auto : use driver pinmux if signal is imported by driver, else turn off function
@@ -105,7 +105,7 @@ void USB_DEVICE_INSTANCE_PORT_init(void)
 	                      // <GPIO_PIN_FUNCTION_N"> N
 	                      PINMUX_PA24H_USB_DM);
 
-	gpio_set_pin_direction(PA25,
+	gpio_set_pin_direction(USBUP_D_P,
 	                       // <y> Pin direction
 	                       // <id> pad_direction
 	                       // <GPIO_DIRECTION_OFF"> Off
@@ -113,14 +113,14 @@ void USB_DEVICE_INSTANCE_PORT_init(void)
 	                       // <GPIO_DIRECTION_OUT"> Out
 	                       GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_level(PA25,
+	gpio_set_pin_level(USBUP_D_P,
 	                   // <y> Initial level
 	                   // <id> pad_initial_level
 	                   // <false"> Low
 	                   // <true"> High
 	                   false);
 
-	gpio_set_pin_pull_mode(PA25,
+	gpio_set_pin_pull_mode(USBUP_D_P,
 	                       // <y> Pull configuration
 	                       // <id> pad_pull_config
 	                       // <GPIO_PULL_OFF"> Off
@@ -128,7 +128,7 @@ void USB_DEVICE_INSTANCE_PORT_init(void)
 	                       // <GPIO_PULL_DOWN"> Pull-down
 	                       GPIO_PULL_OFF);
 
-	gpio_set_pin_function(PA25,
+	gpio_set_pin_function(USBUP_D_P,
 	                      // <y> Pin function
 	                      // <id> pad_function
 	                      // <i> Auto : use driver pinmux if signal is imported by driver, else turn off function
@@ -176,14 +176,14 @@ void system_init(void)
 {
 	init_mcu();
 
-	// GPIO on PC18
+	// GPIO on PC26
 
 	gpio_set_pin_level(LED_system,
 	                   // <y> Initial level
 	                   // <id> pad_initial_level
 	                   // <false"> Low
 	                   // <true"> High
-	                   true);
+	                   false);
 
 	// Set pin direction to output
 	gpio_set_pin_direction(LED_system, GPIO_DIRECTION_OUT);

@@ -9,12 +9,10 @@ versions:
   format: '2'
   frontend: 1.4.1810
 board:
-  identifier: SAME54XplainedPro
-  device: SAME54P20A-AU
+  identifier: CustomBoard
+  device: SAME54N19A-AF
 details: null
-application:
-  definition: 'Atmel:Application_Examples:0.0.1::Application:USB_CDC_Echo:'
-  configuration: {}
+application: null
 middlewares:
   USB_CHAPTER_9:
     user_label: USB_CHAPTER_9
@@ -31,8 +29,8 @@ middlewares:
     api: USB:Protocol:CDC
     dependencies:
       USB Chapter 9: USB_CHAPTER_9
-  USB_DEVICE_CORE:
-    user_label: USB_DEVICE_CORE
+  USB_DEVICE_STACK_CORE_INSTANCE:
+    user_label: USB_DEVICE_STACK_CORE_INSTANCE
     configuration:
       usbd_hs_sp: false
     definition: Atmel:USB:0.0.1::USB_Device_Core
@@ -82,12 +80,12 @@ middlewares:
     functionality: USB_Device_CDC_ACM
     api: USB:Device:CDC_ACM
     dependencies:
-      USB Device Stack Core Instance: USB_DEVICE_CORE
+      USB Device Stack Core Instance: USB_DEVICE_STACK_CORE_INSTANCE
       USB Class CDC: USB_CLASS_CDC
 drivers:
   CMCC:
     user_label: CMCC
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::CMCC::driver_config_definition::CMCC::HAL:HPL:CMCC
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::CMCC::driver_config_definition::CMCC::HAL:HPL:CMCC
     functionality: System
     api: HAL:HPL:CMCC
     configuration:
@@ -103,7 +101,7 @@ drivers:
       domain_group: null
   DMAC:
     user_label: DMAC
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::DMAC::driver_config_definition::DMAC::HAL:HPL:DMAC
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::DMAC::driver_config_definition::DMAC::HAL:HPL:DMAC
     functionality: System
     api: HAL:HPL:DMAC
     configuration:
@@ -639,7 +637,7 @@ drivers:
       domain_group: null
   GCLK:
     user_label: GCLK
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::GCLK::driver_config_definition::GCLK::HAL:HPL:GCLK
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::GCLK::driver_config_definition::GCLK::HAL:HPL:GCLK
     functionality: System
     api: HAL:HPL:GCLK
     configuration:
@@ -720,7 +718,7 @@ drivers:
       gclk_gen_0_oscillator: Digital Phase Locked Loop (DPLL0)
       gclk_gen_10_div: 1
       gclk_gen_10_div_sel: false
-      gclk_gen_10_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_10_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
       gclk_gen_11_div: 6
       gclk_gen_11_div_sel: false
       gclk_gen_11_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
@@ -735,29 +733,29 @@ drivers:
       gclk_gen_3_oscillator: 32kHz External Crystal Oscillator (XOSC32K)
       gclk_gen_4_div: 1
       gclk_gen_4_div_sel: false
-      gclk_gen_4_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_4_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
       gclk_gen_5_div: 1
       gclk_gen_5_div_sel: false
-      gclk_gen_5_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_5_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
       gclk_gen_6_div: 1
       gclk_gen_6_div_sel: false
-      gclk_gen_6_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_6_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
       gclk_gen_7_div: 1
       gclk_gen_7_div_sel: false
-      gclk_gen_7_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_7_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
       gclk_gen_8_div: 1
       gclk_gen_8_div_sel: false
-      gclk_gen_8_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_8_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
       gclk_gen_9_div: 1
       gclk_gen_9_div_sel: false
-      gclk_gen_9_oscillator: External Crystal Oscillator 8-48MHz (XOSC0)
+      gclk_gen_9_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
     optional_signals: []
     variant: null
     clocks:
       domain_group: null
   MCLK:
     user_label: MCLK
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::MCLK::driver_config_definition::MCLK::HAL:HPL:MCLK
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::MCLK::driver_config_definition::MCLK::HAL:HPL:MCLK
     functionality: System
     api: HAL:HPL:MCLK
     configuration:
@@ -778,7 +776,7 @@ drivers:
         configuration: {}
   OSC32KCTRL:
     user_label: OSC32KCTRL
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::OSC32KCTRL::driver_config_definition::OSC32KCTRL::HAL:HPL:OSC32KCTRL
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::OSC32KCTRL::driver_config_definition::OSC32KCTRL::HAL:HPL:OSC32KCTRL
     functionality: System
     api: HAL:HPL:OSC32KCTRL
     configuration:
@@ -806,7 +804,7 @@ drivers:
       domain_group: null
   OSCCTRL:
     user_label: OSCCTRL
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::OSCCTRL::driver_config_definition::OSCCTRL::HAL:HPL:OSCCTRL
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::OSCCTRL::driver_config_definition::OSCCTRL::HAL:HPL:OSCCTRL
     functionality: System
     api: HAL:HPL:OSCCTRL
     configuration:
@@ -843,7 +841,7 @@ drivers:
       fdpll0_arch_runstdby: false
       fdpll0_arch_wuf: false
       fdpll0_clock_dcofilter: 0
-      fdpll0_clock_div: 6
+      fdpll0_clock_div: 2
       fdpll0_ldr: 59
       fdpll0_ldrfrac: 0
       fdpll0_ref_clock: Generic clock generator 11
@@ -857,7 +855,7 @@ drivers:
       fdpll1_arch_runstdby: false
       fdpll1_arch_wuf: false
       fdpll1_clock_dcofilter: 0
-      fdpll1_clock_div: 6
+      fdpll1_clock_div: 2
       fdpll1_ldr: 49
       fdpll1_ldrfrac: 0
       fdpll1_ref_clock: Generic clock generator 11
@@ -887,7 +885,7 @@ drivers:
       domain_group: null
   PORT:
     user_label: PORT
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::PORT::driver_config_definition::PORT::HAL:HPL:PORT
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::PORT::driver_config_definition::PORT::HAL:HPL:PORT
     functionality: System
     api: HAL:HPL:PORT
     configuration:
@@ -931,25 +929,13 @@ drivers:
       portc_input_event_enable_1: false
       portc_input_event_enable_2: false
       portc_input_event_enable_3: false
-      portd_event_action_0: Output register of pin will be set to level of event
-      portd_event_action_1: Output register of pin will be set to level of event
-      portd_event_action_2: Output register of pin will be set to level of event
-      portd_event_action_3: Output register of pin will be set to level of event
-      portd_event_pin_identifier_0: 0
-      portd_event_pin_identifier_1: 0
-      portd_event_pin_identifier_2: 0
-      portd_event_pin_identifier_3: 0
-      portd_input_event_enable_0: false
-      portd_input_event_enable_1: false
-      portd_input_event_enable_2: false
-      portd_input_event_enable_3: false
     optional_signals: []
     variant: null
     clocks:
       domain_group: null
   RAMECC:
     user_label: RAMECC
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::RAMECC::driver_config_definition::RAMECC::HAL:HPL:RAMECC
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::RAMECC::driver_config_definition::RAMECC::HAL:HPL:RAMECC
     functionality: System
     api: HAL:HPL:RAMECC
     configuration: {}
@@ -959,7 +945,7 @@ drivers:
       domain_group: null
   UART_debug:
     user_label: UART_debug
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::SERCOM2::driver_config_definition::UART::HAL:Driver:USART.Async
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM7::driver_config_definition::UART::HAL:Driver:USART.Async
     functionality: USART
     api: HAL:Driver:USART_Async
     configuration:
@@ -986,11 +972,11 @@ drivers:
     variant:
       specification: TXPO=0, RXPO=1, CMODE=0
       required_signals:
-      - name: SERCOM2/PAD/0
-        pad: PB25
+      - name: SERCOM7/PAD/0
+        pad: PB30
         label: TX
-      - name: SERCOM2/PAD/1
-        pad: PB24
+      - name: SERCOM7/PAD/1
+        pad: PB31
         label: RX
     clocks:
       domain_group:
@@ -1004,7 +990,7 @@ drivers:
           slow_gclk_selection: Generic clock generator 3
   USB_DEVICE_INSTANCE:
     user_label: USB_DEVICE_INSTANCE
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::USB::driver_config_definition::USB.Device::HAL:Driver:USB.Device
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::USB::driver_config_definition::USB.Device::HAL:Driver:USB.Device
     functionality: USB
     api: HAL:Driver:USB_Device
     configuration:
@@ -1025,7 +1011,7 @@ drivers:
       usb_ep7_I_CACHE: No cache
       usbd_arch_max_ep_n: 2 (EP 0x82 or 0x02)
       usbd_arch_speed: Full speed
-      usbd_num_ep_sp: Max possible (by "Max Endpoint Number" config)
+      usbd_num_ep_sp: 4 (EP0 + 3 endpoints)
     optional_signals: []
     variant:
       specification: default
@@ -1044,35 +1030,34 @@ drivers:
         configuration:
           usb_gclk_selection: Generic clock generator 1
 pads:
+  USBUP_D_N:
+    name: PA24
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA24
+    mode: Advanced
+    user_label: USBUP_D_N
+    configuration: null
+  USBUP_D_P:
+    name: PA25
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA25
+    mode: Advanced
+    user_label: USBUP_D_P
+    configuration: null
   LED_system:
-    name: PC18
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::pad::PC18
+    name: PC26
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC26
     mode: Digital output
     user_label: LED_system
-    configuration:
-      pad_initial_level: High
-  PA24:
-    name: PA24
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::pad::PA24
-    mode: Advanced
-    user_label: PA24
-    configuration: {}
-  PA25:
-    name: PA25
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::pad::PA25
-    mode: Advanced
-    user_label: PA25
-    configuration: {}
-  PB24:
-    name: PB24
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::pad::PB24
-    mode: Peripheral IO
-    user_label: PB24
     configuration: null
-  PB25:
-    name: PB25
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54P20A-AU::pad::PB25
+  UART_TX:
+    name: PB30
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB30
     mode: Peripheral IO
-    user_label: PB25
+    user_label: UART_TX
+    configuration: null
+  UART_RX:
+    name: PB31
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB31
+    mode: Peripheral IO
+    user_label: UART_RX
     configuration: null
 toolchain_options: []
