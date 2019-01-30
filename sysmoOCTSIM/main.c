@@ -19,19 +19,19 @@
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
 
-volatile static uint32_t data_arrived = 0;
+volatile static bool data_arrived = false;
 
 static void tx_cb_UART_debug(const struct usart_async_descriptor *const io_descr)
 {
 	/* Transfer completed */
-	gpio_toggle_pin_level(LED_system);
+	//gpio_toggle_pin_level(LED_system);
 }
 
 static void rx_cb_UART_debug(const struct usart_async_descriptor *const io_descr)
 {
 	/* Receive completed */
 	gpio_toggle_pin_level(LED_system);
-	data_arrived = 1;
+	data_arrived = true;
 }
 
 int main(void)
@@ -42,5 +42,15 @@ int main(void)
 	usart_async_register_callback(&UART_debug, USART_ASYNC_RXC_CB, rx_cb_UART_debug);
 	usart_async_enable(&UART_debug);
 
-	cdcd_acm_example();
+	usb_start();
+
+	while (true) { // main loop
+		if (data_arrived) { // input on UART debug
+			data_arrived = false; // clear flag
+			uint8_t recv_char; // to store the input
+			while (io_read(&UART_debug.io, &recv_char, 1) == 1) { // read input
+				while (io_write(&UART_debug.io, &recv_char, 1) != 1); // echo back to output
+			}
+		}
+	}
 }

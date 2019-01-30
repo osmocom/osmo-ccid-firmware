@@ -93,25 +93,15 @@ void cdc_device_acm_init(void)
 }
 
 /**
- * Example of using CDC ACM Function.
- * \note
- * In this example, we will use a PC as a USB host:
- * - Connect the DEBUG USB on XPLAINED board to PC for program download.
- * - Connect the TARGET USB on XPLAINED board to PC for running program.
- * The application will behave as a virtual COM.
- * - Open a HyperTerminal or other COM tools in PC side.
- * - Send out a character or string and it will echo the content received.
+ * \brief Start USB stack
  */
-void cdcd_acm_example(void)
+void usb_start(void)
 {
 	while (!cdcdf_acm_is_enabled()) {
 		// wait cdc acm to be installed
 	};
 
 	cdcdf_acm_register_callback(CDCDF_ACM_CB_STATE_C, (FUNC_PTR)usb_device_cb_state_c);
-
-	while (1) {
-	}
 }
 
 void usb_init(void)
