@@ -12,11 +12,305 @@
 #include <hal_init.h>
 
 /*! The buffer size for USART */
+#define SIM0_BUFFER_SIZE 16
+
+/*! The buffer size for USART */
+#define SIM1_BUFFER_SIZE 16
+
+/*! The buffer size for USART */
+#define SIM2_BUFFER_SIZE 16
+
+/*! The buffer size for USART */
+#define SIM3_BUFFER_SIZE 16
+
+/*! The buffer size for USART */
+#define SIM4_BUFFER_SIZE 16
+
+/*! The buffer size for USART */
+#define SIM5_BUFFER_SIZE 16
+
+/*! The buffer size for USART */
+#define SIM6_BUFFER_SIZE 16
+
+/*! The buffer size for USART */
 #define UART_DEBUG_BUFFER_SIZE 16
 
+struct usart_async_descriptor SIM0;
+struct usart_async_descriptor SIM1;
+struct usart_async_descriptor SIM2;
+struct usart_async_descriptor SIM3;
+struct usart_async_descriptor SIM4;
+struct usart_async_descriptor SIM5;
+struct usart_async_descriptor SIM6;
 struct usart_async_descriptor UART_debug;
 
+static uint8_t SIM0_buffer[SIM0_BUFFER_SIZE];
+static uint8_t SIM1_buffer[SIM1_BUFFER_SIZE];
+static uint8_t SIM2_buffer[SIM2_BUFFER_SIZE];
+static uint8_t SIM3_buffer[SIM3_BUFFER_SIZE];
+static uint8_t SIM4_buffer[SIM4_BUFFER_SIZE];
+static uint8_t SIM5_buffer[SIM5_BUFFER_SIZE];
+static uint8_t SIM6_buffer[SIM6_BUFFER_SIZE];
 static uint8_t UART_debug_buffer[UART_DEBUG_BUFFER_SIZE];
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM0_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM0_GCLK_ID_CORE, CONF_GCLK_SERCOM0_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM0_GCLK_ID_SLOW, CONF_GCLK_SERCOM0_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBAMASK_SERCOM0_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM0_PORT_init()
+{
+
+	gpio_set_pin_function(SIM0_IO, PINMUX_PA04D_SERCOM0_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM0_init(void)
+{
+	SIM0_CLOCK_init();
+	usart_async_init(&SIM0, SERCOM0, SIM0_buffer, SIM0_BUFFER_SIZE, (void *)NULL);
+	SIM0_PORT_init();
+}
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM1_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM1_GCLK_ID_CORE, CONF_GCLK_SERCOM1_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM1_GCLK_ID_SLOW, CONF_GCLK_SERCOM1_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBAMASK_SERCOM1_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM1_PORT_init()
+{
+
+	gpio_set_pin_function(SIM1_IO, PINMUX_PA16C_SERCOM1_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM1_init(void)
+{
+	SIM1_CLOCK_init();
+	usart_async_init(&SIM1, SERCOM1, SIM1_buffer, SIM1_BUFFER_SIZE, (void *)NULL);
+	SIM1_PORT_init();
+}
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM2_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_CORE, CONF_GCLK_SERCOM2_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM2_GCLK_ID_SLOW, CONF_GCLK_SERCOM2_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBBMASK_SERCOM2_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM2_PORT_init()
+{
+
+	gpio_set_pin_function(SIM2_IO, PINMUX_PA09D_SERCOM2_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM2_init(void)
+{
+	SIM2_CLOCK_init();
+	usart_async_init(&SIM2, SERCOM2, SIM2_buffer, SIM2_BUFFER_SIZE, (void *)NULL);
+	SIM2_PORT_init();
+}
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM3_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM3_GCLK_ID_CORE, CONF_GCLK_SERCOM3_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM3_GCLK_ID_SLOW, CONF_GCLK_SERCOM3_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBBMASK_SERCOM3_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM3_PORT_init()
+{
+
+	gpio_set_pin_function(SIM3_IO, PINMUX_PB20C_SERCOM3_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM3_init(void)
+{
+	SIM3_CLOCK_init();
+	usart_async_init(&SIM3, SERCOM3, SIM3_buffer, SIM3_BUFFER_SIZE, (void *)NULL);
+	SIM3_PORT_init();
+}
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM4_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM4_GCLK_ID_CORE, CONF_GCLK_SERCOM4_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM4_GCLK_ID_SLOW, CONF_GCLK_SERCOM4_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBDMASK_SERCOM4_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM4_PORT_init()
+{
+
+	gpio_set_pin_function(SIM4_IO, PINMUX_PB08D_SERCOM4_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM4_init(void)
+{
+	SIM4_CLOCK_init();
+	usart_async_init(&SIM4, SERCOM4, SIM4_buffer, SIM4_BUFFER_SIZE, (void *)NULL);
+	SIM4_PORT_init();
+}
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM5_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM5_GCLK_ID_CORE, CONF_GCLK_SERCOM5_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM5_GCLK_ID_SLOW, CONF_GCLK_SERCOM5_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBDMASK_SERCOM5_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM5_PORT_init()
+{
+
+	gpio_set_pin_function(SIM5_IO, PINMUX_PB16C_SERCOM5_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM5_init(void)
+{
+	SIM5_CLOCK_init();
+	usart_async_init(&SIM5, SERCOM5, SIM5_buffer, SIM5_BUFFER_SIZE, (void *)NULL);
+	SIM5_PORT_init();
+}
+
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM6_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM6_GCLK_ID_CORE, CONF_GCLK_SERCOM6_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM6_GCLK_ID_SLOW, CONF_GCLK_SERCOM6_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBDMASK_SERCOM6_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM6_PORT_init()
+{
+
+	gpio_set_pin_function(SIM6_IO, PINMUX_PC16C_SERCOM6_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM6_init(void)
+{
+	SIM6_CLOCK_init();
+	usart_async_init(&SIM6, SERCOM6, SIM6_buffer, SIM6_BUFFER_SIZE, (void *)NULL);
+	SIM6_PORT_init();
+}
 
 /**
  * \brief USART Clock initialization function
@@ -312,6 +606,13 @@ void system_init(void)
 
 	gpio_set_pin_function(USER_LED, GPIO_PIN_FUNCTION_OFF);
 
+	SIM0_init();
+	SIM1_init();
+	SIM2_init();
+	SIM3_init();
+	SIM4_init();
+	SIM5_init();
+	SIM6_init();
 	UART_debug_init();
 
 	USB_DEVICE_INSTANCE_init();

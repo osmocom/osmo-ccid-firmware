@@ -22,10 +22,52 @@ extern "C" {
 #include <hal_sleep.h>
 
 #include <hal_usart_async.h>
+#include <hal_usart_async.h>
+#include <hal_usart_async.h>
+#include <hal_usart_async.h>
+#include <hal_usart_async.h>
+#include <hal_usart_async.h>
+#include <hal_usart_async.h>
+#include <hal_usart_async.h>
 
 #include "hal_usb_device.h"
 
+extern struct usart_async_descriptor SIM0;
+extern struct usart_async_descriptor SIM1;
+extern struct usart_async_descriptor SIM2;
+extern struct usart_async_descriptor SIM3;
+extern struct usart_async_descriptor SIM4;
+extern struct usart_async_descriptor SIM5;
+extern struct usart_async_descriptor SIM6;
 extern struct usart_async_descriptor UART_debug;
+
+void SIM0_PORT_init(void);
+void SIM0_CLOCK_init(void);
+void SIM0_init(void);
+
+void SIM1_PORT_init(void);
+void SIM1_CLOCK_init(void);
+void SIM1_init(void);
+
+void SIM2_PORT_init(void);
+void SIM2_CLOCK_init(void);
+void SIM2_init(void);
+
+void SIM3_PORT_init(void);
+void SIM3_CLOCK_init(void);
+void SIM3_init(void);
+
+void SIM4_PORT_init(void);
+void SIM4_CLOCK_init(void);
+void SIM4_init(void);
+
+void SIM5_PORT_init(void);
+void SIM5_CLOCK_init(void);
+void SIM5_init(void);
+
+void SIM6_PORT_init(void);
+void SIM6_CLOCK_init(void);
+void SIM6_init(void);
 
 void UART_debug_PORT_init(void);
 void UART_debug_CLOCK_init(void);

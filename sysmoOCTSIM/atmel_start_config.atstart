@@ -943,6 +943,307 @@ drivers:
     variant: null
     clocks:
       domain_group: null
+  SIM0:
+    user_label: SIM0
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM0::driver_config_definition::USART.with.ISO7816::HAL:Driver:USART.Async
+    functionality: USART
+    api: HAL:Driver:USART_Async
+    configuration:
+      usart_advanced: false
+      usart_arch_clock_mode: USART with internal clock
+      usart_arch_cloden: false
+      usart_arch_dbgstop: Keep running
+      usart_arch_dord: LSB is transmitted first
+      usart_arch_ibon: false
+      usart_arch_runstdby: false
+      usart_arch_sfde: false
+      usart_baud_rate: 9600
+      usart_character_size: 8 bits
+      usart_dsnack: The successive receive NACK is disable.
+      usart_gtime: 2-bit times
+      usart_inack: NACK is transmitted when a parity error is received.
+      usart_inverse_enabled: false
+      usart_iso7816_type: T=0
+      usart_maxiter: 7
+      usart_parity: Even parity
+      usart_rx_enable: true
+      usart_stop_bit: One stop bit
+      usart_tx_enable: true
+    optional_signals: []
+    variant:
+      specification: TXPO=2, RXPO=0
+      required_signals:
+      - name: SERCOM0/PAD/0
+        pad: PA04
+        label: RX/TX
+    clocks:
+      domain_group:
+        nodes:
+        - name: Core
+          input: Generic clock generator 2
+        - name: Slow
+          input: Generic clock generator 3
+        configuration:
+          core_gclk_selection: Generic clock generator 2
+          slow_gclk_selection: Generic clock generator 3
+  SIM1:
+    user_label: SIM1
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM1::driver_config_definition::USART.with.ISO7816::HAL:Driver:USART.Async
+    functionality: USART
+    api: HAL:Driver:USART_Async
+    configuration:
+      usart_advanced: false
+      usart_arch_clock_mode: USART with internal clock
+      usart_arch_cloden: false
+      usart_arch_dbgstop: Keep running
+      usart_arch_dord: LSB is transmitted first
+      usart_arch_ibon: false
+      usart_arch_runstdby: false
+      usart_arch_sfde: false
+      usart_baud_rate: 9600
+      usart_character_size: 8 bits
+      usart_dsnack: The successive receive NACK is disable.
+      usart_gtime: 2-bit times
+      usart_inack: NACK is transmitted when a parity error is received.
+      usart_inverse_enabled: false
+      usart_iso7816_type: T=0
+      usart_maxiter: 7
+      usart_parity: Even parity
+      usart_rx_enable: true
+      usart_stop_bit: One stop bit
+      usart_tx_enable: true
+    optional_signals: []
+    variant:
+      specification: TXPO=2, RXPO=0
+      required_signals:
+      - name: SERCOM1/PAD/0
+        pad: PA16
+        label: RX/TX
+    clocks:
+      domain_group:
+        nodes:
+        - name: Core
+          input: Generic clock generator 2
+        - name: Slow
+          input: Generic clock generator 3
+        configuration:
+          core_gclk_selection: Generic clock generator 2
+          slow_gclk_selection: Generic clock generator 3
+  SIM2:
+    user_label: SIM2
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM2::driver_config_definition::USART.with.ISO7816::HAL:Driver:USART.Async
+    functionality: USART
+    api: HAL:Driver:USART_Async
+    configuration:
+      usart_advanced: false
+      usart_arch_clock_mode: USART with internal clock
+      usart_arch_cloden: false
+      usart_arch_dbgstop: Keep running
+      usart_arch_dord: LSB is transmitted first
+      usart_arch_ibon: false
+      usart_arch_runstdby: false
+      usart_arch_sfde: false
+      usart_baud_rate: 9600
+      usart_character_size: 8 bits
+      usart_dsnack: The successive receive NACK is disable.
+      usart_gtime: 2-bit times
+      usart_inack: NACK is transmitted when a parity error is received.
+      usart_inverse_enabled: false
+      usart_iso7816_type: T=0
+      usart_maxiter: 7
+      usart_parity: Even parity
+      usart_rx_enable: true
+      usart_stop_bit: One stop bit
+      usart_tx_enable: true
+    optional_signals: []
+    variant:
+      specification: TXPO=2, RXPO=0
+      required_signals:
+      - name: SERCOM2/PAD/0
+        pad: PA09
+        label: RX/TX
+    clocks:
+      domain_group:
+        nodes:
+        - name: Core
+          input: Generic clock generator 2
+        - name: Slow
+          input: Generic clock generator 3
+        configuration:
+          core_gclk_selection: Generic clock generator 2
+          slow_gclk_selection: Generic clock generator 3
+  SIM3:
+    user_label: SIM3
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM3::driver_config_definition::USART.with.ISO7816::HAL:Driver:USART.Async
+    functionality: USART
+    api: HAL:Driver:USART_Async
+    configuration:
+      usart_advanced: false
+      usart_arch_clock_mode: USART with internal clock
+      usart_arch_cloden: false
+      usart_arch_dbgstop: Keep running
+      usart_arch_dord: LSB is transmitted first
+      usart_arch_ibon: false
+      usart_arch_runstdby: false
+      usart_arch_sfde: false
+      usart_baud_rate: 9600
+      usart_character_size: 8 bits
+      usart_dsnack: The successive receive NACK is disable.
+      usart_gtime: 2-bit times
+      usart_inack: NACK is transmitted when a parity error is received.
+      usart_inverse_enabled: false
+      usart_iso7816_type: T=0
+      usart_maxiter: 7
+      usart_parity: Even parity
+      usart_rx_enable: true
+      usart_stop_bit: One stop bit
+      usart_tx_enable: true
+    optional_signals: []
+    variant:
+      specification: TXPO=2, RXPO=0
+      required_signals:
+      - name: SERCOM3/PAD/0
+        pad: PB20
+        label: RX/TX
+    clocks:
+      domain_group:
+        nodes:
+        - name: Core
+          input: Generic clock generator 2
+        - name: Slow
+          input: Generic clock generator 3
+        configuration:
+          core_gclk_selection: Generic clock generator 2
+          slow_gclk_selection: Generic clock generator 3
+  SIM4:
+    user_label: SIM4
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM4::driver_config_definition::USART.with.ISO7816::HAL:Driver:USART.Async
+    functionality: USART
+    api: HAL:Driver:USART_Async
+    configuration:
+      usart_advanced: false
+      usart_arch_clock_mode: USART with internal clock
+      usart_arch_cloden: false
+      usart_arch_dbgstop: Keep running
+      usart_arch_dord: LSB is transmitted first
+      usart_arch_ibon: false
+      usart_arch_runstdby: false
+      usart_arch_sfde: false
+      usart_baud_rate: 9600
+      usart_character_size: 8 bits
+      usart_dsnack: The successive receive NACK is disable.
+      usart_gtime: 2-bit times
+      usart_inack: NACK is transmitted when a parity error is received.
+      usart_inverse_enabled: false
+      usart_iso7816_type: T=0
+      usart_maxiter: 7
+      usart_parity: Even parity
+      usart_rx_enable: true
+      usart_stop_bit: One stop bit
+      usart_tx_enable: true
+    optional_signals: []
+    variant:
+      specification: TXPO=2, RXPO=0
+      required_signals:
+      - name: SERCOM4/PAD/0
+        pad: PB08
+        label: RX/TX
+    clocks:
+      domain_group:
+        nodes:
+        - name: Core
+          input: Generic clock generator 2
+        - name: Slow
+          input: Generic clock generator 3
+        configuration:
+          core_gclk_selection: Generic clock generator 2
+          slow_gclk_selection: Generic clock generator 3
+  SIM5:
+    user_label: SIM5
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM5::driver_config_definition::USART.with.ISO7816::HAL:Driver:USART.Async
+    functionality: USART
+    api: HAL:Driver:USART_Async
+    configuration:
+      usart_advanced: false
+      usart_arch_clock_mode: USART with internal clock
+      usart_arch_cloden: false
+      usart_arch_dbgstop: Keep running
+      usart_arch_dord: LSB is transmitted first
+      usart_arch_ibon: false
+      usart_arch_runstdby: false
+      usart_arch_sfde: false
+      usart_baud_rate: 9600
+      usart_character_size: 8 bits
+      usart_dsnack: The successive receive NACK is disable.
+      usart_gtime: 2-bit times
+      usart_inack: NACK is transmitted when a parity error is received.
+      usart_inverse_enabled: false
+      usart_iso7816_type: T=0
+      usart_maxiter: 7
+      usart_parity: Even parity
+      usart_rx_enable: true
+      usart_stop_bit: One stop bit
+      usart_tx_enable: true
+    optional_signals: []
+    variant:
+      specification: TXPO=2, RXPO=0
+      required_signals:
+      - name: SERCOM5/PAD/0
+        pad: PB16
+        label: RX/TX
+    clocks:
+      domain_group:
+        nodes:
+        - name: Core
+          input: Generic clock generator 2
+        - name: Slow
+          input: Generic clock generator 3
+        configuration:
+          core_gclk_selection: Generic clock generator 2
+          slow_gclk_selection: Generic clock generator 3
+  SIM6:
+    user_label: SIM6
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM6::driver_config_definition::USART.with.ISO7816::HAL:Driver:USART.Async
+    functionality: USART
+    api: HAL:Driver:USART_Async
+    configuration:
+      usart_advanced: false
+      usart_arch_clock_mode: USART with internal clock
+      usart_arch_cloden: false
+      usart_arch_dbgstop: Keep running
+      usart_arch_dord: LSB is transmitted first
+      usart_arch_ibon: false
+      usart_arch_runstdby: false
+      usart_arch_sfde: false
+      usart_baud_rate: 9600
+      usart_character_size: 8 bits
+      usart_dsnack: The successive receive NACK is disable.
+      usart_gtime: 2-bit times
+      usart_inack: NACK is transmitted when a parity error is received.
+      usart_inverse_enabled: false
+      usart_iso7816_type: T=0
+      usart_maxiter: 7
+      usart_parity: Even parity
+      usart_rx_enable: true
+      usart_stop_bit: One stop bit
+      usart_tx_enable: true
+    optional_signals: []
+    variant:
+      specification: TXPO=2, RXPO=0
+      required_signals:
+      - name: SERCOM6/PAD/0
+        pad: PC16
+        label: RX/TX
+    clocks:
+      domain_group:
+        nodes:
+        - name: Core
+          input: Generic clock generator 2
+        - name: Slow
+          input: Generic clock generator 3
+        configuration:
+          core_gclk_selection: Generic clock generator 2
+          slow_gclk_selection: Generic clock generator 3
   UART_debug:
     user_label: UART_debug
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM7::driver_config_definition::UART::HAL:Driver:USART.Async
@@ -1030,6 +1331,24 @@ drivers:
         configuration:
           usb_gclk_selection: Generic clock generator 1
 pads:
+  SIM4_IO:
+    name: PB08
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB08
+    mode: Peripheral IO
+    user_label: SIM4_IO
+    configuration: null
+  SIM0_IO:
+    name: PA04
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA04
+    mode: Peripheral IO
+    user_label: SIM0_IO
+    configuration: null
+  SIM2_IO:
+    name: PA09
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA09
+    mode: Peripheral IO
+    user_label: SIM2_IO
+    configuration: null
   SIMCLK_20MHZ:
     name: PA11
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA11
@@ -1045,6 +1364,30 @@ pads:
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC14
     mode: Digital input
     user_label: SWITCH
+    configuration: null
+  SIM1_IO:
+    name: PA16
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA16
+    mode: Peripheral IO
+    user_label: SIM1_IO
+    configuration: null
+  SIM6_IO:
+    name: PC16
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC16
+    mode: Peripheral IO
+    user_label: SIM6_IO
+    configuration: null
+  SIM5_IO:
+    name: PB16
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB16
+    mode: Peripheral IO
+    user_label: SIM5_IO
+    configuration: null
+  SIM3_IO:
+    name: PB20
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB20
+    mode: Peripheral IO
+    user_label: SIM3_IO
     configuration: null
   VB0:
     name: PA20

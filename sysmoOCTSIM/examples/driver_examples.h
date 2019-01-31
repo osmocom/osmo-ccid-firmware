@@ -12,6 +12,20 @@
 extern "C" {
 #endif
 
+void SIM0_example(void);
+
+void SIM1_example(void);
+
+void SIM2_example(void);
+
+void SIM3_example(void);
+
+void SIM4_example(void);
+
+void SIM5_example(void);
+
+void SIM6_example(void);
+
 void UART_debug_example(void);
 
 #ifdef __cplusplus
