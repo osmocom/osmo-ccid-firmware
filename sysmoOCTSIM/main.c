@@ -44,6 +44,8 @@ int main(void)
 
 	usb_start();
 
+	const char* welcome = "\r\n\r\nsysmocom sysmoOCTSIM\r\n";
+	while (io_write(&UART_debug.io, (const uint8_t*)welcome, strlen(welcome)) != strlen(welcome)); // print welcome message
 	while (true) { // main loop
 		if (data_arrived) { // input on UART debug
 			data_arrived = false; // clear flag
