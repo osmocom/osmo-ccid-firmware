@@ -1135,6 +1135,7 @@ static void _usb_d_dev_out_next(struct _usb_d_dev_ep *ept, bool isr)
 		/* Short packet. */
 		ept->flags.bits.need_zlp = 0;
 		ept->trans_count += last_trans;
+		_usbd_ep_set_out_trans(epn, 0, ept->size, 0);
 	} else {
 		/* Full packets. */
 		ept->trans_count += trans_size;
@@ -1154,9 +1155,6 @@ static void _usb_d_dev_out_next(struct _usb_d_dev_ep *ept, bool isr)
 				if (trans_next > ept->size) {
 					if (trans_next > USB_D_DEV_TRANS_MAX) {
 						trans_next = USB_D_DEV_TRANS_MAX;
-					} else {
-						/* Must expect multiple of ep size. */
-						trans_next -= trans_next & size_mask;
 					}
 				} else if (trans_next < ept->size) {
 					/* Last un-aligned packet should be cached. */
