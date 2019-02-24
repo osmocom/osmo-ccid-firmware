@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <utils_assert.h>
 #include <utils.h>
+#include "atmel_start_pins.h"
 #include "octsim_i2c.h"
 #include "ncn8025.h"
 
@@ -86,6 +87,20 @@ static const uint8_t slot2dir_reg(unsigned int slot)
 		return 0x03;
 }
 
+static const uint8_t slot2int_pin(unsigned int slot)
+{
+	static const uint8_t slot2pin[8] = { SIM0_INT, SIM1_INT, SIM2_INT, SIM3_INT,
+					     SIM4_INT, SIM5_INT, SIM6_INT, SIM7_INT };
+	ASSERT(slot < ARRAY_SIZE(slot2pin));
+	return slot2pin[slot];
+}
+
+bool ncn8025_interrupt_active(uint8_t slot)
+{
+	uint8_t pin = slot2int_pin(slot);
+	return !gpio_get_pin_level(pin);
+}
+
 
 /*! Set a given NCN8025 as described in 'set'.
  *  \param[in] slot Slot number (0..7)
@@ -111,7 +126,9 @@ int ncn8025_get(uint8_t slot, struct ncn8025_settings *set)
 	rc = i2c_read_reg(adap, SX1503_ADDR, reg);
 	if (rc < 0)
 		return rc;
-	return ncn8025_decode(rc, set);
+	rc = ncn8025_decode(rc, set);
+	set->interrupt = ncn8025_interrupt_active(slot);
+	return rc;
 }
 
 /*! default settings we use at start-up: powered off, in reset, slowest clock, 3V */
@@ -156,6 +173,8 @@ void ncn8025_dump(const struct ncn8025_settings *set)
 		printf(", RST");
 	if (set->cmdvcc)
 		printf(", VCC");
+	if (set->interrupt)
+		printf(", INT");
 	if (set->simpres)
 		printf(", SIMPRES");
 	if (set->led)
