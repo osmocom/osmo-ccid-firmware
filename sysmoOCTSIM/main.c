@@ -18,6 +18,7 @@
 
 #include <parts.h>
 #include <hal_cache.h>
+#include <hri_port_e54.h>
 
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
@@ -54,6 +55,10 @@ static void board_init()
 
 	cache_init();
 	cache_enable(CMCC);
+
+	/* increase drive strength of 20Mhz SIM clock output to 8mA
+	 * (there are 8 inputs + traces to drive!) */
+	hri_port_set_PINCFG_DRVSTR_bit(PORT, 0, 11);
 }
 
 int main(void)
