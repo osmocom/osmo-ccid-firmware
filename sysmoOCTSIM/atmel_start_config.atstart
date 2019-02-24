@@ -2,12 +2,12 @@ format_version: '2'
 name: sysmoOCTSIM
 versions:
   api: '1.0'
-  backend: 1.4.93
-  commit: 9c29f8365cf76e9937d19b1e765a83bc7a80e4e9
-  content: 1.0.1340
+  backend: 1.5.122
+  commit: 820baecf7dd115d94b0d42ee3b0b9d6ba2da7113
+  content: 1.0.1405
   content_pack_name: acme-packs-all
   format: '2'
-  frontend: 1.4.1810
+  frontend: 1.5.1826
 board:
   identifier: CustomBoard
   device: SAME54N19A-AF
@@ -773,6 +773,8 @@ drivers:
         nodes:
         - name: CPU
           input: CPU
+          external: false
+          external_frequency: 0
         configuration: {}
   OSC32KCTRL:
     user_label: OSC32KCTRL
@@ -981,8 +983,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1024,8 +1030,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1067,8 +1077,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1110,8 +1124,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1153,8 +1171,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1196,8 +1218,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1239,8 +1265,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1284,8 +1314,12 @@ drivers:
         nodes:
         - name: Core
           input: Generic clock generator 2
+          external: false
+          external_frequency: 0
         - name: Slow
           input: Generic clock generator 3
+          external: false
+          external_frequency: 0
         configuration:
           core_gclk_selection: Generic clock generator 2
           slow_gclk_selection: Generic clock generator 3
@@ -1328,6 +1362,8 @@ drivers:
         nodes:
         - name: USB
           input: Generic clock generator 1
+          external: false
+          external_frequency: 0
         configuration:
           usb_gclk_selection: Generic clock generator 1
 pads:

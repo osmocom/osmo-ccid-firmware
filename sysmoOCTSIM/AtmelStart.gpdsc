@@ -67,11 +67,6 @@
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_sleep.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_async.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_m_async.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_m_dma.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_m_sync.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_s_async.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_s_sync.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_sync.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_usart.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_usb.h"/>
@@ -169,6 +164,11 @@
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hal_usart_async.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_missing_features.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_reset.h"/>
+        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_m_async.h"/>
+        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_m_dma.h"/>
+        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_m_sync.h"/>
+        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_s_async.h"/>
+        <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_spi_s_sync.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_usart_async.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hal/include/hpl_usart_sync.h"/>
         <file category="source" condition="ARMCC, GCC, IAR" name="hal/src/hal_usart_async.c"/>
