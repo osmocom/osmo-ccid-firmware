@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <parts.h>
 #include <hal_cache.h>
 #include <hri_port_e54.h>
@@ -55,6 +57,163 @@ DEFUN(hello_fn, cmd_hello,
 	printf("Hello World!\r\n");
 }
 
+static int validate_slotnr(int argc, char **argv, int idx)
+{
+	int slotnr;
+	if (argc < idx+1) {
+		printf("You have to specify the slot number (0..7)\r\n");
+		return -1;
+	}
+	slotnr = atoi(argv[idx]);
+	if (slotnr < 0 || slotnr > 7) {
+		printf("You have to specify the slot number (0..7)\r\n");
+		return -1;
+	}
+	return slotnr;
+}
+
+DEFUN(sim_status, cmd_sim_status, "sim-status", "Get state of specified NCN8025")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
+	if (slotnr < 0)
+		return;
+	ncn8025_get(slotnr, &settings);
+	printf("SIM%d: ", slotnr);
+	ncn8025_dump(&settings);
+	printf("\r\n");
+}
+
+DEFUN(sim_power, cmd_sim_power, "sim-power", "Enable/disable SIM card power")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
+	int enable;
+
+	if (slotnr < 0)
+		return;
+
+	if (argc < 3) {
+		printf("You have to specify 0=disable or 1=enable\r\n");
+		return;
+	}
+	enable = atoi(argv[2]);
+	ncn8025_get(slotnr, &settings);
+	if (enable)
+		settings.cmdvcc = true;
+	else
+		settings.cmdvcc = false;
+	ncn8025_set(slotnr, &settings);
+}
+
+DEFUN(sim_reset, cmd_sim_reset, "sim-reset", "Enable/disable SIM reset")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
+	int enable;
+
+	if (slotnr < 0)
+		return;
+
+	if (argc < 3) {
+		printf("You have to specify 0=disable or 1=enable\r\n");
+		return;
+	}
+	enable = atoi(argv[2]);
+	ncn8025_get(slotnr, &settings);
+	if (enable)
+		settings.rstin = true;
+	else
+		settings.rstin = false;
+	ncn8025_set(slotnr, &settings);
+}
+
+DEFUN(sim_clkdiv, cmd_sim_clkdiv, "sim-clkdiv", "Set SIM clock divider (1,2,4,8)")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
+	int clkdiv;
+
+	if (slotnr < 0)
+		return;
+
+	if (argc < 3) {
+		printf("You have to specify a valid divider (1,2,4,8)\r\n");
+		return;
+	}
+	clkdiv = atoi(argv[2]);
+	if (clkdiv != 1 && clkdiv != 2 && clkdiv != 4 && clkdiv != 8) {
+		printf("You have to specify a valid divider (1,2,4,8)\r\n");
+		return;
+	}
+	ncn8025_get(slotnr, &settings);
+	switch (clkdiv) {
+	case 1:
+		settings.clkdiv = SIM_CLKDIV_1;
+		break;
+	case 2:
+		settings.clkdiv = SIM_CLKDIV_2;
+		break;
+	case 4:
+		settings.clkdiv = SIM_CLKDIV_4;
+		break;
+	case 8:
+		settings.clkdiv = SIM_CLKDIV_8;
+		break;
+	}
+	ncn8025_set(slotnr, &settings);
+}
+
+DEFUN(sim_voltage, cmd_sim_voltage, "sim-voltage", "Set SIM voltage (5/3/1.8)")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
+
+	if (slotnr < 0)
+		return;
+
+	if (argc < 3) {
+		printf("You have to specify a valid voltage (5/3/1.8)\r\n");
+		return;
+	}
+	ncn8025_get(slotnr, &settings);
+	if (!strcmp(argv[2], "5"))
+		settings.vsel = SIM_VOLT_5V0;
+	else if (!strcmp(argv[2], "3"))
+		settings.vsel = SIM_VOLT_3V0;
+	else if (!strcmp(argv[2], "1.8"))
+		settings.vsel = SIM_VOLT_1V8;
+	else {
+		printf("You have to specify a valid voltage (5/3/1.8)\r\n");
+		return;
+	}
+	ncn8025_set(slotnr, &settings);
+}
+
+DEFUN(sim_led, cmd_sim_led, "sim-led", "Set SIM LED (1=on, 0=off)")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
+
+	if (slotnr < 0)
+		return;
+
+	if (argc < 3) {
+		printf("You have to specify 0=disable or 1=enable\r\n");
+		return;
+	}
+	ncn8025_get(slotnr, &settings);
+	if (atoi(argv[2]))
+		settings.led = true;
+	else
+		settings.led = false;
+	ncn8025_set(slotnr, &settings);
+}
+
+
+
+
+
 int main(void)
 {
 	atmel_start_init();
@@ -66,6 +225,12 @@ int main(void)
 	board_init();
 	command_init("sysmoOCTSIM> ");
 	command_register(&cmd_hello);
+	command_register(&cmd_sim_status);
+	command_register(&cmd_sim_power);
+	command_register(&cmd_sim_reset);
+	command_register(&cmd_sim_clkdiv);
+	command_register(&cmd_sim_voltage);
+	command_register(&cmd_sim_led);
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
 	while (true) { // main loop

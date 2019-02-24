@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 #include <utils_assert.h>
 #include <utils.h>
 #include "octsim_i2c.h"
@@ -133,4 +134,30 @@ int ncn8025_init(unsigned int slot)
 	if (rc < 0)
 		return rc;
 	return ncn8025_set(slot, &def_settings);
+}
+
+static const char *volt_str[] = {
+	[SIM_VOLT_3V0] = "3.0",
+	[SIM_VOLT_5V0] = "5.0",
+	[SIM_VOLT_1V8] = "1.8",
+};
+
+static const unsigned int div_val[] = {
+	[SIM_CLKDIV_1] = 1,
+	[SIM_CLKDIV_2] = 2,
+	[SIM_CLKDIV_4] = 4,
+	[SIM_CLKDIV_8] = 8,
+};
+
+void ncn8025_dump(const struct ncn8025_settings *set)
+{
+	printf("VOLT=%s, CLKDIV=%u", volt_str[set->vsel], div_val[set->clkdiv]);
+	if (set->rstin)
+		printf(", RST");
+	if (set->cmdvcc)
+		printf(", VCC");
+	if (set->simpres)
+		printf(", SIMPRES");
+	if (set->led)
+		printf(", LED");
 }
