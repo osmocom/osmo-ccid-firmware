@@ -80,6 +80,7 @@ main.o \
 i2c_bitbang.o \
 octsim_i2c.o \
 ncn8025.o \
+command.o \
 hpl/osc32kctrl/hpl_osc32kctrl.o \
 examples/driver_examples.o \
 driver_init.o \
@@ -126,6 +127,7 @@ OBJS_AS_ARGS +=  \
 "i2c_bitbang.o" \
 "octsim_i2c.o" \
 "ncn8025.o" \
+"command.o" \
 "hpl/osc32kctrl/hpl_osc32kctrl.o" \
 "examples/driver_examples.o" \
 "driver_init.o" \
@@ -178,6 +180,7 @@ DEPS_AS_ARGS +=  \
 "i2c_bitbang.d" \
 "octsim_i2c.d" \
 "ncn8025.d" \
+"command.d" \
 "examples/driver_examples.d" \
 "hal/src/hal_cache.d" \
 "hal/src/hal_sleep.d" \

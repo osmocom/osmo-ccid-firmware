@@ -27,6 +27,8 @@
 #include "octsim_i2c.h"
 #include "ncn8025.h"
 
+#include "command.h"
+
 
 static void board_init()
 {
@@ -47,6 +49,12 @@ static void board_init()
 	hri_port_set_PINCFG_DRVSTR_bit(PORT, 0, 11);
 }
 
+DEFUN(hello_fn, cmd_hello,
+	"hello", "Hello World example command")
+{
+	printf("Hello World!\r\n");
+}
+
 int main(void)
 {
 	atmel_start_init();
@@ -56,13 +64,11 @@ int main(void)
 	usb_start();
 
 	board_init();
+	command_init("sysmoOCTSIM> ");
+	command_register(&cmd_hello);
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
 	while (true) { // main loop
-		if (usart_sync_is_rx_not_empty(&UART_debug)) {
-			gpio_toggle_pin_level(USER_LED);
-			int c = getchar();
-			putchar(c);
-		}
+		command_try_recv();
 	}
 }
