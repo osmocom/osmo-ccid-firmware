@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <parts.h>
+#include <hal_cache.h>
+
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
 
@@ -48,6 +51,9 @@ static void board_init()
 	/* only 7 slots, as last slot is debug uart! */
 	for (i = 0; i < 7; i++)
 		ncn8025_init(i);
+
+	cache_init();
+	cache_enable(CMCC);
 }
 
 int main(void)
