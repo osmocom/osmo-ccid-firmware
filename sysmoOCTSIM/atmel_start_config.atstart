@@ -82,6 +82,14 @@ middlewares:
     dependencies:
       USB Device Stack Core Instance: USB_DEVICE_STACK_CORE_INSTANCE
       USB Class CDC: USB_CLASS_CDC
+  STDIO_REDIRECT_0:
+    user_label: STDIO_REDIRECT_0
+    configuration: {}
+    definition: Atmel:STDIO_redirect:0.0.1::STDIO_Redirect
+    functionality: STDIO_Redirect
+    api: STDIO:Redirect:IO
+    dependencies:
+      Target IO: UART_debug
 drivers:
   CMCC:
     user_label: CMCC
@@ -1276,9 +1284,9 @@ drivers:
           slow_gclk_selection: Generic clock generator 3
   UART_debug:
     user_label: UART_debug
-    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM7::driver_config_definition::UART::HAL:Driver:USART.Async
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::SERCOM7::driver_config_definition::UART::HAL:Driver:USART.Sync
     functionality: USART
-    api: HAL:Driver:USART_Async
+    api: HAL:Driver:USART_Sync
     configuration:
       usart_advanced: false
       usart_arch_clock_mode: USART with internal clock

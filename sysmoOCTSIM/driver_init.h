@@ -28,7 +28,8 @@ extern "C" {
 #include <hal_usart_async.h>
 #include <hal_usart_async.h>
 #include <hal_usart_async.h>
-#include <hal_usart_async.h>
+
+#include <hal_usart_sync.h>
 
 #include "hal_usb_device.h"
 
@@ -39,7 +40,8 @@ extern struct usart_async_descriptor SIM3;
 extern struct usart_async_descriptor SIM4;
 extern struct usart_async_descriptor SIM5;
 extern struct usart_async_descriptor SIM6;
-extern struct usart_async_descriptor UART_debug;
+
+extern struct usart_sync_descriptor UART_debug;
 
 void SIM0_PORT_init(void);
 void SIM0_CLOCK_init(void);
