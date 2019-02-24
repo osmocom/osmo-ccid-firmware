@@ -1367,6 +1367,66 @@ drivers:
         configuration:
           usb_gclk_selection: Generic clock generator 1
 pads:
+  SIM0_INT:
+    name: PC00
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC00
+    mode: Digital input
+    user_label: SIM0_INT
+    configuration: null
+  SIM1_INT:
+    name: PC01
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC01
+    mode: Digital input
+    user_label: SIM1_INT
+    configuration: null
+  SIM2_INT:
+    name: PC02
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC02
+    mode: Digital input
+    user_label: SIM2_INT
+    configuration: null
+  SIM3_INT:
+    name: PC03
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC03
+    mode: Digital input
+    user_label: SIM3_INT
+    configuration: null
+  SIM4_INT:
+    name: PA02
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA02
+    mode: Digital input
+    user_label: SIM4_INT
+    configuration: null
+  SIM5_INT:
+    name: PA03
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA03
+    mode: Digital input
+    user_label: SIM5_INT
+    configuration: null
+  SIM6_INT:
+    name: PB04
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB04
+    mode: Digital input
+    user_label: SIM6_INT
+    configuration: null
+  SIM7_INT:
+    name: PB05
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB05
+    mode: Digital input
+    user_label: SIM7_INT
+    configuration: null
+  SCL3:
+    name: PB06
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB06
+    mode: Digital output
+    user_label: SCL3
+    configuration: null
+  SDA3:
+    name: PB07
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB07
+    mode: Digital output
+    user_label: SDA3
+    configuration: null
   SIM4_IO:
     name: PB08
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB08
@@ -1395,11 +1455,29 @@ pads:
       pad_function: M
       pad_initial_level: Low
       pad_pull_config: 'Off'
+  SCL1:
+    name: PB14
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB14
+    mode: Digital output
+    user_label: SCL1
+    configuration: null
+  SDA1:
+    name: PB15
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB15
+    mode: Digital output
+    user_label: SDA1
+    configuration: null
   SWITCH:
     name: PC14
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC14
     mode: Digital input
     user_label: SWITCH
+    configuration: null
+  MUX_SSTAT:
+    name: PC15
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC15
+    mode: Digital input
+    user_label: MUX_SSTAT
     configuration: null
   SIM1_IO:
     name: PA16
@@ -1467,6 +1545,18 @@ pads:
     mode: Digital output
     user_label: USER_LED
     configuration: null
+  SCL4:
+    name: PC27
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC27
+    mode: Digital output
+    user_label: SCL4
+    configuration: null
+  SDA4:
+    name: PC28
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC28
+    mode: Digital output
+    user_label: SDA4
+    configuration: null
   UART_TX:
     name: PB30
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB30
@@ -1478,5 +1568,17 @@ pads:
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB31
     mode: Peripheral IO
     user_label: UART_RX
+    configuration: null
+  SCL2:
+    name: PB02
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB02
+    mode: Digital output
+    user_label: SCL2
+    configuration: null
+  SDA2:
+    name: PB03
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PB03
+    mode: Digital output
+    user_label: SDA2
     configuration: null
 toolchain_options: []

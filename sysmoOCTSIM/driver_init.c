@@ -470,6 +470,36 @@ void system_init(void)
 {
 	init_mcu();
 
+	// GPIO on PA02
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM4_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM4_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM4_INT, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PA03
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM5_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM5_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM5_INT, GPIO_PIN_FUNCTION_OFF);
+
 	// GPIO on PA11
 
 	gpio_set_pin_direction(SIMCLK_20MHZ,
@@ -577,6 +607,180 @@ void system_init(void)
 
 	gpio_set_pin_function(VB3, GPIO_PIN_FUNCTION_OFF);
 
+	// GPIO on PB02
+
+	gpio_set_pin_level(SCL2,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SCL2, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SCL2, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PB03
+
+	gpio_set_pin_level(SDA2,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SDA2, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SDA2, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PB04
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM6_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM6_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM6_INT, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PB05
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM7_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM7_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM7_INT, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PB06
+
+	gpio_set_pin_level(SCL3,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SCL3, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SCL3, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PB07
+
+	gpio_set_pin_level(SDA3,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SDA3, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SDA3, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PB14
+
+	gpio_set_pin_level(SCL1,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SCL1, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SCL1, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PB15
+
+	gpio_set_pin_level(SDA1,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SDA1, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SDA1, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PC00
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM0_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM0_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM0_INT, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PC01
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM1_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM1_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM1_INT, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PC02
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM2_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM2_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM2_INT, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PC03
+
+	// Set pin direction to input
+	gpio_set_pin_direction(SIM3_INT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(SIM3_INT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(SIM3_INT, GPIO_PIN_FUNCTION_OFF);
+
 	// GPIO on PC14
 
 	// Set pin direction to input
@@ -592,6 +796,21 @@ void system_init(void)
 
 	gpio_set_pin_function(SWITCH, GPIO_PIN_FUNCTION_OFF);
 
+	// GPIO on PC15
+
+	// Set pin direction to input
+	gpio_set_pin_direction(MUX_SSTAT, GPIO_DIRECTION_IN);
+
+	gpio_set_pin_pull_mode(MUX_SSTAT,
+	                       // <y> Pull configuration
+	                       // <id> pad_pull_config
+	                       // <GPIO_PULL_OFF"> Off
+	                       // <GPIO_PULL_UP"> Pull-up
+	                       // <GPIO_PULL_DOWN"> Pull-down
+	                       GPIO_PULL_OFF);
+
+	gpio_set_pin_function(MUX_SSTAT, GPIO_PIN_FUNCTION_OFF);
+
 	// GPIO on PC26
 
 	gpio_set_pin_level(USER_LED,
@@ -605,6 +824,34 @@ void system_init(void)
 	gpio_set_pin_direction(USER_LED, GPIO_DIRECTION_OUT);
 
 	gpio_set_pin_function(USER_LED, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PC27
+
+	gpio_set_pin_level(SCL4,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SCL4, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SCL4, GPIO_PIN_FUNCTION_OFF);
+
+	// GPIO on PC28
+
+	gpio_set_pin_level(SDA4,
+	                   // <y> Initial level
+	                   // <id> pad_initial_level
+	                   // <false"> Low
+	                   // <true"> High
+	                   false);
+
+	// Set pin direction to output
+	gpio_set_pin_direction(SDA4, GPIO_DIRECTION_OUT);
+
+	gpio_set_pin_function(SDA4, GPIO_PIN_FUNCTION_OFF);
 
 	SIM0_init();
 	SIM1_init();
