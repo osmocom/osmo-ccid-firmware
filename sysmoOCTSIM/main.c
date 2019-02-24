@@ -19,6 +19,10 @@
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
 
+#include "i2c_bitbang.h"
+#include "octsim_i2c.h"
+#include "ncn8025.h"
+
 volatile static bool data_arrived = false;
 
 static void tx_cb_UART_debug(const struct usart_async_descriptor *const io_descr)
@@ -34,6 +38,18 @@ static void rx_cb_UART_debug(const struct usart_async_descriptor *const io_descr
 	data_arrived = true;
 }
 
+static void board_init()
+{
+	int i;
+
+	for (i = 0; i < 4; i++)
+		i2c_init(&i2c[i]);
+
+	/* only 7 slots, as last slot is debug uart! */
+	for (i = 0; i < 7; i++)
+		ncn8025_init(i);
+}
+
 int main(void)
 {
 	atmel_start_init();
@@ -43,6 +59,8 @@ int main(void)
 	usart_async_enable(&UART_debug);
 
 	usb_start();
+
+	board_init();
 
 	const char* welcome = "\r\n\r\nsysmocom sysmoOCTSIM\r\n";
 	while (io_write(&UART_debug.io, (const uint8_t*)welcome, strlen(welcome)) != strlen(welcome)); // print welcome message

@@ -70,6 +70,9 @@ hal/src/hal_init.o \
 gcc/gcc/startup_same54.o \
 hal/src/hal_usb_device.o \
 main.o \
+i2c_bitbang.o \
+octsim_i2c.o \
+ncn8025.o \
 hpl/osc32kctrl/hpl_osc32kctrl.o \
 examples/driver_examples.o \
 driver_init.o \
@@ -108,6 +111,9 @@ OBJS_AS_ARGS +=  \
 "gcc/gcc/startup_same54.o" \
 "hal/src/hal_usb_device.o" \
 "main.o" \
+"i2c_bitbang.o" \
+"octsim_i2c.o" \
+"ncn8025.o" \
 "hpl/osc32kctrl/hpl_osc32kctrl.o" \
 "examples/driver_examples.o" \
 "driver_init.o" \
@@ -152,6 +158,9 @@ DEPS_AS_ARGS +=  \
 "hal/src/hal_usart_async.d" \
 "hpl/osc32kctrl/hpl_osc32kctrl.d" \
 "main.d" \
+"i2c_bitbang.d" \
+"octsim_i2c.d" \
+"ncn8025.d" \
 "examples/driver_examples.d" \
 "hal/src/hal_cache.d" \
 "hal/src/hal_sleep.d" \
