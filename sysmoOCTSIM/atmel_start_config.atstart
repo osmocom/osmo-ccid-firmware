@@ -1481,11 +1481,11 @@ pads:
     mode: Digital input
     user_label: SWITCH
     configuration: null
-  MUX_SSTAT:
+  MUX_STAT:
     name: PC15
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PC15
     mode: Digital input
-    user_label: MUX_SSTAT
+    user_label: MUX_STAT
     configuration: null
   SIM1_IO:
     name: PA16
