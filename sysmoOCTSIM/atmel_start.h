@@ -5,9 +5,14 @@
 extern "C" {
 #endif
 
+#include <dma_memory.h>
+
 #include "driver_init.h"
 #include "usb_start.h"
 #include "stdio_start.h"
+
+/** flag set when the memory to memory DMA is complete */
+volatile bool dma_m2m_complete_flag;
 
 /**
  * Initializes MCU, drivers and middleware in the project

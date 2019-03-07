@@ -164,6 +164,9 @@
         <file category="header" condition="ARMCC, GCC, IAR" name="usb/usb_includes.h"/>
         <file category="source" condition="ARMCC, GCC, IAR" name="usb/usb_protocol.c"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="usb/usb_protocol.h"/>
+        <file category="source" condition="ARMCC, GCC, IAR" name="dma_m2m/dma_memory.c"/>
+        <file category="header" condition="ARMCC, GCC, IAR" name="dma_m2m/dma_memory.h"/>
+        <file category="doc" condition="ARMCC, GCC, IAR" name="documentation/dma_m2m.rst"/>
         <file category="doc" condition="ARMCC, GCC, IAR" name="documentation/stdio.rst"/>
         <file category="source" condition="GCC" name="stdio_redirect/gcc/read.c"/>
         <file category="source" condition="GCC" name="stdio_redirect/gcc/write.c"/>
@@ -210,6 +213,8 @@
         <file category="source" condition="ARMCC, GCC, IAR" name="hpl/usb/hpl_usb.c"/>
         <file category="source" condition="ARMCC, GCC, IAR" name="usb_start.c"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="usb_start.h"/>
+        <file category="source" condition="ARMCC, GCC, IAR" name="dma_m2m_main.c"/>
+        <file category="header" condition="ARMCC, GCC, IAR" name="dma_m2m_main.h"/>
         <file category="source" condition="ARMCC, GCC, IAR" name="stdio_start.c"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="stdio_start.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="atmel_start.h"/>
@@ -225,6 +230,7 @@
         <file attr="config" category="header" condition="ARMCC, GCC, IAR" name="config/hpl_usb_config.h"/>
         <file attr="config" category="header" condition="ARMCC, GCC, IAR" name="config/peripheral_clk_config.h"/>
         <file attr="config" category="header" condition="ARMCC, GCC, IAR" name="config/usbd_config.h"/>
+        <file attr="config" category="header" condition="ARMCC, GCC, IAR" name="dma_m2m/dma_memory_config.h"/>
         <file attr="config" category="header" condition="ARMCC, GCC, IAR" name="config/stdio_redirect_config.h"/>
         <file category="include" condition="ARMCC, GCC, IAR" name=""/>
         <file category="include" condition="ARMCC, GCC, IAR" name="config"/>
@@ -250,6 +256,8 @@
         <file category="include" condition="ARMCC, GCC, IAR" name="usb/class/cdc"/>
         <file category="include" condition="ARMCC, GCC, IAR" name="usb/class/cdc/device"/>
         <file category="include" condition="ARMCC, GCC, IAR" name="usb/device"/>
+        <file category="include" condition="ARMCC, GCC, IAR" name=""/>
+        <file category="include" condition="ARMCC, GCC, IAR" name="dma_m2m"/>
         <file category="include" condition="ARMCC, GCC, IAR" name=""/>
         <file category="include" condition="ARMCC, GCC, IAR" name="config"/>
         <file category="include" condition="ARMCC, GCC, IAR" name="stdio_redirect"/>

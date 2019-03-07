@@ -8,7 +8,7 @@
 // <i> Indicates whether dmac is enabled or not
 // <id> dmac_enable
 #ifndef CONF_DMAC_ENABLE
-#define CONF_DMAC_ENABLE 0
+#define CONF_DMAC_ENABLE 1
 #endif
 
 // <q> Priority Level 0
@@ -105,7 +105,7 @@
 // <e> Channel 0 settings
 // <id> dmac_channel_0_settings
 #ifndef CONF_DMAC_CHANNEL_0_SETTINGS
-#define CONF_DMAC_CHANNEL_0_SETTINGS 0
+#define CONF_DMAC_CHANNEL_0_SETTINGS 1
 #endif
 
 // <q> Channel Run in Standby
@@ -284,14 +284,14 @@
 // <i> Indicates whether the source address incrementation is enabled or not
 // <id> dmac_srcinc_0
 #ifndef CONF_DMAC_SRCINC_0
-#define CONF_DMAC_SRCINC_0 0
+#define CONF_DMAC_SRCINC_0 1
 #endif
 
 // <q> Destination Address Increment
 // <i> Indicates whether the destination address incrementation is enabled or not
 // <id> dmac_dstinc_0
 #ifndef CONF_DMAC_DSTINC_0
-#define CONF_DMAC_DSTINC_0 0
+#define CONF_DMAC_DSTINC_0 1
 #endif
 
 // <o> Beat Size

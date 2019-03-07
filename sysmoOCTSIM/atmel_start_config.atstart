@@ -82,6 +82,15 @@ middlewares:
     dependencies:
       USB Device Stack Core Instance: USB_DEVICE_STACK_CORE_INSTANCE
       USB Class CDC: USB_CLASS_CDC
+  M2M_DMA_0:
+    user_label: M2M_DMA_0
+    configuration:
+      conf_channel: 0
+    definition: Atmel:MEMORY_DMA:0.0.1::M2M_DMA
+    functionality: M2M_DMA
+    api: DMA:M2M:Core
+    dependencies:
+      DMAC: DMAC
   STDIO_REDIRECT_0:
     user_label: STDIO_REDIRECT_0
     configuration: {}
@@ -209,7 +218,7 @@ drivers:
         the transaction
       dmac_blockact_9: Channel will be disabled if it is the last block transfer in
         the transaction
-      dmac_channel_0_settings: false
+      dmac_channel_0_settings: true
       dmac_channel_10_settings: false
       dmac_channel_11_settings: false
       dmac_channel_12_settings: false
@@ -242,7 +251,7 @@ drivers:
       dmac_channel_8_settings: false
       dmac_channel_9_settings: false
       dmac_dbgrun: false
-      dmac_dstinc_0: false
+      dmac_dstinc_0: true
       dmac_dstinc_1: false
       dmac_dstinc_10: false
       dmac_dstinc_11: false
@@ -274,7 +283,7 @@ drivers:
       dmac_dstinc_7: false
       dmac_dstinc_8: false
       dmac_dstinc_9: false
-      dmac_enable: false
+      dmac_enable: true
       dmac_evact_0: No action
       dmac_evact_1: No action
       dmac_evact_10: No action
@@ -479,7 +488,7 @@ drivers:
       dmac_runstdby_7: false
       dmac_runstdby_8: false
       dmac_runstdby_9: false
-      dmac_srcinc_0: false
+      dmac_srcinc_0: true
       dmac_srcinc_1: false
       dmac_srcinc_10: false
       dmac_srcinc_11: false
