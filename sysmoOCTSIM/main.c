@@ -308,8 +308,6 @@ int main(void)
 {
 	atmel_start_init();
 
-	usart_sync_enable(&UART_debug);
-
 	usb_start();
 
 	board_init();

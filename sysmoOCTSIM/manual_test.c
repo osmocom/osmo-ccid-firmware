@@ -203,7 +203,7 @@ static int wait_for_key_and_process(void)
 	int c;
 
 	do {
-	} while (!usart_sync_is_rx_not_empty(&UART_debug));
+	} while (!usart_async_is_rx_not_empty(&UART_debug));
 
 	c = getchar();
 	if (c < 0)

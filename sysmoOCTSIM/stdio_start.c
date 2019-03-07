@@ -9,15 +9,13 @@
 #include "atmel_start.h"
 #include "stdio_start.h"
 
-void STDIO_REDIRECT_0_example(void)
+static void UART_debug_rx_cb(const struct usart_async_descriptor *const io_descr)
 {
-	/* Print welcome message */
-	printf("\r\nHello ATMEL World!\r\n");
 }
 
 void stdio_redirect_init(void)
 {
-
-	usart_sync_enable(&UART_debug);
+	usart_async_register_callback(&UART_debug, USART_ASYNC_RXC_CB, UART_debug_rx_cb); // if no callback function is registered receive won't work, even if the callback does nothing
+	usart_async_enable(&UART_debug);
 	stdio_io_init(&UART_debug.io);
 }

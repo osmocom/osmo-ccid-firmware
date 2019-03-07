@@ -32,6 +32,9 @@
 /*! The buffer size for USART */
 #define SIM6_BUFFER_SIZE 16
 
+/*! The buffer size for USART */
+#define UART_DEBUG_BUFFER_SIZE 32
+
 struct usart_async_descriptor SIM0;
 struct usart_async_descriptor SIM1;
 struct usart_async_descriptor SIM2;
@@ -48,7 +51,9 @@ static uint8_t SIM4_buffer[SIM4_BUFFER_SIZE];
 static uint8_t SIM5_buffer[SIM5_BUFFER_SIZE];
 static uint8_t SIM6_buffer[SIM6_BUFFER_SIZE];
 
-struct usart_sync_descriptor UART_debug;
+struct usart_async_descriptor UART_debug;
+
+static uint8_t UART_DEBUG_buffer[UART_DEBUG_BUFFER_SIZE];
 
 /**
  * \brief USART Clock initialization function
@@ -309,7 +314,26 @@ void SIM6_init(void)
 	SIM6_PORT_init();
 }
 
-void UART_debug_PORT_init(void)
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void UART_debug_CLOCK_init()
+{
+
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_CORE, CONF_GCLK_SERCOM7_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_SLOW, CONF_GCLK_SERCOM7_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBDMASK_SERCOM7_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void UART_debug_PORT_init()
 {
 
 	gpio_set_pin_function(UART_TX, PINMUX_PB30C_SERCOM7_PAD0);
@@ -317,18 +341,15 @@ void UART_debug_PORT_init(void)
 	gpio_set_pin_function(UART_RX, PINMUX_PB31C_SERCOM7_PAD1);
 }
 
-void UART_debug_CLOCK_init(void)
-{
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_CORE, CONF_GCLK_SERCOM7_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_SLOW, CONF_GCLK_SERCOM7_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-
-	hri_mclk_set_APBDMASK_SERCOM7_bit(MCLK);
-}
-
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
 void UART_debug_init(void)
 {
 	UART_debug_CLOCK_init();
-	usart_sync_init(&UART_debug, SERCOM7, (void *)NULL);
+	usart_async_init(&UART_debug, SERCOM7, UART_DEBUG_buffer, UART_DEBUG_BUFFER_SIZE, (void *)NULL);
 	UART_debug_PORT_init();
 }
 
