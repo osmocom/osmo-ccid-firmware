@@ -81,7 +81,7 @@ void command_try_recv(void)
 	unsigned int i = 0;
 
 	/* yield CPU after maximum of 10 received characters */
-	while (usart_async_is_rx_not_empty(&UART_debug) && (i < 10)) {
+	while (usart_async_rings_is_rx_not_empty(&UART_debug) && (i < 10)) {
 		int c = getchar();
 		if (c < 0)
 			return;

@@ -33,7 +33,7 @@
 #define SIM6_BUFFER_SIZE 16
 
 /*! The buffer size for USART */
-#define UART_DEBUG_BUFFER_SIZE 32
+#define UART_DEBUG_BUFFER_SIZE 256
 
 struct usart_async_descriptor SIM0;
 struct usart_async_descriptor SIM1;
@@ -51,9 +51,10 @@ static uint8_t SIM4_buffer[SIM4_BUFFER_SIZE];
 static uint8_t SIM5_buffer[SIM5_BUFFER_SIZE];
 static uint8_t SIM6_buffer[SIM6_BUFFER_SIZE];
 
-struct usart_async_descriptor UART_debug;
+struct usart_async_rings_descriptor UART_debug;
 
-static uint8_t UART_DEBUG_buffer[UART_DEBUG_BUFFER_SIZE];
+static uint8_t UART_DEBUG_buffer_rx[UART_DEBUG_BUFFER_SIZE];
+static uint8_t UART_DEBUG_buffer_tx[UART_DEBUG_BUFFER_SIZE];
 
 /**
  * \brief USART Clock initialization function
@@ -349,7 +350,7 @@ void UART_debug_PORT_init()
 void UART_debug_init(void)
 {
 	UART_debug_CLOCK_init();
-	usart_async_init(&UART_debug, SERCOM7, UART_DEBUG_buffer, UART_DEBUG_BUFFER_SIZE, (void *)NULL);
+	usart_async_rings_init(&UART_debug, SERCOM7, UART_DEBUG_buffer_rx, UART_DEBUG_BUFFER_SIZE, UART_DEBUG_buffer_tx, UART_DEBUG_BUFFER_SIZE, (void *)NULL);
 	UART_debug_PORT_init();
 }
 

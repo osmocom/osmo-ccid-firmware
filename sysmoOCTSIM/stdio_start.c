@@ -9,13 +9,13 @@
 #include "atmel_start.h"
 #include "stdio_start.h"
 
-static void UART_debug_rx_cb(const struct usart_async_descriptor *const io_descr)
+static void UART_debug_rx_cb(const struct usart_async_rings_descriptor *const io_descr)
 {
 }
 
 void stdio_redirect_init(void)
 {
-	usart_async_register_callback(&UART_debug, USART_ASYNC_RXC_CB, UART_debug_rx_cb); // if no callback function is registered receive won't work, even if the callback does nothing
-	usart_async_enable(&UART_debug);
+	usart_async_rings_register_callback(&UART_debug, USART_ASYNC_RXC_CB, UART_debug_rx_cb); // if no callback function is registered receive won't work, even if the callback does nothing
+	usart_async_rings_enable(&UART_debug);
 	stdio_io_init(&UART_debug.io);
 }
