@@ -21,7 +21,7 @@
 static uint8_t ncn8025_encode(const struct ncn8025_settings *set)
 {
 	uint8_t reg = 0;
-	if (set->rstin)
+	if (!set->rstin)
 		reg |= 0x01;
 	if (!set->cmdvcc)
 		reg |= 0x02;
@@ -43,7 +43,7 @@ static int ncn8025_decode(uint8_t reg, struct ncn8025_settings *set)
 {
 	memset(set, 0, sizeof(*set));
 
-	if (reg & 0x01)
+	if (!(reg & 0x01))
 		set->rstin = true;
 	if (!(reg & 0x02))
 		set->cmdvcc = true;
