@@ -50,12 +50,6 @@ static void board_init()
 	hri_port_set_PINCFG_DRVSTR_bit(PORT, 0, 11);
 }
 
-DEFUN(hello_fn, cmd_hello,
-	"hello", "Hello World example command")
-{
-	printf("Hello World!\r\n");
-}
-
 static int validate_slotnr(int argc, char **argv, int idx)
 {
 	int slotnr;
@@ -223,7 +217,6 @@ int main(void)
 
 	board_init();
 	command_init("sysmoOCTSIM> ");
-	command_register(&cmd_hello);
 	command_register(&cmd_sim_status);
 	command_register(&cmd_sim_power);
 	command_register(&cmd_sim_reset);
