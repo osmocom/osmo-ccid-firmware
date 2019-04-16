@@ -232,6 +232,8 @@ int main(void)
 	command_register(&cmd_sim_led);
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
+
+	command_print_prompt();
 	while (true) { // main loop
 		command_try_recv();
 	}

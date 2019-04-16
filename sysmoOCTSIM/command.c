@@ -71,6 +71,11 @@ static void cmd_buf_append(char c)
 	g_cmds.buf[g_cmds.buf_idx++] = c;
 }
 
+void command_print_prompt(void)
+{
+	printf(g_cmds.prompt);
+}
+
 void command_try_recv(void)
 {
 	unsigned int i = 0;

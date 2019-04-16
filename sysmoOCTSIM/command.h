@@ -18,3 +18,4 @@ struct command_fn {
 void command_init(const char *prompt);
 int command_register(const struct command_fn *cmd);
 void command_try_recv(void);
+void command_print_prompt(void);
