@@ -31,6 +31,13 @@
 
 #include "command.h"
 
+// TODO put declaration in more global file
+// TODO for now SIM7 is not present because used for debug
+static struct usart_async_descriptor* SIM_peripheral_descriptors[] = {&SIM0, &SIM1, &SIM2, &SIM3, &SIM4, &SIM5, &SIM6, NULL};
+
+static void SIM_rx_cb(const struct usart_async_descriptor *const io_descr)
+{
+}
 
 static void board_init()
 {
@@ -48,6 +55,15 @@ static void board_init()
 	/* increase drive strength of 20Mhz SIM clock output to 8mA
 	 * (there are 8 inputs + traces to drive!) */
 	hri_port_set_PINCFG_DRVSTR_bit(PORT, 0, 11);
+
+	// enable SIM interfaces
+	for (uint8_t i = 0; i < ARRAY_SIZE(SIM_peripheral_descriptors); i++) {
+		if (NULL == SIM_peripheral_descriptors[i]) {
+			continue;
+		}
+		usart_async_register_callback(SIM_peripheral_descriptors[i], USART_ASYNC_RXC_CB, SIM_rx_cb); // required for RX to work, even if the callback does nothing
+		usart_async_enable(SIM_peripheral_descriptors[i]);
+	}
 }
 
 static int validate_slotnr(int argc, char **argv, int idx)
@@ -203,7 +219,81 @@ DEFUN(sim_led, cmd_sim_led, "sim-led", "Set SIM LED (1=on, 0=off)")
 	ncn8025_set(slotnr, &settings);
 }
 
+DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
 
+	if (slotnr < 0 || slotnr >= ARRAY_SIZE(SIM_peripheral_descriptors) || NULL == SIM_peripheral_descriptors[slotnr]) {
+		return;
+	}
+
+	// check if card is present (and read current settings)
+	ncn8025_get(slotnr, &settings);
+	if (!settings.simpres) {
+		printf("no card present in slot %d, aborting\r\n", slotnr);
+		return;
+	}
+
+	// switch card off (assert reset and disable power)
+	// note: ISO/IEC 7816-3:2006 section 6.4 provides the deactivation sequence, but not the minimum corresponding times
+	settings.rstin = true;
+	settings.cmdvcc = false;
+	ncn8025_set(slotnr, &settings);
+
+	// TODO wait some time for card to be completely deactivated
+	usart_async_flush_rx_buffer(SIM_peripheral_descriptors[slotnr]); // flush RX buffer to start from scratch
+
+	//usart_async_set_baud_rate(SIM_peripheral_descriptors[slotnr], 2500000 / (372 / 1)); // set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
+	// set clock to lowest frequency (20 MHz / 8 = 2.5 MHz)
+	// note: according to ISO/IEC 7816-3:2006 section 5.2.3 the minimum value is 1 MHz, and maximum is 5 MHz during activation
+	settings.clkdiv = SIM_CLKDIV_8;
+	// set card voltage to 3.0 V (the most supported)
+	// note: according to ISO/IEC 7816-3:2006 no voltage should damage the card, and you should cycle from low to high
+	settings.vsel = SIM_VOLT_3V0;
+	// provide power (the NCN8025 should perform the activation according to spec)
+	// note: activation sequence is documented in ISO/IEC 7816-3:2006 section 6.2
+	settings.cmdvcc = true;
+	ncn8025_set(slotnr, &settings);
+
+	// wait for Tb=400 cycles before re-asserting reset
+	delay_us(400 * 10000 / 2500); // 400 cycles * 1000 for us, 2.5 MHz / 1000 for us
+
+	// de-assert reset to switch card back on
+	settings.rstin = false;
+	ncn8025_set(slotnr, &settings);
+
+	// wait for Tc=40000 cycles for transmission to start
+	uint32_t cycles = 40000;
+	while (cycles && !usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
+		delay_us(10);
+		cycles -= 25; // 10 us = 25 cycles at 2.5 MHz
+	}
+	if (!usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
+		delay_us(12 * 372 / 1 / 2); // wait more than one byte (approximate freq down to 2 MHz)
+	}
+	// verify if one byte has been received
+	if (!usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
+		printf("card in slot %d is not responding, aborting\r\n", slotnr);
+		return;
+	}
+
+	// read ATR (just do it until there is no traffic anymore)
+	// TODO the ATR should be parsed to read the right number of bytes
+	printf("ATR: ");
+	uint8_t atr_byte;
+	while (usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
+		if (1 == io_read(&SIM_peripheral_descriptors[slotnr]->io, &atr_byte, 1)) {
+			printf("%02x ", atr_byte);
+		}
+		uint16_t wt = 9600; // waiting time in ETU
+		while (wt && !usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
+			delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
+			wt--;
+		}
+	}
+	printf("\r\n");
+}
 
 extern void testmode_init(void);
 
@@ -223,6 +313,7 @@ int main(void)
 	command_register(&cmd_sim_clkdiv);
 	command_register(&cmd_sim_voltage);
 	command_register(&cmd_sim_led);
+	command_register(&cmd_sim_atr);
 	testmode_init();
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
