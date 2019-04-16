@@ -59,7 +59,7 @@
 // <i> USART baud rate setting
 // <id> usart_baud_rate
 #ifndef CONF_SERCOM_0_USART_BAUD
-#define CONF_SERCOM_0_USART_BAUD 9600
+#define CONF_SERCOM_0_USART_BAUD 6720
 #endif
 // </h>
 
@@ -331,7 +331,7 @@
 // <i> USART baud rate setting
 // <id> usart_baud_rate
 #ifndef CONF_SERCOM_1_USART_BAUD
-#define CONF_SERCOM_1_USART_BAUD 9600
+#define CONF_SERCOM_1_USART_BAUD 6720
 #endif
 // </h>
 
@@ -603,7 +603,7 @@
 // <i> USART baud rate setting
 // <id> usart_baud_rate
 #ifndef CONF_SERCOM_2_USART_BAUD
-#define CONF_SERCOM_2_USART_BAUD 9600
+#define CONF_SERCOM_2_USART_BAUD 6720
 #endif
 // </h>
 
@@ -875,7 +875,7 @@
 // <i> USART baud rate setting
 // <id> usart_baud_rate
 #ifndef CONF_SERCOM_3_USART_BAUD
-#define CONF_SERCOM_3_USART_BAUD 9600
+#define CONF_SERCOM_3_USART_BAUD 6720
 #endif
 // </h>
 
@@ -1147,7 +1147,7 @@
 // <i> USART baud rate setting
 // <id> usart_baud_rate
 #ifndef CONF_SERCOM_4_USART_BAUD
-#define CONF_SERCOM_4_USART_BAUD 9600
+#define CONF_SERCOM_4_USART_BAUD 6720
 #endif
 // </h>
 
@@ -1419,7 +1419,7 @@
 // <i> USART baud rate setting
 // <id> usart_baud_rate
 #ifndef CONF_SERCOM_5_USART_BAUD
-#define CONF_SERCOM_5_USART_BAUD 9600
+#define CONF_SERCOM_5_USART_BAUD 6720
 #endif
 // </h>
 
@@ -1691,7 +1691,7 @@
 // <i> USART baud rate setting
 // <id> usart_baud_rate
 #ifndef CONF_SERCOM_6_USART_BAUD
-#define CONF_SERCOM_6_USART_BAUD 9600
+#define CONF_SERCOM_6_USART_BAUD 6720
 #endif
 // </h>
 
