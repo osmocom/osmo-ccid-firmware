@@ -77,6 +77,7 @@ hal/src/hal_init.o \
 gcc/gcc/startup_same54.o \
 hal/src/hal_usb_device.o \
 main.o \
+manual_test.o \
 i2c_bitbang.o \
 octsim_i2c.o \
 ncn8025.o \
@@ -124,6 +125,7 @@ OBJS_AS_ARGS +=  \
 "gcc/gcc/startup_same54.o" \
 "hal/src/hal_usb_device.o" \
 "main.o" \
+"manual_test.o" \
 "i2c_bitbang.o" \
 "octsim_i2c.o" \
 "ncn8025.o" \
@@ -177,6 +179,7 @@ DEPS_AS_ARGS +=  \
 "hal/src/hal_usart_async.d" \
 "hpl/osc32kctrl/hpl_osc32kctrl.d" \
 "main.d" \
+"manual_test.d" \
 "i2c_bitbang.d" \
 "octsim_i2c.d" \
 "ncn8025.d" \

@@ -211,7 +211,7 @@ DEFUN(sim_led, cmd_sim_led, "sim-led", "Set SIM LED (1=on, 0=off)")
 
 
 
-
+extern void testmode_init(void);
 
 int main(void)
 {
@@ -230,6 +230,7 @@ int main(void)
 	command_register(&cmd_sim_clkdiv);
 	command_register(&cmd_sim_voltage);
 	command_register(&cmd_sim_led);
+	testmode_init();
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
 
