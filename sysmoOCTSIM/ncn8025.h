@@ -15,8 +15,8 @@ enum ncn8025_sim_clkdiv {
 };
 
 struct ncn8025_settings {
-	bool rstin;	/* high: active */
-	bool cmdvcc;	/* high: active */
+	bool rstin;	/* Reset signal (true: asserted low) */
+	bool cmdvcc;	/* Command VCC pin. Activation sequence Enable (true: active low) */
 	bool simpres;	/* high: active */
 	bool led;	/* high: active */
 	bool interrupt;	/* high: active */
