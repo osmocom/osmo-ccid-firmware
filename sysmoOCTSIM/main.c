@@ -39,8 +39,7 @@ static void board_init()
 	for (i = 0; i < 4; i++)
 		i2c_init(&i2c[i]);
 
-	/* only 7 slots, as last slot is debug uart! */
-	for (i = 0; i < 7; i++)
+	for (i = 0; i < 8; i++)
 		ncn8025_init(i);
 
 	cache_init();
