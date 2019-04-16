@@ -664,7 +664,7 @@ drivers:
       enable_gclk_gen_11: true
       enable_gclk_gen_2: true
       enable_gclk_gen_3: true
-      enable_gclk_gen_4: false
+      enable_gclk_gen_4: true
       enable_gclk_gen_5: true
       enable_gclk_gen_6: false
       enable_gclk_gen_7: false
@@ -700,7 +700,7 @@ drivers:
       gclk_arch_gen_3_oe: false
       gclk_arch_gen_3_oov: false
       gclk_arch_gen_3_runstdby: false
-      gclk_arch_gen_4_enable: false
+      gclk_arch_gen_4_enable: true
       gclk_arch_gen_4_idc: false
       gclk_arch_gen_4_oe: false
       gclk_arch_gen_4_oov: false
@@ -742,7 +742,7 @@ drivers:
       gclk_gen_1_div: 1
       gclk_gen_1_div_sel: false
       gclk_gen_1_oscillator: Digital Frequency Locked Loop (DFLL48M)
-      gclk_gen_2_div: 1
+      gclk_gen_2_div: 30
       gclk_gen_2_div_sel: false
       gclk_gen_2_oscillator: Digital Phase Locked Loop (DPLL1)
       gclk_gen_3_div: 1
@@ -750,7 +750,7 @@ drivers:
       gclk_gen_3_oscillator: 32kHz External Crystal Oscillator (XOSC32K)
       gclk_gen_4_div: 1
       gclk_gen_4_div_sel: false
-      gclk_gen_4_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
+      gclk_gen_4_oscillator: Digital Phase Locked Loop (DPLL1)
       gclk_gen_5_div: 5
       gclk_gen_5_div_sel: false
       gclk_gen_5_oscillator: Digital Phase Locked Loop (DPLL1)
@@ -976,7 +976,7 @@ drivers:
       usart_arch_ibon: false
       usart_arch_runstdby: false
       usart_arch_sfde: false
-      usart_baud_rate: 9600
+      usart_baud_rate: 6720
       usart_character_size: 8 bits
       usart_dsnack: The successive receive NACK is disable.
       usart_gtime: 2-bit times
@@ -1023,7 +1023,7 @@ drivers:
       usart_arch_ibon: false
       usart_arch_runstdby: false
       usart_arch_sfde: false
-      usart_baud_rate: 9600
+      usart_baud_rate: 6720
       usart_character_size: 8 bits
       usart_dsnack: The successive receive NACK is disable.
       usart_gtime: 2-bit times
@@ -1070,7 +1070,7 @@ drivers:
       usart_arch_ibon: false
       usart_arch_runstdby: false
       usart_arch_sfde: false
-      usart_baud_rate: 9600
+      usart_baud_rate: 6720
       usart_character_size: 8 bits
       usart_dsnack: The successive receive NACK is disable.
       usart_gtime: 2-bit times
@@ -1117,7 +1117,7 @@ drivers:
       usart_arch_ibon: false
       usart_arch_runstdby: false
       usart_arch_sfde: false
-      usart_baud_rate: 9600
+      usart_baud_rate: 6720
       usart_character_size: 8 bits
       usart_dsnack: The successive receive NACK is disable.
       usart_gtime: 2-bit times
@@ -1164,7 +1164,7 @@ drivers:
       usart_arch_ibon: false
       usart_arch_runstdby: false
       usart_arch_sfde: false
-      usart_baud_rate: 9600
+      usart_baud_rate: 6720
       usart_character_size: 8 bits
       usart_dsnack: The successive receive NACK is disable.
       usart_gtime: 2-bit times
@@ -1211,7 +1211,7 @@ drivers:
       usart_arch_ibon: false
       usart_arch_runstdby: false
       usart_arch_sfde: false
-      usart_baud_rate: 9600
+      usart_baud_rate: 6720
       usart_character_size: 8 bits
       usart_dsnack: The successive receive NACK is disable.
       usart_gtime: 2-bit times
@@ -1258,7 +1258,7 @@ drivers:
       usart_arch_ibon: false
       usart_arch_runstdby: false
       usart_arch_sfde: false
-      usart_baud_rate: 9600
+      usart_baud_rate: 6720
       usart_character_size: 8 bits
       usart_dsnack: The successive receive NACK is disable.
       usart_gtime: 2-bit times
@@ -1330,7 +1330,7 @@ drivers:
       domain_group:
         nodes:
         - name: Core
-          input: Generic clock generator 2
+          input: Generic clock generator 4
           external: false
           external_frequency: 0
         - name: Slow
@@ -1338,7 +1338,7 @@ drivers:
           external: false
           external_frequency: 0
         configuration:
-          core_gclk_selection: Generic clock generator 2
+          core_gclk_selection: Generic clock generator 4
           slow_gclk_selection: Generic clock generator 3
   USB_DEVICE_INSTANCE:
     user_label: USB_DEVICE_INSTANCE
