@@ -82,7 +82,7 @@ struct usart_async_status {
 	uint32_t flags;
 	/** Number of characters transmitted */
 	uint16_t txcnt;
-	/** Number of characters receviced */
+	/** Number of characters received */
 	uint16_t rxcnt;
 };
 
