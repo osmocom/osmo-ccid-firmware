@@ -281,7 +281,7 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 
 	// read ATR (just do it until there is no traffic anymore)
 	// TODO the ATR should be parsed to read the right number of bytes
-	printf("ATR: ");
+	printf("(%d) ATR: ", slotnr);
 	uint8_t atr_byte;
 	while (usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
 		if (1 == io_read(&SIM_peripheral_descriptors[slotnr]->io, &atr_byte, 1)) {
