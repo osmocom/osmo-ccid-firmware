@@ -85,15 +85,19 @@ void command_try_recv(void)
 		int c = getchar();
 		if (c < 0)
 			return;
-		putchar(c);
 		if (c == '\r' || c == '\n' || g_cmds.buf_idx >= sizeof(g_cmds.buf)-1) {
+			/* skip empty commands */
+			if (g_cmds.buf_idx == 0)
+				return;
 			cmd_execute();
 			cmd_buf_reset();
 			printf(g_cmds.prompt);
 			return;
+		} else {
+			/* print + append character */
+			putchar(c);
+			cmd_buf_append(c);
 		}
-		/* append character */
-		cmd_buf_append(c);
 
 		i++;
 	}
