@@ -239,6 +239,7 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 	// note: ISO/IEC 7816-3:2006 section 6.4 provides the deactivation sequence, but not the minimum corresponding times
 	settings.rstin = true;
 	settings.cmdvcc = false;
+	settings.led = true;
 	ncn8025_set(slotnr, &settings);
 
 	// TODO wait some time for card to be completely deactivated
@@ -293,6 +294,12 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 		}
 	}
 	printf("\r\n");
+
+	/* disable VCC and LED, re-enable RST */
+	settings.cmdvcc = false;
+	settings.rstin = true;
+	settings.led = false;
+	ncn8025_set(slotnr, &settings);
 }
 
 extern void testmode_init(void);
