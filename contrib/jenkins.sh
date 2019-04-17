@@ -9,5 +9,5 @@ echo "=============== sysmoOCTSIM firmware build ==========="
 cd $TOPDIR/sysmoOCTSIM
 cd gcc
 make clean
-make
+make $PARALLEL_MAKE
 make clean
