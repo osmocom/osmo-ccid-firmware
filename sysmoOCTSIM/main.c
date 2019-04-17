@@ -708,6 +708,26 @@ DEFUN(sim_iccid, cmd_sim_iccid, "sim-iccid", "Read ICCID from SIM card")
 
 extern void testmode_init(void);
 
+#include "talloc.h"
+void *g_tall_ctx;
+
+DEFUN(_talloc_report, cmd_talloc_report, "talloc-report", "Generate a talloc report")
+{
+	talloc_report_full(g_tall_ctx, stdout);
+}
+
+DEFUN(talloc_test, cmd_talloc_test, "talloc-test", "Test the talloc allocator")
+{
+	for (int i = 0; i < 10; i++)
+		talloc_named_const(g_tall_ctx, 10, "sibling");
+}
+
+DEFUN(v_talloc_free, cmd_talloc_free, "talloc-free", "Release all memory")
+{
+	talloc_free(g_tall_ctx);
+	g_tall_ctx = NULL;
+}
+
 /* Section 9.6 of SAMD5x/E5x Family Data Sheet */
 static int get_chip_unique_serial(uint8_t *out, size_t len)
 {
@@ -759,9 +779,16 @@ int main(void)
 	command_register(&cmd_sim_atr);
 	command_register(&cmd_sim_iccid);
 	testmode_init();
+	command_register(&cmd_talloc_test);
+	command_register(&cmd_talloc_report);
+	command_register(&cmd_talloc_free);
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
 	printf("Chip-Id %s\r\n", sernr_buf);
+
+	talloc_enable_null_tracking();
+	g_tall_ctx = talloc_named_const(NULL, 0, "global");
+	printf("g_tall_ctx=%p\r\n", g_tall_ctx);
 
 	command_print_prompt();
 	while (true) { // main loop
