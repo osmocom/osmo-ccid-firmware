@@ -708,6 +708,7 @@ DEFUN(sim_iccid, cmd_sim_iccid, "sim-iccid", "Read ICCID from SIM card")
 extern void testmode_init(void);
 
 #include "talloc.h"
+#include <osmocom/core/msgb.h>
 void *g_tall_ctx;
 
 DEFUN(_talloc_report, cmd_talloc_report, "talloc-report", "Generate a talloc report")
@@ -719,12 +720,22 @@ DEFUN(talloc_test, cmd_talloc_test, "talloc-test", "Test the talloc allocator")
 {
 	for (int i = 0; i < 10; i++)
 		talloc_named_const(g_tall_ctx, 10, "sibling");
+	msgb_alloc_c(g_tall_ctx, 1024, "foo");
 }
 
 DEFUN(v_talloc_free, cmd_talloc_free, "talloc-free", "Release all memory")
 {
 	talloc_free(g_tall_ctx);
 	g_tall_ctx = NULL;
+}
+
+/* dependency of libosmocore. FIXME: Implement it bsed on jiffies and/or RTC! */
+#include <sys/time.h>
+int _gettimeofday(struct timeval *tv, void *tz)
+{
+	tv->tv_sec = 0;
+	tv->tv_usec = 0;
+	return 0;
 }
 
 int main(void)
