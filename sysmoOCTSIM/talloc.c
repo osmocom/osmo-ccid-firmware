@@ -494,7 +494,7 @@ _PUBLIC_ void talloc_set_abort_fn(void (*abort_fn)(const char *reason))
 
 static void talloc_abort(const char *reason)
 {
-	talloc_log("%s\n", reason);
+	talloc_log("%s\r\n", reason);
 
 	if (!talloc_abort_fn) {
 		TALLOC_ABORT(reason);
@@ -521,7 +521,7 @@ static inline struct talloc_chunk *talloc_chunk_from_ptr(const void *ptr)
 	if (unlikely((tc->flags & (TALLOC_FLAG_FREE | ~TALLOC_FLAG_MASK)) != talloc_magic)) {
 		if ((tc->flags & (TALLOC_FLAG_FREE | ~TALLOC_FLAG_MASK))
 		    == (TALLOC_MAGIC_NON_RANDOM | TALLOC_FLAG_FREE)) {
-			talloc_log("talloc: access after free error - first free may be at %s\n", tc->name);
+			talloc_log("talloc: access after free error - first free may be at %s\r\n", tc->name);
 			talloc_abort_access_after_free();
 			return NULL;
 		}
@@ -1331,11 +1331,11 @@ _PUBLIC_ void *_talloc_steal_loc(const void *new_ctx, const void *ptr, const cha
 	if (unlikely(tc->refs != NULL) && talloc_parent(ptr) != new_ctx) {
 		struct talloc_reference_handle *h;
 
-		talloc_log("WARNING: talloc_steal with references at %s\n",
+		talloc_log("WARNING: talloc_steal with references at %s\r\n",
 			   location);
 
 		for (h=tc->refs; h; h=h->next) {
-			talloc_log("\treference at %s\n",
+			talloc_log("\treference at %s\r\n",
 				   h->location);
 		}
 	}
@@ -1344,7 +1344,7 @@ _PUBLIC_ void *_talloc_steal_loc(const void *new_ctx, const void *ptr, const cha
 	/* this test is probably too expensive to have on in the
 	   normal build, but it useful for debugging */
 	if (talloc_is_parent(new_ctx, ptr)) {
-		talloc_log("WARNING: stealing into talloc child at %s\n", location);
+		talloc_log("WARNING: stealing into talloc child at %s\r\n", location);
 	}
 #endif
 
@@ -1756,11 +1756,11 @@ _PUBLIC_ int _talloc_free(void *ptr, const char *location)
 			return talloc_unlink(null_context, ptr);
 		}
 
-		talloc_log("ERROR: talloc_free with references at %s\n",
+		talloc_log("ERROR: talloc_free with references at %s\r\n",
 			   location);
 
 		for (h=tc->refs; h; h=h->next) {
-			talloc_log("\treference at %s\n",
+			talloc_log("\treference at %s\r\n",
 				   h->location);
 		}
 		return -1;
@@ -2251,14 +2251,14 @@ static void talloc_report_depth_FILE_helper(const void *ptr, int depth, int max_
 	FILE *f = (FILE *)_f;
 
 	if (is_ref) {
-		fprintf(f, "%*sreference to: %s\n", depth*4, "", name);
+		fprintf(f, "%*sreference to: %s\r\n", depth*4, "", name);
 		return;
 	}
 
 	tc = talloc_chunk_from_ptr(ptr);
 	if (tc->limit && tc->limit->parent == tc) {
 		fprintf(f, "%*s%-30s is a memlimit context"
-			" (max_size = %lu bytes, cur_size = %lu bytes)\n",
+			" (max_size = %lu bytes, cur_size = %lu bytes)\r\n",
 			depth*4, "",
 			name,
 			(unsigned long)tc->limit->max_size,
@@ -2266,14 +2266,14 @@ static void talloc_report_depth_FILE_helper(const void *ptr, int depth, int max_
 	}
 
 	if (depth == 0) {
-		fprintf(f,"%stalloc report on '%s' (total %6lu bytes in %3lu blocks)\n",
+		fprintf(f,"%stalloc report on '%s' (total %6lu bytes in %3lu blocks)\r",
 			(max_depth < 0 ? "full " :""), name,
 			(unsigned long)talloc_total_size(ptr),
 			(unsigned long)talloc_total_blocks(ptr));
 		return;
 	}
 
-	fprintf(f, "%*s%-30s contains %6lu bytes in %3lu blocks (ref %d) %p\n",
+	fprintf(f, "%*s%-30s contains %6lu bytes in %3lu blocks (ref %d) %p\r\n",
 		depth*4, "",
 		name,
 		(unsigned long)talloc_total_size(ptr),
@@ -2294,7 +2294,7 @@ static void talloc_report_depth_FILE_helper(const void *ptr, int depth, int max_
 			}
 		}
 	}
-	fprintf(f, "\n");
+	fprintf(f, "\r\n");
 #endif
 }
 
@@ -2837,14 +2837,14 @@ _PUBLIC_ void talloc_show_parents(const void *context, FILE *file)
 	struct talloc_chunk *tc;
 
 	if (context == NULL) {
-		fprintf(file, "talloc no parents for NULL\n");
+		fprintf(file, "talloc no parents for NULL\r\n");
 		return;
 	}
 
 	tc = talloc_chunk_from_ptr(context);
-	fprintf(file, "talloc parents of '%s'\n", __talloc_get_name(context));
+	fprintf(file, "talloc parents of '%s'\r\n", __talloc_get_name(context));
 	while (tc) {
-		fprintf(file, "\t'%s'\n", __talloc_get_name(TC_PTR_FROM_CHUNK(tc)));
+		fprintf(file, "\t'%s'\r\n", __talloc_get_name(TC_PTR_FROM_CHUNK(tc)));
 		while (tc && tc->prev) tc = tc->prev;
 		if (tc) {
 			tc = tc->parent;
@@ -2971,7 +2971,7 @@ static void talloc_memlimit_grow(struct talloc_memlimit *limit,
 	for (l = limit; l != NULL; l = l->upper) {
 		size_t new_cur_size = l->cur_size + size;
 		if (new_cur_size < l->cur_size) {
-			talloc_abort("logic error in talloc_memlimit_grow\n");
+			talloc_abort("logic error in talloc_memlimit_grow\r\n");
 			return;
 		}
 		l->cur_size = new_cur_size;
@@ -2988,7 +2988,7 @@ static void talloc_memlimit_shrink(struct talloc_memlimit *limit,
 
 	for (l = limit; l != NULL; l = l->upper) {
 		if (l->cur_size < size) {
-			talloc_abort("logic error in talloc_memlimit_shrink\n");
+			talloc_abort("logic error in talloc_memlimit_shrink\r\n");
 			return;
 		}
 		l->cur_size = l->cur_size - size;
