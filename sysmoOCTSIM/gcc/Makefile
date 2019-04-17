@@ -2,6 +2,9 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
+EXTRA_LIBS=/usr/local/arm-none-eabi/lib/libosmocore.a
+EXTRA_CFLAGS=-I/usr/local/arm-none-eabi/include
+
 ifdef SystemRoot
 	SHELL = cmd.exe
 	MK_DIR = mkdir
@@ -225,7 +228,7 @@ all: $(SUB_DIRS) $(OUTPUT_FILE_PATH)
 $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo Building target: $@
 	@echo Invoking: ARM/GNU Linker
-	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -o $(OUTPUT_FILE_NAME).elf $(OBJS_AS_ARGS) -Wl,--start-group -lm -Wl,--end-group -mthumb \
+	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -o $(OUTPUT_FILE_NAME).elf $(OBJS_AS_ARGS) $(EXTRA_LIBS) -Wl,--start-group -lm -Wl,--end-group -mthumb \
 -Wl,-Map="$(OUTPUT_FILE_NAME).map" --specs=nano.specs -Wl,--gc-sections -mcpu=cortex-m4 \
  \
 -T"../gcc/gcc/same54n19a_dfu.ld" \
@@ -253,7 +256,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo ARM/GNU C Compiler
 	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
 -D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
--I"../" -I"../config" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/class/ccid" -I"../usb/class/ccid/device" -I"../usb/device" -I"../" -I"../config" -I"../stdio_redirect" -I"../" -I"../dma_m2m" -I"../" -I"../CMSIS/Core/Include" -I"../include"  \
+-I"../" -I"../config" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/class/ccid" -I"../usb/class/ccid/device" -I"../usb/device" -I"../" -I"../config" -I"../stdio_redirect" -I"../" -I"../dma_m2m" -I"../" -I"../CMSIS/Core/Include" -I"../include" $(EXTRA_CFLAGS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
