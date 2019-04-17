@@ -108,6 +108,7 @@ int32_t _dma_init(void)
 		hri_dmac_write_CHPRILVL_reg(DMAC, i, _cfgs[i].prilvl);
 		hri_dmac_write_CHEVCTRL_reg(DMAC, i, _cfgs[i].evctrl);
 		hri_dmacdescriptor_write_BTCTRL_reg(&_descriptor_section[i], _cfgs[i].btctrl);
+		hri_dmacdescriptor_write_DESCADDR_reg(&_descriptor_section[i], 0x0);
 	}
 
 	for (i = 0; i < 5; i++) {
