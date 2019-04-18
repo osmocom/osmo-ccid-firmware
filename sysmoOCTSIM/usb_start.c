@@ -89,4 +89,5 @@ void usb_init(void)
 {
 
 	cdc_device_acm_init();
+	ccid_df_init();
 }
