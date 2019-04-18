@@ -66,6 +66,13 @@ struct ccid_header {
 	uint8_t		bSeq;
 } __attribute__ ((packed));
 
+/* CCID Class-Specific Control Request (Section 5.3 / Table 5.3-1) */
+enum ccid_class_spec_req {
+	CLASS_SPEC_CCID_ABORT		= 0x01,
+	CLASS_SPEC_CCID_GET_CLOCK_FREQ	= 0x02,
+	CLASS_SPEC_CCID_GET_DATA_RATES	= 0x03
+};
+
 /***********************************************************************
  * Bulk OUT
  ***********************************************************************/

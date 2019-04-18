@@ -21,6 +21,8 @@
  */
 
 #include "ccid_df.h"
+#include "ccid_proto.h"
+#include "usb_includes.h"
 
 #ifndef USB_CLASS_CCID
 #define	USB_CLASS_CCID	11
@@ -32,10 +34,16 @@ struct ccid_df_func_data {
 	uint8_t func_ep_out;	/*!< OUT endpoint number */
 	uint8_t func_ep_irq;	/*!< IRQ endpoint number */
 	bool enabled;		/*!< is this driver/function enabled? */
+	const struct usb_ccid_class_descriptor *ccid_cd;
 };
 
 static struct usbdf_driver _ccid_df;
 static struct ccid_df_func_data _ccid_df_funcd;
+
+/* FIXME: make those configurable, ensure they're sized according to
+ * bNumClockSupported / bNumDataRatesSupported */
+static uint32_t ccid_clock_frequencies[] = { LE32(20000) };
+static uint32_t ccid_baud_rates[] = { LE32(9600) };
 
 static int32_t ccid_df_enable(struct usbdf_driver *drv, struct usbd_descriptors *desc)
 {
@@ -71,8 +79,10 @@ static int32_t ccid_df_enable(struct usbdf_driver *drv, struct usbd_descriptors 
 		if (usb_d_ep_init(ep_desc.bEndpointAddress, ep_desc.bmAttributes, ep_desc.wMaxPacketSize))
 			return ERR_NOT_INITIALIZED;
 		if (ep_desc.bEndpointAddress & USB_EP_DIR_IN) {
-			func_data->func_ep_in = ep_desc.bEndpointAddress;
-			/* FIXME: interrupt? */
+			if ((ep_desc.bmAttributes & USB_EP_XTYPE_MASK) == USB_EP_XTYPE_INTERRUPT)
+				func_data->func_ep_irq = ep_desc.bEndpointAddress;
+			else
+				func_data->func_ep_in = ep_desc.bEndpointAddress;
 		} else {
 			func_data->func_ep_out = ep_desc.bEndpointAddress;
 		}
@@ -80,6 +90,10 @@ static int32_t ccid_df_enable(struct usbdf_driver *drv, struct usbd_descriptors 
 		desc->sod = ep;
 		ep = usb_find_ep_desc(usb_desc_next(desc->sod), desc->eod);
 	}
+
+	ASSERT(func_data->func_ep_irq);
+	ASSERT(func_data->func_ep_in);
+	ASSERT(func_data->func_ep_out);
 
 	_ccid_df_funcd.enabled = true;
 	return ERR_NONE;
@@ -129,11 +143,80 @@ static int32_t ccid_df_ctrl(struct usbdf_driver *drv, enum usbdf_control ctrl, v
 	}
 }
 
+/* Section 5.3.1: ABORT */
+static int32_t ccid_df_ctrl_req_ccid_abort(uint8_t ep, struct usb_req *req,
+					   enum usb_ctrl_stage stage)
+{
+	const struct usb_ccid_class_descriptor *ccid_cd = _ccid_df_funcd.ccid_cd;
+	uint8_t slot_nr = req->wValue & 0xff;
+
+	if (slot_nr > ccid_cd->bMaxSlotIndex)
+		return ERR_INVALID_ARG;
+	slot_nr = req->wValue;
+
+	/* FIXME: Implement Abort handling, particularly in combination with
+	 * the PC_to_RDR_Abort on the OUT EP */
+	return ERR_NONE;
+}
+
+/* Section 5.3.2: return array of DWORD containing clock frequencies in kHz */
+static int32_t ccid_df_ctrl_req_ccid_get_clock_freq(uint8_t ep, struct usb_req *req,
+						    enum usb_ctrl_stage stage)
+{
+	const struct usb_ccid_class_descriptor *ccid_cd = _ccid_df_funcd.ccid_cd;
+
+	if (stage != USB_DATA_STAGE)
+		return ERR_NONE;
+
+	if (req->wLength != ccid_cd->bNumClockSupported * sizeof(uint32_t))
+		return ERR_INVALID_DATA;
+
+	return usbdc_xfer(ep, (uint8_t *)ccid_clock_frequencies, req->wLength, false);
+}
+
+/* Section 5.3.3: return array of DWORD containing data rates in bps */
+static int32_t ccid_df_ctrl_req_ccid_get_data_rates(uint8_t ep, struct usb_req *req,
+						    enum usb_ctrl_stage stage)
+{
+	const struct usb_ccid_class_descriptor *ccid_cd = _ccid_df_funcd.ccid_cd;
+
+	if (stage != USB_DATA_STAGE)
+		return ERR_NONE;
+
+	if (req->wLength != ccid_cd->bNumDataRatesSupported * sizeof(uint32_t))
+		return ERR_INVALID_DATA;
+
+	return usbdc_xfer(ep, (uint8_t *)ccid_baud_rates, req->wLength, false);
+}
+
 
 /* process a control endpoint request */
 static int32_t ccid_df_ctrl_req(uint8_t ep, struct usb_req *req, enum usb_ctrl_stage stage)
 {
-	return ERR_NOT_FOUND;
+	/* verify this is a class-specific request */
+	if (0x01 != ((req->bmRequestType >> 5) & 0x03))
+                return ERR_NOT_FOUND;
+
+	/* Verify req->wIndex == interface */
+	if (req->wIndex != _ccid_df_funcd.func_iface)
+                return ERR_NOT_FOUND;
+
+	switch (req->bRequest) {
+	case CLASS_SPEC_CCID_ABORT:
+		if (req->bmRequestType & USB_EP_DIR_IN)
+			return ERR_INVALID_ARG;
+		return ccid_df_ctrl_req_ccid_abort(ep, req, stage);
+	case CLASS_SPEC_CCID_GET_CLOCK_FREQ:
+		if (!(req->bmRequestType & USB_EP_DIR_IN))
+			return ERR_INVALID_ARG;
+		return ccid_df_ctrl_req_ccid_get_clock_freq(ep, req, stage);
+	case CLASS_SPEC_CCID_GET_DATA_RATES:
+		if (!(req->bmRequestType & USB_EP_DIR_IN))
+			return ERR_INVALID_ARG;
+		return ccid_df_ctrl_req_ccid_get_data_rates(ep, req, stage);
+	default:
+		return ERR_NOT_FOUND;
+	}
 }
 
 static struct usbdc_handler ccid_df_req_h = { NULL, (FUNC_PTR) ccid_df_ctrl_req };
@@ -161,6 +244,27 @@ void ccid_df_deinit(void)
 	usb_d_ep_deinit(_ccid_df_funcd.func_ep_irq);
 }
 
+int32_t ccid_df_read_out(uint8_t *buf, uint32_t size)
+{
+	if (!ccid_df_is_enabled())
+		return ERR_DENIED;
+	return usbdc_xfer(_ccid_df_funcd.func_ep_out, buf, size, false);
+}
+
+int32_t ccid_df_write_in(uint8_t *buf, uint32_t size)
+{
+	if (!ccid_df_is_enabled())
+		return ERR_DENIED;
+	return usbdc_xfer(_ccid_df_funcd.func_ep_in, buf, size, true);
+}
+
+int32_t ccid_df_write_irq(uint8_t *buf, uint32_t size)
+{
+	if (!ccid_df_is_enabled())
+		return ERR_DENIED;
+	return usbdc_xfer(_ccid_df_funcd.func_ep_irq, buf, size, true);
+}
+
 int32_t ccid_df_register_callback(enum ccid_df_cb_type cb_type, FUNC_PTR func)
 {
 	switch (cb_type) {
@@ -177,4 +281,9 @@ int32_t ccid_df_register_callback(enum ccid_df_cb_type cb_type, FUNC_PTR func)
 		return ERR_INVALID_ARG;
 	}
 	return ERR_NONE;
+}
+
+bool ccid_df_is_enabled(void)
+{
+	return _ccid_df_funcd.enabled;
 }

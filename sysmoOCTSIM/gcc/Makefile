@@ -3,7 +3,7 @@
 ################################################################################
 
 EXTRA_LIBS=/usr/local/arm-none-eabi/lib/libosmocore.a
-EXTRA_CFLAGS=-I/usr/local/arm-none-eabi/include
+EXTRA_CFLAGS=-I/usr/local/arm-none-eabi/include -I../../ccid
 
 ifdef SystemRoot
 	SHELL = cmd.exe
