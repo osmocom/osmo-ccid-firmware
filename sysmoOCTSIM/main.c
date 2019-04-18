@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <parts.h>
+#include <errno.h>
 #include <hal_cache.h>
 #include <hri_port_e54.h>
 
@@ -738,9 +739,43 @@ int _gettimeofday(struct timeval *tv, void *tz)
 	return 0;
 }
 
+/* Section 9.6 of SAMD5x/E5x Family Data Sheet */
+static int get_chip_unique_serial(uint8_t *out, size_t len)
+{
+	uint32_t *out32 = (uint32_t *)out;
+	if (len < 16)
+		return -EINVAL;
+
+	out32[0] = *(uint32_t *)0x008061fc;
+	out32[1] = *(uint32_t *)0x00806010;
+	out32[2] = *(uint32_t *)0x00806014;
+	out32[3] = *(uint32_t *)0x00806018;
+
+	return 0;
+}
+
+/* same as get_chip_unique_serial but in hex-string format */
+static int get_chip_unique_serial_str(char *out, size_t len)
+{
+	uint8_t buf[16];
+	int rc;
+
+	if (len < 16*2 + 1)
+		return -EINVAL;
+
+	rc = get_chip_unique_serial(buf, sizeof(buf));
+	if (rc < 0)
+		return rc;
+	osmo_hexdump_buf(out, len, buf, sizeof(buf), NULL, false);
+	return 0;
+}
+
 int main(void)
 {
+	char sernr_buf[16*2+1];
+
 	atmel_start_init();
+	get_chip_unique_serial_str(sernr_buf, sizeof(sernr_buf));
 
 	usb_start();
 
@@ -760,6 +795,7 @@ int main(void)
 	command_register(&cmd_talloc_free);
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
+	printf("Chip-Id %s\r\n", sernr_buf);
 
 	talloc_enable_null_tracking();
 	g_tall_ctx = talloc_named_const(NULL, 0, "global");
