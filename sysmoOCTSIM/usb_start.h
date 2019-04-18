@@ -14,6 +14,7 @@ extern "C" {
 
 #include "cdcdf_acm.h"
 #include "cdcdf_acm_desc.h"
+#include "ccid_df.h"
 
 void usb_start(void);
 void cdc_device_acm_init(void);

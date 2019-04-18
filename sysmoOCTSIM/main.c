@@ -102,7 +102,191 @@ static void board_init()
 		usart_async_register_callback(SIM_peripheral_descriptors[i], USART_ASYNC_TXC_CB, SIM_tx_cb); // to count the number of bytes transmitted since we are using it asynchronously
 		usart_async_enable(SIM_peripheral_descriptors[i]);
 	}
+
+	ccid_app_init();
 }
+
+/***********************************************************************
+ * CCID Driver integration
+ ***********************************************************************/
+
+#include <osmocom/core/linuxlist.h>
+#include <osmocom/core/msgb.h>
+#include "linuxlist_atomic.h"
+#include "ccid_df.h"
+
+struct usb_ep_q {
+	const char *name;
+	/* msgb queue of pending to-be-transmitted (IN/IRQ) or completed received (OUT)
+	 * USB transfers */
+	struct llist_head list;
+	/* currently ongoing/processed msgb (USB transmit or receive */
+	struct msgb *in_progress;
+};
+
+struct ccid_state {
+	/* msgb queue of free msgs */
+	struct llist_head free_q;
+
+	/* msgb queue of pending to-be-transmitted (IN EP) */
+	struct usb_ep_q in_ep;
+	/* msgb queue of pending to-be-transmitted (IRQ EP) */
+	struct usb_ep_q irq_ep;
+	/* msgb queue of completed received (OUT EP) */
+	struct usb_ep_q out_ep;
+};
+static struct ccid_state g_ccid_s;
+
+static void ccid_out_read_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred);
+static void ccid_in_write_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred);
+static void ccid_irq_write_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred);
+
+static void usb_ep_q_init(struct usb_ep_q *ep_q, const char *name)
+{
+	ep_q->name = name;
+	INIT_LLIST_HEAD(&ep_q->list);
+	ep_q->in_progress = NULL;
+}
+
+void ccid_app_init(void)
+{
+	/* initialize data structures */
+	INIT_LLIST_HEAD(&g_ccid_s.free_q);
+	usb_ep_q_init(&g_ccid_s.in_ep, "IN");
+	usb_ep_q_init(&g_ccid_s.irq_ep, "IRQ");
+	usb_ep_q_init(&g_ccid_s.out_ep, "OUT");
+
+	/* OUT endpoint read complete callback (irq context) */
+	ccid_df_register_callback(CCID_DF_CB_READ_OUT, &ccid_out_read_compl);
+	/* IN endpoint write complete callback (irq context) */
+	ccid_df_register_callback(CCID_DF_CB_WRITE_IN, &ccid_in_write_compl);
+	/* IRQ endpoint write complete callback (irq context) */
+	ccid_df_register_callback(CCID_DF_CB_WRITE_IRQ, &ccid_irq_write_compl);
+}
+
+/* irqsafe version of msgb_enqueue */
+struct msgb *msgb_dequeue_irqsafe(struct llist_head *q)
+{
+	struct msgb *msg;
+	CRITICAL_SECTION_ENTER()
+	msg = msgb_dequeue(q);
+	CRITICAL_SECTION_LEAVE()
+	return msg;
+}
+
+/* submit the next pending (if any) message for the IN EP */
+static int submit_next_in(void)
+{
+	struct usb_ep_q *ep_q = &g_ccid_s.in_ep;
+	struct msgb *msg;
+	int rc;
+
+	OSMO_ASSERT(!ep_q->in_progress);
+	msg = msgb_dequeue_irqsafe(&ep_q->list);
+	if (!msg)
+		return 0;
+
+	ep_q->in_progress = msg;
+	rc = ccid_df_write_in(msgb_data(msg), msgb_length(msg));
+	if (rc != ERR_NONE) {
+		printf("EP %s failed: %d\r\n", ep_q->name, rc);
+		return -1;
+	}
+	return 1;
+
+}
+
+/* submit the next pending (if any) message for the IRQ EP */
+static int submit_next_irq(void)
+{
+	struct usb_ep_q *ep_q = &g_ccid_s.irq_ep;
+	struct msgb *msg;
+	int rc;
+
+	OSMO_ASSERT(!ep_q->in_progress);
+	msg = msgb_dequeue_irqsafe(&ep_q->list);
+	if (!msg)
+		return 0;
+
+	ep_q->in_progress = msg;
+	rc = ccid_df_write_irq(msgb_data(msg), msgb_length(msg));
+	/* may return HALTED/ERROR/DISABLED/BUSY/ERR_PARAM/ERR_FUNC/ERR_DENIED */
+	if (rc != ERR_NONE) {
+		printf("EP %s failed: %d\r\n", ep_q->name, rc);
+		return -1;
+	}
+	return 1;
+}
+
+static int submit_next_out(void)
+{
+	struct usb_ep_q *ep_q = &g_ccid_s.out_ep;
+	struct msgb *msg;
+	int rc;
+
+	OSMO_ASSERT(!ep_q->in_progress);
+	msg = msgb_dequeue_irqsafe(&g_ccid_s.free_q);
+	if (!msg)
+		return -1;
+	ep_q->in_progress = msg;
+
+	rc = ccid_df_read_out(msgb_data(msg), msgb_tailroom(msg));
+	if (rc != ERR_NONE) {
+		/* re-add to the list of free msgb's */
+		llist_add_tail_at(&g_ccid_s.free_q, &msg->list);
+		return 0;
+	}
+	return 1;
+}
+
+/* OUT endpoint read complete callback (irq context) */
+static void ccid_out_read_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred)
+{
+	struct msgb *msg = g_ccid_s.out_ep.in_progress;
+
+	/* add just-received msg to tail of endpoint queue */
+	OSMO_ASSERT(msg);
+	/* update msgb with the amount of data received */
+	msgb_put(msg, transferred);
+	/* append to list of pending-to-be-handed messages */
+	llist_add_tail_at(&msg->list, &g_ccid_s.out_ep.list);
+
+	/* submit another [free] msgb to receive the next transfer */
+	submit_next_out();
+}
+
+/* IN endpoint write complete callback (irq context) */
+static void ccid_in_write_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred)
+{
+	struct msgb *msg = g_ccid_s.in_ep.in_progress;
+
+	OSMO_ASSERT(msg);
+	/* return the message back to the queue of free message buffers */
+	llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+	g_ccid_s.in_ep.in_progress = NULL;
+
+	/* submit the next pending to-be-transmitted msgb (if any) */
+	submit_next_in();
+}
+
+/* IRQ endpoint write complete callback (irq context) */
+static void ccid_irq_write_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred)
+{
+	struct msgb *msg = g_ccid_s.irq_ep.in_progress;
+
+	OSMO_ASSERT(msg);
+	/* return the message back to the queue of free message buffers */
+	llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+	g_ccid_s.irq_ep.in_progress = NULL;
+
+	/* submit the next pending to-be-transmitted msgb (if any) */
+	submit_next_irq();
+}
+
+
+/***********************************************************************
+ * Command Line interface
+ ***********************************************************************/
 
 static int validate_slotnr(int argc, char **argv, int idx)
 {
@@ -711,6 +895,7 @@ extern void testmode_init(void);
 #include "talloc.h"
 #include <osmocom/core/msgb.h>
 void *g_tall_ctx;
+void *g_msgb_ctx;
 
 DEFUN(_talloc_report, cmd_talloc_report, "talloc-report", "Generate a talloc report")
 {
@@ -721,7 +906,6 @@ DEFUN(talloc_test, cmd_talloc_test, "talloc-test", "Test the talloc allocator")
 {
 	for (int i = 0; i < 10; i++)
 		talloc_named_const(g_tall_ctx, 10, "sibling");
-	msgb_alloc_c(g_tall_ctx, 1024, "foo");
 }
 
 DEFUN(v_talloc_free, cmd_talloc_free, "talloc-free", "Release all memory")
@@ -800,6 +984,8 @@ int main(void)
 	talloc_enable_null_tracking();
 	g_tall_ctx = talloc_named_const(NULL, 0, "global");
 	printf("g_tall_ctx=%p\r\n", g_tall_ctx);
+	g_msgb_ctx = talloc_pool(g_tall_ctx, 20480);
+	talloc_set_memlimit(g_msgb_ctx, 20480);
 
 	command_print_prompt();
 	while (true) { // main loop
