@@ -8,28 +8,7 @@
 #include "atmel_start.h"
 #include "usb_start.h"
 
-#if CONF_USBD_HS_SP
-static uint8_t single_desc_bytes[] = {
-    /* Device descriptors and Configuration descriptors list. */
-    CDCD_ACM_HS_DESCES_LS_FS};
-static uint8_t single_desc_bytes_hs[] = {
-    /* Device descriptors and Configuration descriptors list. */
-    CDCD_ACM_HS_DESCES_HS};
-#define CDCD_ECHO_BUF_SIZ CONF_USB_CDCD_ACM_DATA_BULKIN_MAXPKSZ_HS
-#else
-static uint8_t single_desc_bytes[] = {
-    /* Device descriptors and Configuration descriptors list. */
-    CDCD_ACM_DESCES_LS_FS};
 #define CDCD_ECHO_BUF_SIZ CONF_USB_CDCD_ACM_DATA_BULKIN_MAXPKSZ
-#endif
-
-static struct usbd_descriptors single_desc[]
-    = {{single_desc_bytes, single_desc_bytes + sizeof(single_desc_bytes)}
-#if CONF_USBD_HS_SP
-       ,
-       {single_desc_bytes_hs, single_desc_bytes_hs + sizeof(single_desc_bytes_hs)}
-#endif
-};
 
 /** Buffers to receive and echo the communication bytes. */
 static uint32_t usbd_cdc_buffer[CDCD_ECHO_BUF_SIZ / 4];
@@ -77,6 +56,8 @@ static bool usb_device_cb_state_c(usb_cdc_control_signal_t state)
 	return false;
 }
 
+extern const struct usbd_descriptors usb_descs[];
+
 /**
  * \brief CDC ACM Init
  */
@@ -88,7 +69,7 @@ void cdc_device_acm_init(void)
 	/* usbdc_register_funcion inside */
 	cdcdf_acm_init();
 
-	usbdc_start(single_desc);
+	usbdc_start((struct usbd_descriptors *) usb_descs);
 	usbdc_attach();
 }
 
