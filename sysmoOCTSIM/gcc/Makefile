@@ -85,6 +85,7 @@ hal/src/hal_usb_device.o \
 main.o \
 manual_test.o \
 talloc.o \
+usb_descriptors.o \
 i2c_bitbang.o \
 octsim_i2c.o \
 ncn8025.o \
@@ -137,6 +138,7 @@ OBJS_AS_ARGS +=  \
 "main.o" \
 "manual_test.o" \
 "talloc.o" \
+"usb_descriptors.o" \
 "i2c_bitbang.o" \
 "octsim_i2c.o" \
 "ncn8025.o" \
@@ -195,6 +197,7 @@ DEPS_AS_ARGS +=  \
 "main.d" \
 "manual_test.d" \
 "talloc.d" \
+"usb_descriptors.d" \
 "i2c_bitbang.d" \
 "octsim_i2c.d" \
 "ncn8025.d" \
