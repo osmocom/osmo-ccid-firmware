@@ -702,7 +702,7 @@ drivers:
       gclk_arch_gen_3_runstdby: false
       gclk_arch_gen_4_enable: true
       gclk_arch_gen_4_idc: false
-      gclk_arch_gen_4_oe: false
+      gclk_arch_gen_4_oe: true
       gclk_arch_gen_4_oov: false
       gclk_arch_gen_4_runstdby: false
       gclk_arch_gen_5_enable: true
@@ -748,7 +748,7 @@ drivers:
       gclk_gen_3_div: 1
       gclk_gen_3_div_sel: false
       gclk_gen_3_oscillator: 32kHz External Crystal Oscillator (XOSC32K)
-      gclk_gen_4_div: 1
+      gclk_gen_4_div: 2
       gclk_gen_4_div_sel: false
       gclk_gen_4_oscillator: Digital Phase Locked Loop (DPLL1)
       gclk_gen_5_div: 5
@@ -1462,6 +1462,16 @@ pads:
     mode: Peripheral IO
     user_label: SIM2_IO
     configuration: null
+  RMII_CLOCK:
+    name: PA10
+    definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA10
+    mode: Advanced
+    user_label: RMII_CLOCK
+    configuration:
+      pad_direction: Out
+      pad_function: M
+      pad_initial_level: Low
+      pad_pull_config: 'Off'
   SIMCLK_20MHZ:
     name: PA11
     definition: Atmel:SAME54_Drivers:0.0.1::SAME54N19A-AF::pad::PA11
