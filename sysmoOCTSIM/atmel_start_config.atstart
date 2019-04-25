@@ -666,7 +666,7 @@ drivers:
       enable_gclk_gen_3: true
       enable_gclk_gen_4: true
       enable_gclk_gen_5: true
-      enable_gclk_gen_6: false
+      enable_gclk_gen_6: true
       enable_gclk_gen_7: false
       enable_gclk_gen_8: false
       enable_gclk_gen_9: false
@@ -710,7 +710,7 @@ drivers:
       gclk_arch_gen_5_oe: true
       gclk_arch_gen_5_oov: false
       gclk_arch_gen_5_runstdby: false
-      gclk_arch_gen_6_enable: false
+      gclk_arch_gen_6_enable: true
       gclk_arch_gen_6_idc: false
       gclk_arch_gen_6_oe: false
       gclk_arch_gen_6_oov: false
@@ -742,7 +742,7 @@ drivers:
       gclk_gen_1_div: 1
       gclk_gen_1_div_sel: false
       gclk_gen_1_oscillator: Digital Frequency Locked Loop (DFLL48M)
-      gclk_gen_2_div: 30
+      gclk_gen_2_div: 200
       gclk_gen_2_div_sel: false
       gclk_gen_2_oscillator: Digital Phase Locked Loop (DPLL1)
       gclk_gen_3_div: 1
@@ -754,9 +754,9 @@ drivers:
       gclk_gen_5_div: 5
       gclk_gen_5_div_sel: false
       gclk_gen_5_oscillator: Digital Phase Locked Loop (DPLL1)
-      gclk_gen_6_div: 1
+      gclk_gen_6_div: 17
       gclk_gen_6_div_sel: false
-      gclk_gen_6_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
+      gclk_gen_6_oscillator: Digital Phase Locked Loop (DPLL0)
       gclk_gen_7_div: 1
       gclk_gen_7_div_sel: false
       gclk_gen_7_oscillator: External Crystal Oscillator 8-48MHz (XOSC1)
