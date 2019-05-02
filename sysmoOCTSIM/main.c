@@ -18,12 +18,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <parts.h>
 #include <hal_cache.h>
 #include <hri_port_e54.h>
 
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
+#include "config/hpl_gclk_config.h"
 
 #include "i2c_bitbang.h"
 #include "octsim_i2c.h"
@@ -38,6 +40,21 @@ static struct usart_async_descriptor* SIM_peripheral_descriptors[] = {&SIM0, &SI
 static void SIM_rx_cb(const struct usart_async_descriptor *const io_descr)
 {
 }
+
+/** possible clock sources for the SERCOM peripheral
+ *  warning: the definition must match the GCLK configuration
+ */
+static const uint8_t sercom_glck_sources[] = {GCLK_PCHCTRL_GEN_GCLK2_Val, GCLK_PCHCTRL_GEN_GCLK4_Val, GCLK_PCHCTRL_GEN_GCLK6_Val};
+
+/** possible clock frequencies in MHz for the SERCOM peripheral
+ *  warning: the definition must match the GCLK configuration
+ */
+static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_2_DIV, 100E6 / CONF_GCLK_GEN_4_DIV, 120E6 / CONF_GCLK_GEN_6_DIV};
+
+/** the GCLK ID for the SERCOM SIM peripherals
+ *  @note: used as index for PCHCTRL
+ */
+static const uint8_t SIM_peripheral_GCLK_ID[] = {SERCOM0_GCLK_ID_CORE, SERCOM1_GCLK_ID_CORE, SERCOM2_GCLK_ID_CORE, SERCOM3_GCLK_ID_CORE, SERCOM4_GCLK_ID_CORE, SERCOM5_GCLK_ID_CORE, SERCOM6_GCLK_ID_CORE, SERCOM7_GCLK_ID_CORE};
 
 static void board_init()
 {
@@ -79,6 +96,66 @@ static int validate_slotnr(int argc, char **argv, int idx)
 		return -1;
 	}
 	return slotnr;
+}
+
+/** change baud rate of card slot
+ *  @param[in] slotnr slot number for which the baud rate should be set
+ *  @param[in] baudrate baud rate in bps to set
+ *  @return if the baud rate has been set, else a parameter is out of range
+ */
+static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
+{
+	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
+
+	// calculate the error corresponding to the clock sources
+	uint16_t bauds[ARRAY_SIZE(sercom_glck_freqs)];
+	double errors[ARRAY_SIZE(sercom_glck_freqs)];
+	for (uint8_t i = 0; i < ARRAY_SIZE(sercom_glck_freqs); i++) {
+		double freq = sercom_glck_freqs[i]; // remember possible SERCOM frequency
+		uint32_t min = freq / (2 * (255 + 1)); // calculate the minimum baud rate for this frequency
+		uint32_t max = freq / (2 * (0 + 1)); // calculate the maximum baud rate for this frequency
+		if (baudrate < min || baudrate > max) { // baud rate it out of supported range
+			errors[i] = NAN;
+		} else {
+			uint16_t baud = round(freq / (2 * baudrate) - 1);
+			bauds[i] = baud;
+			double actual = freq / (2 * (baud + 1));
+			errors[i] = fabs(1.0 - (actual / baudrate));
+		}
+	}
+
+	// find the smallest error
+	uint8_t best = ARRAY_SIZE(sercom_glck_freqs);
+	for (uint8_t i = 0; i < ARRAY_SIZE(sercom_glck_freqs); i++) {
+		if (isnan(errors[i])) {
+			continue;
+		}
+		if (best >= ARRAY_SIZE(sercom_glck_freqs)) {
+			best = i;
+		} else if (errors[i] < errors[best]) {
+			best = i;
+		}
+	}
+	if (best >= ARRAY_SIZE(sercom_glck_freqs)) { // found no clock supporting this baud rate
+		return false;
+	}
+
+	// set clock and baud rate
+	struct usart_async_descriptor* slot = SIM_peripheral_descriptors[slotnr]; // get slot
+	if (NULL == slot) {
+		return false;
+	}
+	printf("(%u) switching SERCOM clock to GCLK%u (freq = %lu kHz) and baud rate to %lu bps (baud = %u)\r\n", slotnr, (best + 1) * 2, (uint32_t)(round(sercom_glck_freqs[best] / 1000)), baudrate, bauds[best]);
+	while (!usart_async_is_tx_empty(slot)); // wait for transmission to complete (WARNING no timeout)
+	usart_async_disable(slot); // disable SERCOM peripheral
+	hri_gclk_clear_PCHCTRL_reg(GCLK, SIM_peripheral_GCLK_ID[slotnr], (1 << GCLK_PCHCTRL_CHEN_Pos)); // disable clock for this peripheral
+	while (hri_gclk_get_PCHCTRL_reg(GCLK, SIM_peripheral_GCLK_ID[slotnr], (1 << GCLK_PCHCTRL_CHEN_Pos))); // wait until clock is really disabled
+	// it does not seem we need to completely disable the peripheral using hri_mclk_clear_APBDMASK_SERCOMn_bit
+	hri_gclk_write_PCHCTRL_reg(GCLK, SIM_peripheral_GCLK_ID[slotnr], sercom_glck_sources[best] | (1 << GCLK_PCHCTRL_CHEN_Pos)); // set peripheral core clock and re-enable it
+	usart_async_set_baud_rate(slot, bauds[best]); // set the new baud rate
+	usart_async_enable(slot); // re-enable SERCOM peripheral
+
+	return true;
 }
 
 DEFUN(sim_status, cmd_sim_status, "sim-status", "Get state of specified NCN8025")
@@ -245,7 +322,7 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 	// TODO wait some time for card to be completely deactivated
 	usart_async_flush_rx_buffer(SIM_peripheral_descriptors[slotnr]); // flush RX buffer to start from scratch
 
-	//usart_async_set_baud_rate(SIM_peripheral_descriptors[slotnr], 2500000 / (372 / 1)); // set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
+	slot_set_baudrate(slotnr, 2500000 / (372 / 1)); // set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
 	// set clock to lowest frequency (20 MHz / 8 = 2.5 MHz)
 	// note: according to ISO/IEC 7816-3:2006 section 5.2.3 the minimum value is 1 MHz, and maximum is 5 MHz during activation
 	settings.clkdiv = SIM_CLKDIV_8;
