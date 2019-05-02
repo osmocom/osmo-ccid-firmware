@@ -83,6 +83,7 @@ i2c_bitbang.o \
 octsim_i2c.o \
 ncn8025.o \
 command.o \
+iso7816_3.o \
 hpl/osc32kctrl/hpl_osc32kctrl.o \
 driver_init.o \
 hal/src/hal_usart_async.o \
@@ -132,6 +133,7 @@ OBJS_AS_ARGS +=  \
 "octsim_i2c.o" \
 "ncn8025.o" \
 "command.o" \
+"iso7816_3.o" \
 "hpl/osc32kctrl/hpl_osc32kctrl.o" \
 "driver_init.o" \
 "hal/src/hal_usart_async.o" \
@@ -188,7 +190,8 @@ DEPS_AS_ARGS +=  \
 "octsim_i2c.d" \
 "ncn8025.d" \
 "command.d" \
-"hal/src/hal_cache.d" \
+"iso7816_3.d" \
+"hal/src/halcache.d" \
 "hal/src/hal_sleep.d" \
 "hal/utils/src/utils_ringbuffer.d" \
 "hpl/sercom/hpl_sercom.d" \
