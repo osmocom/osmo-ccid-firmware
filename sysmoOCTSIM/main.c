@@ -30,6 +30,7 @@
 #include "i2c_bitbang.h"
 #include "octsim_i2c.h"
 #include "ncn8025.h"
+#include "iso7816_3.h"
 
 #include "command.h"
 
@@ -156,6 +157,57 @@ static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
 	usart_async_enable(slot); // re-enable SERCOM peripheral
 
 	return true;
+}
+
+/** change ISO baud rate of card slot
+ *  @param[in] slotnr slot number for which the baud rate should be set
+ *  @param[in] clkdiv can clock divider
+ *  @param[in] f clock rate conversion integer F
+ *  @param[in] d baud rate adjustment factor D
+ *  @return if the baud rate has been set, else a parameter is out of range
+ */
+static bool slot_set_isorate(uint8_t slotnr, enum ncn8025_sim_clkdiv clkdiv, uint16_t f, uint8_t d)
+{
+	// input checks
+	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
+	if (clkdiv != SIM_CLKDIV_1 && clkdiv != SIM_CLKDIV_2 && clkdiv != SIM_CLKDIV_4 && clkdiv != SIM_CLKDIV_8) {
+		return false;
+	}
+	if (!iso7816_3_valid_f(f)) {
+		return false;
+	}
+	if (!iso7816_3_valid_d(d)) {
+		return false;
+	}
+
+	// set clockdiv
+	struct ncn8025_settings settings;
+	ncn8025_get(slotnr, &settings);
+	if (settings.clkdiv != clkdiv) {
+		settings.clkdiv = clkdiv;
+		ncn8025_set(slotnr, &settings);
+	}
+
+	// calculate desired frequency
+	uint32_t freq = 20000000UL; // maximum frequency
+	switch (clkdiv) {
+	case SIM_CLKDIV_1:
+		freq /= 1;
+		break;
+	case SIM_CLKDIV_2:
+		freq /= 2;
+		break;
+	case SIM_CLKDIV_4:
+		freq /= 4;
+		break;
+	case SIM_CLKDIV_8:
+		freq /= 8;
+		break;
+	}
+
+	// set baud rate
+	uint32_t baudrate = (freq * d) / f; // calculate actual baud rate
+	return slot_set_baudrate(slotnr, baudrate); // // set baud rate
 }
 
 DEFUN(sim_status, cmd_sim_status, "sim-status", "Get state of specified NCN8025")
@@ -322,10 +374,12 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 	// TODO wait some time for card to be completely deactivated
 	usart_async_flush_rx_buffer(SIM_peripheral_descriptors[slotnr]); // flush RX buffer to start from scratch
 
-	slot_set_baudrate(slotnr, 2500000 / (372 / 1)); // set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
+	
 	// set clock to lowest frequency (20 MHz / 8 = 2.5 MHz)
 	// note: according to ISO/IEC 7816-3:2006 section 5.2.3 the minimum value is 1 MHz, and maximum is 5 MHz during activation
 	settings.clkdiv = SIM_CLKDIV_8;
+	// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
+	slot_set_isorate(slotnr, settings.clkdiv, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 	// set card voltage to 3.0 V (the most supported)
 	// note: according to ISO/IEC 7816-3:2006 no voltage should damage the card, and you should cycle from low to high
 	settings.vsel = SIM_VOLT_3V0;
