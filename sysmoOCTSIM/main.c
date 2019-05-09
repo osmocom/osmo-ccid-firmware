@@ -226,7 +226,183 @@ static bool slot_set_isorate(uint8_t slotnr, enum ncn8025_sim_clkdiv clkdiv, uin
 
 	// set baud rate
 	uint32_t baudrate = (freq * d) / f; // calculate actual baud rate
-	return slot_set_baudrate(slotnr, baudrate); // // set baud rate
+	return slot_set_baudrate(slotnr, baudrate); // set baud rate
+}
+
+/** write data to card
+ *  @param[in] slotnr slot number on which to send data
+ *  @param[in] data data to be transmitted
+ *  @param[in] length length of data to be transmitted
+ *  @return error code
+ */
+static int slot_card_write(uint8_t slotnr, const uint8_t* data, uint16_t length)
+{
+	// input checks
+	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
+	if (0 == length || NULL == data) {
+		return ERR_INVALID_ARG;
+	}
+
+	struct usart_async_descriptor* sim = SIM_peripheral_descriptors[slotnr];
+	((Sercom *)sim->device.hw)->USART.CTRLB.bit.RXEN = 0; // disable receive (to avoid the echo back)
+	SIM_tx_count[slotnr] = false; // reset TX complete
+	for (uint16_t i = 0; i < length; i++) { // transmit data
+		while(!usart_async_is_tx_empty(sim)); // wait for previous byte to be transmitted (WARNING blocking)
+		if (1 != io_write(&sim->io, &data[i], 1)) { // put but in transmit buffer
+			return ERR_IO;
+		}
+	}
+	while (!SIM_tx_count[slotnr]); // wait until transmission is complete (WARNING blocking)
+	((Sercom *)sim->device.hw)->USART.CTRLB.bit.RXEN = 1; // enable receive again
+
+	return ERR_NONE;
+}
+
+/** read data from card
+ *  @param[in] slotnr slot number on which to send data
+ *  @param[out] data buffer for read data to be stored
+ *  @param[in] length length of data to be read
+ *  @param[in] wt Waiting Time in ETU
+ *  @return error code
+ *  TODO fix WT/ETU duration
+ */
+static int slot_card_read(uint8_t slotnr, uint8_t* data, uint16_t length, uint32_t wt)
+{
+	// input checks
+	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
+	if (0 == length || NULL == data) {
+		return ERR_INVALID_ARG;
+	}
+
+	struct usart_async_descriptor* sim = SIM_peripheral_descriptors[slotnr];
+
+	((Sercom *)sim->device.hw)->USART.CTRLB.bit.RXEN = 1; // ensure RX is enabled
+	uint32_t timeout = wt; // reset waiting time
+	for (uint16_t i = 0; i < length; i++) { // read all data
+		while (timeout && !usart_async_is_rx_not_empty(sim)) { // verify if data is present
+			delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
+			timeout--;
+		}
+		if (0 == timeout) { // timeout reached
+			return ERR_TIMEOUT;
+		}
+		timeout = wt; // reset waiting time
+		if (1 != io_read(&sim->io, &data[i], 1)) { // read one byte
+			return ERR_IO;
+		}
+	}
+
+	return ERR_NONE;
+}
+
+/** transfer TPDU
+ *  @param[in] slotnr slot number on which to transfer the TPDU
+ *  @param[in] header TPDU header to send
+ *  @param[io] data TPDU data to transfer
+ *  @param[in] data_length length of TPDU data to transfer
+ *  @param[in] write if the data should be written (true) or read (false)
+ * TODO fix WT
+ * TODO the data length can be deduce from the header
+ */
+static int slot_tpdu_xfer(uint8_t slotnr, const uint8_t* header, uint8_t* data, uint16_t data_length, bool write)
+{
+	// input checks
+	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
+	if (NULL == header || (data_length > 0 && NULL == data)) {
+		return ERR_INVALID_ARG;
+	}
+
+	int rc;
+	struct usart_async_descriptor* sim = SIM_peripheral_descriptors[slotnr]; // get USART peripheral
+	usart_async_flush_rx_buffer(sim); // flush RX buffer to start from scratch
+
+	// send command header
+	printf("(%d) TPDU: ", slotnr);
+	for (uint8_t i = 0; i < 5; i++) {
+		printf("%02x ", header[i]);
+	}
+	rc = slot_card_write(slotnr, header, 5); // transmit header
+	if (ERR_NONE != rc) {
+		printf("error in command header transmit (errno = %d)\r\n", rc);
+		return rc;
+	}
+
+	// read procedure byte, and handle data
+	uint8_t pb = 0x60; // wait more procedure byte
+	uint16_t data_i = 0; // progress in the data transfer
+	while (0x60 == pb) { // wait for SW
+		rc = slot_card_read(slotnr, &pb, 1, ISO7816_3_DEFAULT_WT);
+		if (ERR_NONE != rc) {
+			printf("error while receiving PB/SW1 (errno = %d)\r\n", rc);
+			return rc;
+		}
+		printf("%02x ", pb);
+		if (0x60 == pb) { // NULL byte
+			// just wait more time
+		} else if ((0x60 == (pb & 0xf0)) || (0x90 == (pb & 0xf0))) { // SW1 byte
+			// left the rest of the code handle it
+		} else if (header[1] == pb) { // ACK byte
+			// transfer rest of the data
+			if (data_i >= data_length) {
+				printf("error no more data to transfer\r\n");
+				return ERR_INVALID_DATA;
+			}
+			if (write) { // transmit remaining command data
+				rc = slot_card_write(slotnr, &data[data_i], data_length - data_i); // transmit command data
+				if (ERR_NONE != rc) {
+					printf("error in command data transmit (errno = %d)\r\n", rc);
+					return rc;
+				}
+			} else { // receive remaining command data
+				rc = slot_card_read(slotnr, &data[data_i], data_length - data_i, ISO7816_3_DEFAULT_WT);
+				if (ERR_NONE != rc) {
+					printf("error in command data receive (errno = %d)\r\n", rc);
+					return rc;
+				}
+			}
+			for (uint16_t i = data_i; i < data_length; i++) {
+				printf("%02x ", data[i]);
+			}
+			data_i = data_length; // remember we transferred the data
+			pb = 0x60; // wait for SW1
+		} else if (header[1] == (pb ^ 0xff)) { // ACK byte
+			// transfer only one byte
+			if (data_i >= data_length) {
+				printf("error no more data to transfer\r\n");
+				return ERR_INVALID_DATA;
+			}
+			if (write) { // transmit command data byte
+				rc = slot_card_write(slotnr, &data[data_i], 1); // transmit command data
+				if (ERR_NONE != rc) {
+					printf("error in command data transmit (errno = %d)\r\n", rc);
+					return rc;
+				}
+			} else { // receive command data byte
+				rc = slot_card_read(slotnr, &data[data_i], 1, ISO7816_3_DEFAULT_WT);
+				if (ERR_NONE != rc) {
+					printf("error in command data receive (errno = %d)\r\n", rc);
+					return rc;
+				}
+			}
+			printf("%02x ", data[data_i]);
+			data_i += 1; // remember we transferred one data byte
+			pb = 0x60; // wait for SW1
+		} else { // invalid byte
+			return ERR_INVALID_DATA;
+		}
+	}
+
+	// read SW2
+	uint8_t sw2;
+	rc = slot_card_read(slotnr, &sw2, 1, ISO7816_3_DEFAULT_WT);
+	if (ERR_NONE != rc) {
+		printf("error in receiving SW2 (errno = %d)\r\n", rc);
+		return rc;
+	}
+	printf("%02x", sw2);
+
+	printf("\r\n");
+	return ERR_NONE;
 }
 
 DEFUN(sim_status, cmd_sim_status, "sim-status", "Get state of specified NCN8025")
@@ -480,90 +656,15 @@ DEFUN(sim_iccid, cmd_sim_iccid, "sim-iccid", "Read ICCID from SIM card")
 		ncn8025_set(slotnr, &settings);
 	}
 
-	// read MF
-	printf("(%d) SELECT MF: ", slotnr);
-	struct usart_async_descriptor* sim = SIM_peripheral_descriptors[slotnr];
-	((Sercom *)sim->device.hw)->USART.CTRLB.bit.RXEN = 0;
-	usart_async_flush_rx_buffer(sim); // flush RX buffer to start from scratch
+	// select MF
+	printf("(%d) SELECT MF\r\n", slotnr);
 	// write SELECT MF APDU
-	const uint8_t select_mf[] = {0xa0, 0xa4, 0x00, 0x00, 0x02, 0x3f, 0x00};
-	SIM_tx_count[slotnr] = false; // reset TX complete
-	for (uint8_t i = 0; i < 5; i++) { // transmit command header
-		printf("%02x ", select_mf[i]);
-		while(!usart_async_is_tx_empty(sim)); // wait for previous byte to be transmitted (WARNING could block)
-		if (1 != io_write(&sim->io, &select_mf[i], 1)) {
-			printf("(%d) error: could not send command header\r\n", slotnr);
-			return;
-		}
+	const uint8_t select_mf_header[] = {0xa0, 0xa4, 0x00, 0x00, 0x02};
+	const uint8_t select_mf_data[] = {0x3f, 0x00};
+	int rc = slot_tpdu_xfer(slotnr, select_mf_header, (uint8_t*)select_mf_data, ARRAY_SIZE(select_mf_data), true); // transfer TPDU
+	if (ERR_NONE != rc) {
+		printf("error while SELECT MF (errno = %d)\r\n", rc);
 	}
-	uint16_t wt = ISO7816_3_DEFAULT_WT; // waiting time in ETU (actually it can be a lot more after the ATR, but we use the default)
-	while (wt && !SIM_tx_count[slotnr]) { // wait until transmission is complete
-		delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
-		wt--;
-	}
-	if (0 == wt) { // timeout reached
-		printf("(%d) error: could not transmit data\r\n", slotnr);
-		return;
-	}
-	((Sercom *)sim->device.hw)->USART.CTRLB.bit.RXEN = 1;
-	//usart_async_flush_rx_buffer(sim); // flush RX buffer to start from scratch
-	wt = ISO7816_3_DEFAULT_WT; // reset waiting time
-	while (wt && !usart_async_is_rx_not_empty(sim)) { // wait for procedure byte
-		delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
-		wt--;
-	}
-	if (0 == wt) { // timeout reached
-		printf("(%d) error: card not responsive\r\n", slotnr);
-		return;
-	}
-	uint8_t pb;
-	if (1 != io_read(&sim->io, &pb, 1)) { // read procedure byte
-		printf("(%d) error: could not read data\r\n", slotnr);
-		return;
-	}
-	if (select_mf[1] != pb) { // the header is ACKed when the procedure by is equal to the instruction byte
-		printf("(%d) error: header NACKed\r\n", slotnr);
-		return;
-	}
-	SIM_tx_count[slotnr] = false; // reset TX complete
-	for (uint8_t i = 5; i < 7; i++) { // transmit command data
-		printf("%02x ", select_mf[i]);
-		while(!usart_async_is_tx_empty(sim)); // wait for previous byte to be transmitted (WARNING could block)
-		if (1 != io_write(&sim->io, &select_mf[i], 1)) {
-			printf("(%d) error: could not send command data\r\n", slotnr);
-			return;
-		}
-	}
-	wt = ISO7816_3_DEFAULT_WT; // waiting time in ETU (actually it can be a lot more after the ATR, but we use the default)
-	while (wt && !SIM_tx_count[slotnr]) { // wait until transmission is complete
-		delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
-		wt--;
-	}
-	if (0 == wt) { // timeout reached
-		printf("(%d) error: could not transmit data\r\n", slotnr);
-		return;
-	}
-	usart_async_flush_rx_buffer(sim); // flush RX buffer to start from scratch
-	// read SW
-	uint8_t sw[2]; // to read the status words
-	wt = ISO7816_3_DEFAULT_WT; // waiting time in ETU (actually it can be a lot more after the ATR, but we use the default)
-	for (uint8_t i = 0; i < ARRAY_SIZE(sw); i++) {
-		while (wt && !usart_async_is_rx_not_empty(sim)) {
-			delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
-			wt--;
-		}
-		if (0 == wt) { // timeout reached
-			printf("(%d) error: card not responsive\r\n", slotnr);
-		} else {
-			if (1 != io_read(&sim->io, &sw[i], 1)) { // read SW
-				printf("(%d) error: could not read data\r\n", slotnr);
-				return;
-			}
-			printf("%02x ", sw[i]);
-			wt = ISO7816_3_DEFAULT_WT; // reset WT
-		}
-	}
-	printf("\r\n");
 
 	// disable LED
 	settings.led = false;
