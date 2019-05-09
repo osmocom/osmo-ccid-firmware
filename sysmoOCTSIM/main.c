@@ -38,8 +38,26 @@
 // TODO for now SIM7 is not present because used for debug
 static struct usart_async_descriptor* SIM_peripheral_descriptors[] = {&SIM0, &SIM1, &SIM2, &SIM3, &SIM4, &SIM5, &SIM6, NULL};
 
+/** number of bytes transmitted on the SIM peripheral */
+static volatile bool SIM_tx_count[8];
+
 static void SIM_rx_cb(const struct usart_async_descriptor *const io_descr)
 {
+}
+
+/** called when the transmission is complete
+ *  e.g. this is when the byte has been sent and there is no data to transmit anymore
+ */
+static void SIM_tx_cb(const struct usart_async_descriptor *const io_descr)
+{
+	// find slotnr for corresponding USART
+	uint8_t slotnr;
+	for (slotnr = 0; slotnr < ARRAY_SIZE(SIM_peripheral_descriptors) && SIM_peripheral_descriptors[slotnr] != io_descr; slotnr++);
+
+	// set flag
+	if (slotnr < ARRAY_SIZE(SIM_peripheral_descriptors)) {
+		SIM_tx_count[slotnr] = true;
+	}
 }
 
 /** possible clock sources for the SERCOM peripheral
@@ -80,6 +98,7 @@ static void board_init()
 			continue;
 		}
 		usart_async_register_callback(SIM_peripheral_descriptors[i], USART_ASYNC_RXC_CB, SIM_rx_cb); // required for RX to work, even if the callback does nothing
+		usart_async_register_callback(SIM_peripheral_descriptors[i], USART_ASYNC_TXC_CB, SIM_tx_cb); // to count the number of bytes transmitted since we are using it asynchronously
 		usart_async_enable(SIM_peripheral_descriptors[i]);
 	}
 }
@@ -360,7 +379,7 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 	// check if card is present (and read current settings)
 	ncn8025_get(slotnr, &settings);
 	if (!settings.simpres) {
-		printf("no card present in slot %d, aborting\r\n", slotnr);
+		printf("(%d) error: no card present\r\n", slotnr);
 		return;
 	}
 
@@ -406,19 +425,19 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 	}
 	// verify if one byte has been received
 	if (!usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
-		printf("card in slot %d is not responding, aborting\r\n", slotnr);
+		printf("(%d) error: card not responsive\r\n", slotnr);
 		return;
 	}
 
 	// read ATR (just do it until there is no traffic anymore)
-	// TODO the ATR should be parsed to read the right number of bytes
+	// TODO the ATR should be parsed to read the right number of bytes, instead we just wait until to end of WT
 	printf("(%d) ATR: ", slotnr);
 	uint8_t atr_byte;
 	while (usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
 		if (1 == io_read(&SIM_peripheral_descriptors[slotnr]->io, &atr_byte, 1)) {
 			printf("%02x ", atr_byte);
 		}
-		uint16_t wt = 9600; // waiting time in ETU
+		uint16_t wt = ISO7816_3_DEFAULT_WT; // waiting time in ETU
 		while (wt && !usart_async_is_rx_not_empty(SIM_peripheral_descriptors[slotnr])) {
 			delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
 			wt--;
@@ -426,9 +445,127 @@ DEFUN(sim_atr, cmd_sim_atr, "sim-atr", "Read ATR from SIM card")
 	}
 	printf("\r\n");
 
-	/* disable VCC and LED, re-enable RST */
-	settings.cmdvcc = false;
-	settings.rstin = true;
+	/* disable LED */
+	settings.led = false;
+	ncn8025_set(slotnr, &settings);
+}
+
+DEFUN(sim_iccid, cmd_sim_iccid, "sim-iccid", "Read ICCID from SIM card")
+{
+	struct ncn8025_settings settings;
+	int slotnr = validate_slotnr(argc, argv, 1);
+
+	if (slotnr < 0 || slotnr >= ARRAY_SIZE(SIM_peripheral_descriptors) || NULL == SIM_peripheral_descriptors[slotnr]) {
+		return;
+	}
+
+	// read current settings and check if card is present and powered
+	ncn8025_get(slotnr, &settings);
+	if (!settings.simpres) {
+		printf("(%d) error: no card present\r\n", slotnr);
+		return;
+	}
+	if (!settings.cmdvcc) {
+		printf("(%d) error: card not powered\r\n", slotnr);
+		return;
+	}
+	if (settings.rstin) {
+		printf("(%d) error: card under reset\r\n", slotnr);
+		return;
+	}
+
+	// enable LED
+	if (!settings.led) {
+		settings.led = true;
+		ncn8025_set(slotnr, &settings);
+	}
+
+	// read MF
+	printf("(%d) SELECT MF: ", slotnr);
+	struct usart_async_descriptor* sim = SIM_peripheral_descriptors[slotnr];
+	((Sercom *)sim->device.hw)->USART.CTRLB.bit.RXEN = 0;
+	usart_async_flush_rx_buffer(sim); // flush RX buffer to start from scratch
+	// write SELECT MF APDU
+	const uint8_t select_mf[] = {0xa0, 0xa4, 0x00, 0x00, 0x02, 0x3f, 0x00};
+	SIM_tx_count[slotnr] = false; // reset TX complete
+	for (uint8_t i = 0; i < 5; i++) { // transmit command header
+		printf("%02x ", select_mf[i]);
+		while(!usart_async_is_tx_empty(sim)); // wait for previous byte to be transmitted (WARNING could block)
+		if (1 != io_write(&sim->io, &select_mf[i], 1)) {
+			printf("(%d) error: could not send command header\r\n", slotnr);
+			return;
+		}
+	}
+	uint16_t wt = ISO7816_3_DEFAULT_WT; // waiting time in ETU (actually it can be a lot more after the ATR, but we use the default)
+	while (wt && !SIM_tx_count[slotnr]) { // wait until transmission is complete
+		delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
+		wt--;
+	}
+	if (0 == wt) { // timeout reached
+		printf("(%d) error: could not transmit data\r\n", slotnr);
+		return;
+	}
+	((Sercom *)sim->device.hw)->USART.CTRLB.bit.RXEN = 1;
+	//usart_async_flush_rx_buffer(sim); // flush RX buffer to start from scratch
+	wt = ISO7816_3_DEFAULT_WT; // reset waiting time
+	while (wt && !usart_async_is_rx_not_empty(sim)) { // wait for procedure byte
+		delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
+		wt--;
+	}
+	if (0 == wt) { // timeout reached
+		printf("(%d) error: card not responsive\r\n", slotnr);
+		return;
+	}
+	uint8_t pb;
+	if (1 != io_read(&sim->io, &pb, 1)) { // read procedure byte
+		printf("(%d) error: could not read data\r\n", slotnr);
+		return;
+	}
+	if (select_mf[1] != pb) { // the header is ACKed when the procedure by is equal to the instruction byte
+		printf("(%d) error: header NACKed\r\n", slotnr);
+		return;
+	}
+	SIM_tx_count[slotnr] = false; // reset TX complete
+	for (uint8_t i = 5; i < 7; i++) { // transmit command data
+		printf("%02x ", select_mf[i]);
+		while(!usart_async_is_tx_empty(sim)); // wait for previous byte to be transmitted (WARNING could block)
+		if (1 != io_write(&sim->io, &select_mf[i], 1)) {
+			printf("(%d) error: could not send command data\r\n", slotnr);
+			return;
+		}
+	}
+	wt = ISO7816_3_DEFAULT_WT; // waiting time in ETU (actually it can be a lot more after the ATR, but we use the default)
+	while (wt && !SIM_tx_count[slotnr]) { // wait until transmission is complete
+		delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
+		wt--;
+	}
+	if (0 == wt) { // timeout reached
+		printf("(%d) error: could not transmit data\r\n", slotnr);
+		return;
+	}
+	usart_async_flush_rx_buffer(sim); // flush RX buffer to start from scratch
+	// read SW
+	uint8_t sw[2]; // to read the status words
+	wt = ISO7816_3_DEFAULT_WT; // waiting time in ETU (actually it can be a lot more after the ATR, but we use the default)
+	for (uint8_t i = 0; i < ARRAY_SIZE(sw); i++) {
+		while (wt && !usart_async_is_rx_not_empty(sim)) {
+			delay_us(149); // wait for 1 ETU (372 / 1 / 2.5 MHz = 148.8 us)
+			wt--;
+		}
+		if (0 == wt) { // timeout reached
+			printf("(%d) error: card not responsive\r\n", slotnr);
+		} else {
+			if (1 != io_read(&sim->io, &sw[i], 1)) { // read SW
+				printf("(%d) error: could not read data\r\n", slotnr);
+				return;
+			}
+			printf("%02x ", sw[i]);
+			wt = ISO7816_3_DEFAULT_WT; // reset WT
+		}
+	}
+	printf("\r\n");
+
+	// disable LED
 	settings.led = false;
 	ncn8025_set(slotnr, &settings);
 }
@@ -450,6 +587,7 @@ int main(void)
 	command_register(&cmd_sim_voltage);
 	command_register(&cmd_sim_led);
 	command_register(&cmd_sim_atr);
+	command_register(&cmd_sim_iccid);
 	testmode_init();
 
 	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
