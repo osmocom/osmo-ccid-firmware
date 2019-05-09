@@ -658,13 +658,47 @@ DEFUN(sim_iccid, cmd_sim_iccid, "sim-iccid", "Read ICCID from SIM card")
 
 	// select MF
 	printf("(%d) SELECT MF\r\n", slotnr);
-	// write SELECT MF APDU
-	const uint8_t select_mf_header[] = {0xa0, 0xa4, 0x00, 0x00, 0x02};
-	const uint8_t select_mf_data[] = {0x3f, 0x00};
-	int rc = slot_tpdu_xfer(slotnr, select_mf_header, (uint8_t*)select_mf_data, ARRAY_SIZE(select_mf_data), true); // transfer TPDU
+	const uint8_t select_header[] = {0xa0, 0xa4, 0x00, 0x00, 0x02}; // see TS 102.221 sec. 11.1.1
+	const uint8_t select_data_mf[] = {0x3f, 0x00}; // see TS 102.221 sec. 13.1
+	int rc = slot_tpdu_xfer(slotnr, select_header, (uint8_t*)select_data_mf, ARRAY_SIZE(select_data_mf), true); // transfer TPDU
 	if (ERR_NONE != rc) {
 		printf("error while SELECT MF (errno = %d)\r\n", rc);
 	}
+	// ignore response data
+
+	// select EF_ICCID
+	printf("(%d) SELECT EF_ICCID\r\n", slotnr);
+	const uint8_t select_data_ef_iccid[] = {0x2f, 0xe2}; // see TS 102.221 sec. 13.2
+	rc = slot_tpdu_xfer(slotnr, select_header, (uint8_t*)select_data_ef_iccid, ARRAY_SIZE(select_data_ef_iccid), true); // transfer TPDU
+	if (ERR_NONE != rc) {
+		printf("error while SELECT EF_ICCID (errno = %d)\r\n", rc);
+	}
+	// ignore response data
+
+	// read EF_ICCID
+	printf("(%d) READ EF_ICCID\r\n", slotnr);
+	uint8_t iccid[10];
+	uint8_t read_binary[] = {0xa0, 0xb0, 0x00, 0x00, ARRAY_SIZE(iccid)}; // see TS 102.221 sec. 11.1.3
+	rc = slot_tpdu_xfer(slotnr, read_binary, iccid, ARRAY_SIZE(iccid), false); // transfer TPDU
+	if (ERR_NONE != rc) {
+		printf("error while READ ICCID (errno = %d)\r\n", rc);
+	}
+	// ignore response data
+
+	printf("(%d) ICCID: ", slotnr);
+	for (uint8_t i = 0; i < ARRAY_SIZE(iccid); i++) {
+		uint8_t nibble = iccid[i] & 0xf;
+		if (0xf == nibble) {
+			break;
+		}
+		printf("%x", nibble);
+		nibble = iccid[i] >> 4;
+		if (0xf == nibble) {
+			break;
+		}
+		printf("%x", nibble);
+	}
+	printf("\r\n");
 
 	// disable LED
 	settings.led = false;
