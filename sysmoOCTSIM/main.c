@@ -436,11 +436,15 @@ static const struct ccid_ops c_ops = {
 //#######################
 
 #define NUM_OUT_BUF 16
+char sernr_buf[16*2+1];
+//unicode for descriptor
+char sernr_buf_descr[1+1+16*2*2];
+
+
+char rstcause_buf[RSTCAUSE_STR_SIZE];
 
 int main(void)
 {
-	char sernr_buf[16*2+1];
-	char rstcause_buf[RSTCAUSE_STR_SIZE];
 
 #if 0
 CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk ; //| /* tracing*/
@@ -468,6 +472,11 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	atmel_start_init();
 	get_chip_unique_serial_str(sernr_buf, sizeof(sernr_buf));
 	get_rstcause_str(rstcause_buf);
+
+	sernr_buf_descr[0] = sizeof(sernr_buf_descr);
+	sernr_buf_descr[1] = 0x3;
+	for(int i= 2; i < sizeof(sernr_buf_descr); i+=2)
+		sernr_buf_descr[i] = sernr_buf[i >> 1];
 
 	usb_start();
 

@@ -58,6 +58,96 @@ static bool usb_device_cb_state_c(usb_cdc_control_signal_t state)
 
 extern const struct usbd_descriptors usb_descs[];
 
+#define USBStringDescriptor_LENGTH(length)      ((length) * 2 + 2)
+#define USBStringDescriptor_UNICODE(ascii)      (ascii), 0
+#define USBStringDescriptor_ENGLISH_US          0x09, 0x04
+
+static uint8_t usb_str_lang[] = {
+	USBStringDescriptor_LENGTH(1),
+	USB_DT_STRING,
+	USBStringDescriptor_ENGLISH_US,
+};
+
+static uint8_t usb_str_serial[] = {
+	USBStringDescriptor_LENGTH(4),
+	USB_DT_STRING,
+	USBStringDescriptor_UNICODE('1'),
+	USBStringDescriptor_UNICODE('2'),
+	USBStringDescriptor_UNICODE('3'),
+	USBStringDescriptor_UNICODE('4'),
+};
+
+/* transmit given string descriptor */
+static bool send_str_desc(uint8_t ep, const struct usb_req *req, enum usb_ctrl_stage stage,
+			  const uint8_t *desc)
+{
+	uint16_t len_req = LE16(req->wLength);
+	uint16_t len_desc = desc[0];
+	uint16_t len_tx;
+	bool need_zlp = !(len_req & (CONF_USB_CDCD_ACM_BMAXPKSZ0 - 1));
+
+	if (len_req <= len_desc) {
+		need_zlp = false;
+		len_tx = len_req;
+	} else {
+		len_tx = len_desc;
+	}
+
+	printf("Sending string %u from callback: ", req->wValue & 0x00ff);
+	printf("ep=0x%02x len_req=%u len_desc=%u, len_tx=%u, zlp=%u\r\n",
+		ep, len_req, len_desc, len_tx, need_zlp);
+
+	if (ERR_NONE != usbdc_xfer(ep, (uint8_t *)desc, len_tx, need_zlp)) {
+		printf("returning false\r\n");
+		return true;
+	}
+
+	printf("returning true\r\n");
+	return false;
+}
+
+extern char sernr_buf_descr[];
+/* call-back for every control EP request */
+static int32_t string_req_cb(uint8_t ep, struct usb_req *req, enum usb_ctrl_stage stage)
+{
+	uint8_t index, type;
+
+	if (stage != USB_SETUP_STAGE)
+		return ERR_NOT_FOUND;
+
+	if ((req->bmRequestType & (USB_REQT_TYPE_MASK | USB_REQT_DIR_IN)) !=
+	    (USB_REQT_TYPE_STANDARD | USB_REQT_DIR_IN))
+		return ERR_NOT_FOUND;
+
+	/* abort if it's not a GET DESCRIPTOR request */
+	if (req->bRequest != USB_REQ_GET_DESC)
+		return ERR_NOT_FOUND;
+
+	/* abort if it's not about a string descriptor */
+	type = req->wValue >> 8;
+	if (type != USB_DT_STRING)
+		return ERR_NOT_FOUND;
+#if 0
+	printf("ep=%02x, bmReqT=%04x, bReq=%02x, wValue=%04x, stage=%d\r\n",
+		ep, req->bmRequestType, req->bRequest, req->wValue, stage);
+#endif
+	/* abort if it's not a standard GET request */
+	index = req->wValue & 0x00FF;
+	switch (index) {
+#if 0
+	case 0:
+		return send_str_desc(ep, req, stage, usb_str_lang);
+#endif
+	case 7: /* STR_DESC_SERIAL */
+		return send_str_desc(ep, req, stage, sernr_buf_descr);
+	default:
+		return ERR_NOT_FOUND;
+	}
+}
+
+
+static struct usbdc_handler string_req_h = {NULL, (FUNC_PTR)string_req_cb};
+
 /**
  * \brief CDC ACM Init
  */
@@ -65,10 +155,12 @@ void cdc_device_acm_init(void)
 {
 	/* usb stack init */
 	usbdc_init(ctrl_buffer);
+	usbdc_register_handler(USBDC_HDL_REQ, &string_req_h);
 
 	/* usbdc_register_funcion inside */
 	cdcdf_acm_init();
 
+	printf("usb_descs_size=%u\r\n", usb_descs[0].eod - usb_descs[0].sod);
 	usbdc_start((struct usbd_descriptors *) usb_descs);
 	usbdc_attach();
 }
@@ -87,7 +179,6 @@ void usb_start(void)
 
 void usb_init(void)
 {
-
 	cdc_device_acm_init();
 	ccid_df_init();
 }
