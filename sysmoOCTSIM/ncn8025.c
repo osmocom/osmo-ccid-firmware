@@ -95,10 +95,10 @@ static const uint8_t slot2int_pin(unsigned int slot)
 	return slot2pin[slot];
 }
 
-bool ncn8025_interrupt_active(uint8_t slot)
+bool ncn8025_interrupt_level(uint8_t slot)
 {
 	uint8_t pin = slot2int_pin(slot);
-	return !gpio_get_pin_level(pin);
+	return gpio_get_pin_level(pin);
 }
 
 
@@ -127,7 +127,7 @@ int ncn8025_get(uint8_t slot, struct ncn8025_settings *set)
 	if (rc < 0)
 		return rc;
 	rc = ncn8025_decode(rc, set);
-	set->interrupt = ncn8025_interrupt_active(slot);
+	set->interrupt = ncn8025_interrupt_level(slot);
 	return rc;
 }
 

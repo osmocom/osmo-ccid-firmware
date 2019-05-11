@@ -26,6 +26,6 @@ struct ncn8025_settings {
 
 int ncn8025_set(uint8_t slot, const struct ncn8025_settings *set);
 int ncn8025_get(uint8_t slot, struct ncn8025_settings *set);
-bool ncn8025_interrupt_active(uint8_t slot);
+bool ncn8025_interrupt_level(uint8_t slot);
 int ncn8025_init(unsigned int slot);
 void ncn8025_dump(const struct ncn8025_settings *set);
