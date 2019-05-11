@@ -19,6 +19,8 @@
 #ifndef USB_DESCRIPTORS_H_
 #define USB_DESCRIPTORS_H_
 
+#include "ccid_device.h"
+
 #define CCID_NUM_CLK_SUPPORTED 4
 
 /* aggregate descriptors for the combined CDC-ACM + CCID device that we expose
