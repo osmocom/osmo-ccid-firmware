@@ -33,7 +33,7 @@
 #define SIM6_BUFFER_SIZE 16
 
 /*! The buffer size for USART */
-#define UART_DEBUG_BUFFER_SIZE 256
+#define UART_DEBUG_BUFFER_SIZE 1024
 
 struct usart_async_descriptor SIM0;
 struct usart_async_descriptor SIM1;
