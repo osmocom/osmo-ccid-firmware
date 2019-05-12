@@ -17,6 +17,7 @@
 */
 
 #include <stdlib.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <math.h>
 #include <parts.h>
@@ -139,6 +140,9 @@ struct ccid_state {
 	struct usb_ep_q irq_ep;
 	/* msgb queue of completed received (OUT EP) */
 	struct usb_ep_q out_ep;
+
+	/* bit-mask of card-insert status, as determined from NCN8025 IRQ output */
+	uint8_t card_insert_mask;
 };
 static struct ccid_state g_ccid_s;
 
@@ -177,6 +181,13 @@ struct msgb *msgb_dequeue_irqsafe(struct llist_head *q)
 	msg = msgb_dequeue(q);
 	CRITICAL_SECTION_LEAVE()
 	return msg;
+}
+
+void msgb_enqueue_irqsafe(struct llist_head *q, struct msgb *msg)
+{
+	CRITICAL_SECTION_ENTER()
+	msgb_enqueue(q, msg);
+	CRITICAL_SECTION_LEAVE()
 }
 
 /* submit the next pending (if any) message for the IN EP */
@@ -287,6 +298,45 @@ static void ccid_irq_write_compl(const uint8_t ep, enum usb_xfer_code code, uint
 	/* submit the next pending to-be-transmitted msgb (if any) */
 	submit_next_irq();
 }
+
+#include "ccid_proto.h"
+struct msgb *ccid_gen_notify_slot_status(const uint8_t *bitmask, uint8_t bm_len)
+{
+	//struct msgb *msg = ccid_msgb_alloc();
+	struct msgb *msg = msgb_alloc(64, "IRQ");
+	struct ccid_rdr_to_pc_notify_slot_change *nsc = msgb_put(msg, sizeof(*nsc) + bm_len);
+	nsc->bMessageType = RDR_to_PC_NotifySlotChange;
+	memcpy(&nsc->bmSlotCCState, bitmask, bm_len);
+
+	return msg;
+}
+
+/* check if any card detect state has changed */
+static void poll_card_detect(void)
+{
+	uint8_t new_mask = 0;
+	struct msgb *msg;
+	unsigned int i;
+
+	for (i = 0; i < 8; i++) {
+		bool irq_level = ncn8025_interrupt_level(i);
+		if (irq_level)
+			new_mask &= ~(1 << i);
+		else
+			new_mask |= (1 << i);
+	}
+
+	/* notify the user/host about any changes */
+	if (g_ccid_s.card_insert_mask != new_mask) {
+		printf("CARD_DET 0x%02x -> 0x%02x\r\n",
+			g_ccid_s.card_insert_mask, new_mask);
+		msg = ccid_gen_notify_slot_status(&new_mask, 1);
+		msgb_enqueue_irqsafe(&g_ccid_s.irq_ep.list, msg);
+
+		g_ccid_s.card_insert_mask = new_mask;
+	}
+}
+
 
 
 /***********************************************************************
@@ -995,5 +1045,6 @@ int main(void)
 	command_print_prompt();
 	while (true) { // main loop
 		command_try_recv();
+		poll_card_detect();
 	}
 }
