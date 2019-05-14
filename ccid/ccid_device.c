@@ -17,6 +17,7 @@ struct ccid_slot {
 	bool icc_present;
 	bool icc_powered;
 	bool icc_in_reset;
+	bool cmd_busy;
 };
 
 struct ccid_ops {
@@ -26,10 +27,15 @@ struct ccid_ops {
 struct ccid_instance {
 	struct ccid_slot slot[NR_SLOTS];
 	struct ccid_ops ops;
+	const char *name;
 };
 
 #define msgb_ccid_out(x) (union ccid_pc_to_rdr *)msgb_data(x)
 #define msgb_ccid_in(x) (union ccid_rdr_to_pc *)msgb_data(x)
+
+#define LOGPCI(ci, lvl, fmt, args ...) LOGP(DCCID, lvl, "%s: " fmt, (ci)->name, ## args)
+#define LOGPCS(cs, lvl, fmt, args ...) \
+	LOGP(DCCID, lvl, "%s(%u): " fmt, (cc)->ci->name, (cc)->slot_nr, ## args)
 
 static struct ccid_slot *get_ccid_slot(struct ccid_instance *ci, uint8_t slot_nr)
 {
@@ -62,6 +68,14 @@ static uint8_t get_icc_status(const struct ccid_slot *cs)
 	(x)->hdr.bError = error;				\
 	} while (0)
 
+#if 0
+static uint8_t ccid_pc_to_rdr_get_seq(const struct ccid_pc_to_rdr *u)
+{
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	return ch->bSeq;
+}
+#endif
+
 /***********************************************************************
  * Message generation / sending
  ***********************************************************************/
@@ -73,11 +87,13 @@ static struct msgb *ccid_msgb_alloc(void)
 	return msg;
 }
 
+/* Send given CCID message */
 static int ccid_send(struct ccid_instance *ci, struct msgb *msg)
 {
 	return ci->ops.send_in(ci, msg);
 }
 
+/* Send given CCID message for given slot; patch bSlot into message */
 static int ccid_slot_send(struct ccid_slot *cs, struct msgb *msg)
 {
 	struct ccid_header *ch = (struct ccid_header *) msgb_ccid_in(msg);
@@ -87,80 +103,207 @@ static int ccid_slot_send(struct ccid_slot *cs, struct msgb *msg)
 	return ccid_send(cs->ci, msg);
 }
 
+/* Send given CCID message and mark slot as un-busy */
+static int ccid_slot_send_unbusy(struct ccid_slot *cs, struct msgb *msg)
+{
+	cs->cmd_busy = false;
+	return ccid_slot_send(cs, msg);
+}
 
 /* Section 6.2.1 */
-static struct msgb *ccid_gen_data_block(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-					 enum ccid_error_code err, const uint8_t *data,
-					 uint32_t data_len)
+static struct msgb *ccid_gen_data_block_nr(uint8_t slot_nr, uint8_t icc_status, uint8_t seq,
+					   uint8_t cmd_sts, enum ccid_error_code err,
+					   const uint8_t *data, uint32_t data_len)
 {
 	struct msgb *msg = ccid_msgb_alloc();
-	struct ccid_rdr_to_pc_data_block *db = 
+	struct ccid_rdr_to_pc_data_block *db =
 		(struct ccid_rdr_to_pc_data_block *) msgb_put(msg, sizeof(*db) + data_len);
-	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | get_icc_status(cs);
+	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
-	SET_HDR_IN(db, RDR_to_PC_DataBlock, cs->slot_nr, seq, sts, err);
+	SET_HDR_IN(db, RDR_to_PC_DataBlock, slot_nr, seq, sts, err);
 	osmo_store32le(data_len, &db->hdr.hdr.dwLength);
 	memcpy(db->abData, data, data_len);
 	return msg;
 }
+static struct msgb *ccid_gen_data_block(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+					 enum ccid_error_code err, const uint8_t *data,
+					 uint32_t data_len)
+{
+	return ccid_gen_data_block_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, data, data_len);
+}
 
 /* Section 6.2.2 */
-static struct msgb *ccid_gen_slot_status(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-					 enum ccid_error_code err)
+static struct msgb *ccid_gen_slot_status_nr(uint8_t slot_nr, uint8_t icc_status,
+					    uint8_t seq, uint8_t cmd_sts,
+					    enum ccid_error_code err)
 {
 	struct msgb *msg = ccid_msgb_alloc();
 	struct ccid_rdr_to_pc_slot_status *ss =
 		(struct ccid_rdr_to_pc_slot_status *) msgb_put(msg, sizeof(*ss));
-	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | get_icc_status(cs);
+	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
-	SET_HDR_IN(ss, RDR_to_PC_SlotStatus, cs->slot_nr, seq, sts, err);
+	SET_HDR_IN(ss, RDR_to_PC_SlotStatus, slot_nr, seq, sts, err);
 	return msg;
+}
+static struct msgb *ccid_gen_slot_status(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+					 enum ccid_error_code err)
+{
+	return ccid_gen_slot_status_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err);
 }
 
 /* Section 6.2.3 */
-/* TODO */
+static struct msgb *ccid_gen_parameters_t0_nr(uint8_t slot_nr, uint8_t icc_status,
+					      uint8_t seq, uint8_t cmd_sts, enum ccid_error_code err,
+					      const struct ccid_proto_data_t0 *t0)
+{
+	struct msgb *msg = ccid_msgb_alloc();
+	struct ccid_rdr_to_pc_parameters *par =
+		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(*t0));
+	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
+
+	SET_HDR_IN(par, RDR_to_PC_Parameters, slot_nr, seq, sts, err);
+	if (t0) {
+		osmo_store32le(sizeof(*t0), &par->hdr.hdr.dwLength);
+		par->abProtocolData.t0 = *t0;
+	}
+	return msg;
+}
+static struct msgb *ccid_gen_parameters_t0(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+					   enum ccid_error_code err,
+					   const struct ccid_proto_data_t0 *t0)
+{
+	return ccid_gen_parameters_t0_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, t0);
+}
+
+static struct msgb *ccid_gen_parameters_t1_nr(uint8_t slot_nr, uint8_t icc_status,
+					      uint8_t seq, uint8_t cmd_sts, enum ccid_error_code err,
+					      const struct ccid_proto_data_t1 *t1)
+{
+	struct msgb *msg = ccid_msgb_alloc();
+	struct ccid_rdr_to_pc_parameters *par =
+		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(*t1));
+	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
+
+	SET_HDR_IN(par, RDR_to_PC_Parameters, slot_nr, seq, sts, err);
+	if (t1) {
+		osmo_store32le(sizeof(*t1), &par->hdr.hdr.dwLength);
+		par->abProtocolData.t1 = *t1;
+	}
+	return msg;
+}
+static struct msgb *ccid_gen_parameters_t1(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+					   enum ccid_error_code err,
+					   const struct ccid_proto_data_t1 *t1)
+{
+	return ccid_gen_parameters_t1_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, t1);
+}
+
 
 /* Section 6.2.4 */
-static struct msgb *ccid_gen_escape(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-				    enum ccid_error_code err, const uint8_t *data,
-				    uint32_t data_len)
+static struct msgb *ccid_gen_escape_nr(uint8_t slot_nr, uint8_t icc_status, uint8_t seq, uint8_t cmd_sts,
+					enum ccid_error_code err, const uint8_t *data, uint32_t data_len)
 {
 	struct msgb *msg = ccid_msgb_alloc();
 	struct ccid_rdr_to_pc_escape *esc =
 		(struct ccid_rdr_to_pc_escape *) msgb_put(msg, sizeof(*esc) + data_len);
-	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | get_icc_status(cs);
+	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
-	SET_HDR_IN(esc, RDR_to_PC_Escape, cs->slot_nr, seq, sts, err);
+	SET_HDR_IN(esc, RDR_to_PC_Escape, slot_nr, seq, sts, err);
 	osmo_store32le(data_len, &esc->hdr.hdr.dwLength);
 	memcpy(esc->abData, data, data_len);
 	return msg;
 }
+static struct msgb *ccid_gen_escape(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+				    enum ccid_error_code err, const uint8_t *data,
+				    uint32_t data_len)
+{
+	return ccid_gen_escape_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, data, data_len);
+}
 
 /* Section 6.2.5 */
-static struct msgb *ccid_gen_clock_and_rate(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-					    enum ccid_error_code err, uint32_t clock_khz, uint32_t rate_bps)
+static struct msgb *ccid_gen_clock_and_rate_nr(uint8_t slot_nr, uint8_t icc_status, uint8_t seq,
+						uint8_t cmd_sts, enum ccid_error_code err,
+						uint32_t clock_khz, uint32_t rate_bps)
 {
 	struct msgb *msg = ccid_msgb_alloc();
 	struct ccid_rdr_to_pc_data_rate_and_clock *drc =
 		(struct ccid_rdr_to_pc_data_rate_and_clock *) msgb_put(msg, sizeof(*drc));
-	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | get_icc_status(cs);
+	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
-	SET_HDR_IN(drc, RDR_to_PC_DataRateAndClockFrequency, cs->slot_nr, seq, sts, err);
+	SET_HDR_IN(drc, RDR_to_PC_DataRateAndClockFrequency, slot_nr, seq, sts, err);
 	osmo_store32le(8, &drc->hdr.hdr.dwLength); /* Message-specific data length (wtf?) */
 	osmo_store32le(clock_khz, &drc->dwClockFrequency); /* kHz */
 	osmo_store32le(rate_bps, &drc->dwDataRate); /* bps */
 	return msg;
 }
-
-
-
-#if 0
-static struct msgb *gen_err_resp(struct ccid_instance *ci, enum ccid_msg_type msg_type,
-				 enum ccid_error_code err_code)
+static struct msgb *ccid_gen_clock_and_rate(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+					    enum ccid_error_code err, uint32_t clock_khz,
+					    uint32_t rate_bps)
 {
-	struct c
+	return ccid_gen_clock_and_rate_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err,
+					  clock_khz, rate_bps);
 }
-#endif
+
+/*! generate an error response for given input message_type/slot_nr/seq
+ *  \param[in] msg_type CCID Message Type against which response is to be created
+ *  \param[in] slot_nr CCID Slot Number
+ *  \param[in] icc_status ICC Status of the slot
+ *  \param[in] seq CCID Sequence number
+ *  \param[in] err_code CCID Error Code to send
+ *  \returns dynamically-allocated message buffer containing error response */
+static struct msgb *gen_err_resp(enum ccid_msg_type msg_type, uint8_t slot_nr, uint8_t icc_status,
+				 uint8_t seq, enum ccid_error_code err_code)
+{
+	struct msgb *resp = NULL;
+
+	switch (msg_type) {
+	case PC_to_RDR_IccPowerOn:
+	case PC_to_RDR_XfrBlock:
+	case PC_to_RDR_Secure:
+		/* Return RDR_to_PC_DataBlock */
+		resp = ccid_gen_data_block_nr(slot_nr, icc_status, seq, CCID_CMD_STATUS_FAILED,
+						err_code, NULL, 0);
+		break;
+
+	case PC_to_RDR_IccPowerOff:
+	case PC_to_RDR_GetSlotStatus:
+	case PC_to_RDR_IccClock:
+	case PC_to_RDR_T0APDU:
+	case PC_to_RDR_Mechanical:
+	case PC_to_RDR_Abort:
+		/* Return RDR_to_PC_SlotStatus */
+		resp = ccid_gen_slot_status_nr(slot_nr, icc_status, seq, CCID_CMD_STATUS_FAILED,
+						err_code);
+		break;
+
+	case PC_to_RDR_GetParameters:
+	case PC_to_RDR_ResetParameters:
+	case PC_to_RDR_SetParameters:
+		/* Return RDR_to_PC_Parameters */
+		resp = ccid_gen_parameters_t0_nr(slot_nr, icc_status, seq, CCID_CMD_STATUS_FAILED,
+						 err_code, NULL); /* FIXME: parameters? */
+		break;
+
+	case PC_to_RDR_Escape:
+		/* Return RDR_to_PC_Escape */
+		resp = ccid_gen_escape_nr(slot_nr, icc_status, seq, CCID_CMD_STATUS_FAILED,
+					  err_code, NULL, 0);
+		break;
+
+	case PC_to_RDR_SetDataRateAndClockFrequency:
+		/* Return RDR_to_PC_SlotStatus */
+		resp = ccid_gen_slot_status_nr(slot_nr, icc_status, seq, CCID_CMD_STATUS_FAILED,
+						err_code);
+		break;
+
+	default:
+		/* generate general error */
+		resp = ccid_gen_slot_status_nr(slot_nr, icc_status, seq, CCID_CMD_STATUS_FAILED,
+						CCID_ERR_CMD_NOT_SUPPORTED);
+		break;
+	}
+	return resp;
+}
 
 /***********************************************************************
  * Message reception / parsing
@@ -170,11 +313,13 @@ static struct msgb *gen_err_resp(struct ccid_instance *ci, enum ccid_msg_type ms
 static int ccid_handle_get_slot_status(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->get_slot_status.hdr.bSeq;
 	struct msgb *resp;
 
-	resp = ccid_gen_slot_status(cs, u->get_slot_status.hdr.bSeq, CCID_CMD_STATUS_OK, 0);
+	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
 
-	return ccid_send(cs->ci, resp);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 
@@ -182,123 +327,195 @@ static int ccid_handle_get_slot_status(struct ccid_slot *cs, struct msgb *msg)
 static int ccid_handle_icc_power_on(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->icc_power_on.hdr.bSeq;
 	struct msgb *resp;
 
 	/* TODO: send actual ATR; handle error cases */
 	/* TODO: handle this asynchronously */
-	resp = ccid_gen_data_block(cs, u->icc_power_on.hdr.bSeq, CCID_CMD_STATUS_OK, 0, NULL, 0);
+	resp = ccid_gen_data_block(cs, seq, CCID_CMD_STATUS_OK, 0, NULL, 0);
 
-	return ccid_send(cs->ci, resp);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.2 */
 static int ccid_handle_icc_power_off(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->icc_power_off.hdr.bSeq;
 	struct msgb *resp;
 
-	resp = ccid_gen_slot_status(cs, u->get_slot_status.hdr.bSeq, CCID_CMD_STATUS_OK, 0);
-	return ccid_send(cs->ci, resp);
+	/* FIXME */
+	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.4 */
 static int ccid_handle_xfr_block(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->xfr_block.hdr.bSeq;
 	struct msgb *resp;
 
-	resp = ccid_gen_data_block(cs, u->icc_power_on.hdr.bSeq, CCID_CMD_STATUS_OK, 0, NULL, 0);
-	return ccid_send(cs->ci, resp);
+	/* FIXME */
+	resp = ccid_gen_data_block(cs, seq, CCID_CMD_STATUS_OK, 0, NULL, 0);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.5 */
 static int ccid_handle_get_parameters(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->get_parameters.hdr.bSeq;
 	struct msgb *resp;
+
+	/* FIXME */
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.6 */
 static int ccid_handle_reset_parameters(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->reset_parameters.hdr.bSeq;
 	struct msgb *resp;
+
+	/* FIXME */
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.7 */
 static int ccid_handle_set_parameters(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->set_parameters.hdr.bSeq;
 	struct msgb *resp;
+
+	/* FIXME */
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.8 */
 static int ccid_handle_escape(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->escape.hdr.bSeq;
 	struct msgb *resp;
+
+	resp = ccid_gen_escape(cs, seq, CCID_CMD_STATUS_FAILED, CCID_ERR_CMD_NOT_SUPPORTED, NULL, 0);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.9 */
 static int ccid_handle_icc_clock(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->icc_clock.hdr.bSeq;
 	struct msgb *resp;
 
-	resp = ccid_gen_slot_status(cs, u->get_slot_status.hdr.bSeq, CCID_CMD_STATUS_OK, 0);
-	return ccid_send(cs->ci, resp);
+	/* FIXME: Actually Stop/Start the clock */
+	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.10 */
 static int ccid_handle_t0apdu(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->t0apdu.hdr.bSeq;
 	struct msgb *resp;
 
-	resp = ccid_gen_slot_status(cs, u->get_slot_status.hdr.bSeq, CCID_CMD_STATUS_OK, 0);
-	return ccid_send(cs->ci, resp);
+	/* FIXME */
+	//resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
+	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_FAILED, CCID_ERR_CMD_NOT_SUPPORTED);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.11 */
 static int ccid_handle_secure(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->secure.hdr.bSeq;
+	struct msgb *resp;
+
+	/* FIXME */
+	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_FAILED, CCID_ERR_CMD_NOT_SUPPORTED);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.12 */
 static int ccid_handle_mechanical(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->mechanical.hdr.bSeq;
 	struct msgb *resp;
 
-	resp = ccid_gen_slot_status(cs, u->get_slot_status.hdr.bSeq, CCID_CMD_STATUS_OK, 0);
-	return ccid_send(cs->ci, resp);
+	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_FAILED, CCID_ERR_CMD_NOT_SUPPORTED);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.13 */
 static int ccid_handle_abort(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->abort.hdr.bSeq;
 	struct msgb *resp;
 
-	resp = ccid_gen_slot_status(cs, u->get_slot_status.hdr.bSeq, CCID_CMD_STATUS_OK, 0);
-	return ccid_send(cs->ci, resp);
+	/* Check if the currently in-progress message is Abortable */
+	switch (0/* FIXME */) {
+	case PC_to_RDR_IccPowerOn:
+	case PC_to_RDR_XfrBlock:
+	case PC_to_RDR_Escape:
+	case PC_to_RDR_Secure:
+	case PC_to_RDR_Mechanical:
+	//case PC_to_RDR_Abort: /* seriously? WTF! */
+		break;
+	default:
+		/* CCID spec lists CMD_NOT_ABORTED, but gives no numberic value ?!? */
+		resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_FAILED, CCID_ERR_CMD_NOT_SUPPORTED);
+		return ccid_slot_send_unbusy(cs, resp);
+	}
+
+	/* FIXME */
+	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 6.1.14 */
 static int ccid_handle_set_rate_and_clock(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_header *ch = (const struct ccid_header *) u;
+	uint8_t seq = u->set_rate_and_clock.hdr.bSeq;
 	struct msgb *resp;
+
+	/* FIXME */
+	resp = ccid_gen_clock_and_rate(cs, seq, CCID_CMD_STATUS_OK, 0, 9600, 2500000);
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
-/* handle data arriving from the host on the OUT endpoint */
+/*! Handle data arriving from the host on the OUT endpoint.
+ *  \param[in] cs CCID Instance on which to operate
+ *  \param[in] msgb received message buffer containing one CCID OUT EP message from the host
+ *  \returns 0 on success; negative on error */
 int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
 	const struct ccid_header *ch = (const struct ccid_header *) u;
 	unsigned int len = msgb_length(msg);
 	struct ccid_slot *cs;
+	struct msgb *resp;
 	int rc;
 
 	if (len < sizeof(*ch)) {
@@ -306,11 +523,25 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		return -1;
 	}
 
+	/* Check for invalid slot number */
 	cs = get_ccid_slot(ci, ch->bSlot);
 	if (!cs) {
-		/* FIXME */
-		return -1;
+		resp = gen_err_resp(ch->bMessageType, ch->bSlot, CCID_ICC_STATUS_NO_ICC, ch->bSeq, 5);
+		return ccid_send(ci, resp);
 	}
+
+	/* Check if slot is already busy; Reject any additional commands meanwhile */
+	if (cs->cmd_busy) {
+		/* FIXME: ABORT logic as per section 5.3.1 of CCID Spec v1.1 */
+		resp = gen_err_resp(ch->bMessageType, ch->bSlot, get_icc_status(cs), ch->bSeq,
+					CCID_ERR_CMD_SLOT_BUSY);
+		return ccid_send(ci, resp);
+	}
+
+	/* we're now processing a command for the slot; mark slot as busy */
+	cs->cmd_busy = true;
+
+	/* TODO: enqueue into the per-slot specific input queue */
 
 	switch (ch->bMessageType) {
 	case PC_to_RDR_GetSlotStatus:
@@ -384,8 +615,10 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		rc = ccid_handle_set_rate_and_clock(cs, msg);
 		break;
 	default:
-		/* FIXME */
-		break;
+		/* generic response with bERror = 0 (command not supported) */
+		resp = gen_err_resp(ch->bMessageType, ch->bSlot, CCID_ICC_STATUS_NO_ICC, ch->bSeq,
+				    CCID_ERR_CMD_NOT_SUPPORTED);
+		return ccid_slot_send_unbusy(cs, resp);
 	}
 	return 0;
 
