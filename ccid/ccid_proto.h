@@ -303,14 +303,14 @@ struct ccid_rdr_to_pc_parameters {
 
 /* Section 6.2.4 RDR_to_PC_Escape */
 struct ccid_rdr_to_pc_escape {
-	struct ccid_header hdr;
+	struct ccid_header_in hdr;
 	uint8_t bRFU;
 	uint8_t abData[0];
 } __attribute__ ((packed));
 
 /* Section 6.2.5 RDR_to_PC_DataRateAndClockFrequency */
 struct ccid_rdr_to_pc_data_rate_and_clock {
-	struct ccid_header hdr;
+	struct ccid_header_in hdr;
 	uint8_t bRFU;
 	uint32_t dwClockFrequency;
 	uint32_t dwDataRate;
