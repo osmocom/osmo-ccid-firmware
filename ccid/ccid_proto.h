@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <osmocom/core/utils.h>
 
 /* Identifies the length of type of subordinate descriptors of a CCID device
  * Table 5.1-1 Smart Card Device Class descriptors */
@@ -372,3 +373,11 @@ union ccid_rdr_to_pc_irq {
 	struct ccid_rdr_to_pc_notify_slot_change	slot_change;
 	struct ccid_rdr_to_pc_hardware_error		hw_error;
 };
+
+
+extern const struct value_string ccid_msg_type_vals[];
+extern const struct value_string ccid_class_spec_req_vals[];
+extern const struct value_string ccid_power_select_vals[];
+extern const struct value_string ccid_clock_command_vals[];
+extern const struct value_string ccid_error_code_vals[];
+
