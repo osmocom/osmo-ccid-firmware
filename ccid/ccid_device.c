@@ -157,7 +157,7 @@ static struct msgb *ccid_msgb_alloc(void)
 /* Send given CCID message */
 static int ccid_send(struct ccid_instance *ci, struct msgb *msg)
 {
-	return ci->ops.send_in(ci, msg);
+	return ci->ops->send_in(ci, msg);
 }
 
 /* Send given CCID message for given slot; patch bSlot into message */
@@ -716,4 +716,19 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 short_msg:
 	/* FIXME */
 	return -1;
+}
+
+void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops, const char *name,
+			void *priv)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(ci->slot); i++) {
+		struct ccid_slot *cs = &ci->slot[i];
+		cs->slot_nr = i;
+		cs->ci = ci;
+	}
+	ci->ops= ops;
+	ci->name = name;
+	ci->priv = priv;
 }

@@ -277,16 +277,19 @@ static int evfd_cb(struct osmo_fd *ofd, unsigned int what)
 		} else if (fd == uh->ep_in.fd) {
 			/* IN endpoint AIO has completed. This means the IN transfer which
 			 * we sent to the host has completed */
+			msgb_free(uh->aio_in.msg);
+			uh->aio_in.msg = NULL;
 		} else if (fd == uh->ep_out.fd) {
 			/* IN endpoint AIO has completed. This means the host has sent us
 			 * some OUT data */
-			//printf("\t%s\n", osmo_hexdump(uh->aio_out.buf, evt[i].res));
-			//ccid_handle_out(uh->ccid_handle, uh->aio_out.buf, evt[i].res);
 			msgb_put(uh->aio_out.msg, evt[i].res);
+			printf("\t%s\n", msgb_hexdump(uh->aio_out.msg));
+			//ccid_handle_out(uh->ccid_handle, uh->aio_out.buf, evt[i].res);
 			ccid_handle_out(uh->ccid_handle, uh->aio_out.msg);
 			aio_refill_out(uh);
 		}
 	}
+	return 0;
 }
 #endif
 
@@ -353,11 +356,36 @@ static int ep0_init(struct ufunc_handle *uh)
 	return 0;
 }
 
+static int ccid_ops_send_in(struct ccid_instance *ci, struct msgb *msg)
+{
+	struct ufunc_handle *uh = ci->priv;
+	struct aio_help *ah = &uh->aio_in;
+	int rc;
+
+	/* FIXME: does this work with multiple iocbs? probably not yet! */
+	ah->iocb = malloc(sizeof(struct iocb));
+	OSMO_ASSERT(ah->iocb);
+	ah->msg = msg;
+	io_prep_pwrite(ah->iocb, uh->ep_in.fd, msgb_data(msg), msgb_length(msg), 0);
+	io_set_eventfd(ah->iocb, uh->aio_evfd.fd);
+	rc = io_submit(uh->aio_ctx, 1, &ah->iocb);
+	OSMO_ASSERT(rc >= 0);
+
+	return 0;
+}
+
+static const struct ccid_ops c_ops = {
+	.send_in = ccid_ops_send_in,
+};
 
 int main(int argc, char **argv)
 {
 	struct ufunc_handle ufh = (struct ufunc_handle) { 0, };
+	struct ccid_instance ci = (struct ccid_instance) { 0, };
 	int rc;
+
+	ccid_instance_init(&ci, &c_ops, "", &ufh);
+	ufh.ccid_handle = &ci;
 
 	chdir(argv[1]);
 	rc = ep0_init(&ufh);

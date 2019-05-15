@@ -63,8 +63,12 @@ struct ccid_instance {
 	/* slots within the reader */
 	struct ccid_slot slot[NR_SLOTS];
 	/* set of function pointers implementing specific operations */
-	const struct ccid_ops ops;
+	const struct ccid_ops *ops;
 	const char *name;
+	/* user-supplied opaque data */
+	void *priv;
 };
 
+void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops, const char *name,
+			void *priv);
 int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg);
