@@ -1,0 +1,15 @@
+Index: linux-source-4.19/drivers/usb/gadget/function/f_fs.c
+===================================================================
+--- linux-source-4.19.orig/drivers/usb/gadget/function/f_fs.c
++++ linux-source-4.19/drivers/usb/gadget/function/f_fs.c
+@@ -2000,8 +2000,8 @@
+ 
+ 	case HID_DT_HID:
+ 		pr_vdebug("hid descriptor\n");
+-		if (length != sizeof(struct hid_descriptor))
+-			goto inv_length;
++		//if (length != sizeof(struct hid_descriptor))
++			//goto inv_length;
+ 		break;
+ 
+ 	case USB_DT_OTG:

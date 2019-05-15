@@ -1,0 +1,98 @@
+Requirements
+============
+
+* you need dummy_hcd.ko, i.e. a kernel compiled with CONFIG_USB_DUMMY_HCD=m
+* you need a fixed usb_f_fs.ko, which doesn't make blind assumptions about
+  everything being a HID descriptor.  See CCID.patch
+
+On a stock Debian system, this works as follows (kernel versions will change over time,
+in my case `uname -r` shows 4.19.0-4-amd64).
+
+----
+apt-get install linux-headers-4.19.0-4-amd64 linux-source-4.19
+cd /usr/src
+tar xf linux-source-4.19.tar.xz
+cd linux-source-4.19
+ln -s /boot/config-4.19.0-4-amd64 .config
+ln -s /usr/src/linux-headers-4.19.0-4-amd64/Module.symvers .
+patch -p1 < /my/path/to/CCID.patch
+# edit .config and set CONFIG_USB_DUMMY_HCD=m
+make modules_prepare
+make M=drivers/usb/gadget/function
+make M=drivers/usb/gadget/udc
+cp drivers/usb/gadget/function/usb_f_fs.ko /lib/modules/`uname -r`/kernel/drivers/usb/gadget/function/
+cp drivers/usb/gadget/udc/dummy_hcd.ko /lib/modules/`uname -r`/kernel/drivers/usb/gadget/udc/
+depmod
+----
+
+
+Running
+-------
+
+You first have to run the `create_ccid_gadget.sh` script, which will
+
+* load the required kernel modules with their respective options
+* use usb-gadget-configfs to create a new device with configuration + interface
+* mount the resulting endpoints as usb functionfs to /dev/ffs-ccid
+
+Next, you run the actual userspace implementation of the gadget, telling it the functionfs path
+
+	./ccid_functionfs /dev/ffs-ccid
+
+which should make your 'dmesg' show something like
+
+----
+read descriptors
+read strings
+----
+
+Finally, you can virtually connect the gadget to the virtual host controller by issuing
+
+	echo dummy_udc.0 > /sys/kernel/config/usb_gadget/osmo-ccid/UDC
+
+at which point your 'dmesg' should print something along the lines of
+
+----
+usb 3-1: new full-speed USB device number 8 using dummy_hcd
+usb 3-1: New USB device found, idVendor=2342, idProduct=2342, bcdDevice= 4.19
+usb 3-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+usb 3-1: Product: sysmoOCTSIM
+usb 3-1: Manufacturer: sysmocom GmbH
+usb 3-1: SerialNumber: 2342
+configfs-gadget gadget: full-speed config #1: c
+----
+
+
+Using from pcsc-lite
+--------------------
+
+In order to make pcsc-lite recognize the reader, you'll need to add the VID/PID
+to the /etc/libccid_Info.plist with a diff like this:
+
+--- /tmp/libccid_Info.plist	2019-05-15 22:02:07.892925425 +0200
++++ /etc/libccid_Info.plist	2018-12-27 16:18:01.026824476 +0100
+@@ -525,6 +525,7 @@
+ 		<string>0x08C3</string>
+ 		<string>0x15E1</string>
+ 		<string>0x062D</string>
++		<string>0x2342</string>
+ 	</array>
+ 
+ 	<key>ifdProductID</key>
+@@ -952,6 +953,7 @@
+ 		<string>0x0402</string>
+ 		<string>0x2007</string>
+ 		<string>0x0001</string>
++		<string>0x2342</string>
+ 	</array>
+ 
+ 	<key>ifdFriendlyName</key>
+@@ -1379,6 +1381,7 @@
+ 		<string>Precise Biometrics Precise 200 MC</string>
+ 		<string>RSA RSA SecurID (R) Authenticator</string>
+ 		<string>THRC Smart Card Reader</string>
++		<string>sysmoOCTSIM Test Reader</string>
+ 	</array>
+ 
+ 	<key>Copyright</key>
+
