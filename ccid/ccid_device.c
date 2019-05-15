@@ -11,6 +11,28 @@
 
 #define NR_SLOTS	8
 
+struct ccid_pars_decoded {
+	/* global for T0/T1 */
+	uint8_t fi;
+	uint8_t di;
+	enum ccid_clock_stop clock_stop;
+	bool inverse_convention;
+
+	struct {
+		uint8_t guard_time_etu;
+		uint8_t waiting_integer;
+	} t0;
+
+	struct {
+		enum ccid_t1_csum_type csum_type;
+		uint8_t guard_time_t1;
+		uint8_t bwi;
+		uint8_t cwi;
+		uint8_t ifsc;
+		uint8_t nad;
+	} t1;
+};
+
 struct ccid_slot {
 	struct ccid_instance *ci;
 	uint8_t slot_nr;
@@ -18,7 +40,99 @@ struct ccid_slot {
 	bool icc_powered;
 	bool icc_in_reset;
 	bool cmd_busy;
+	struct ccid_pars_decoded pars;
 };
+
+/* decode on-the-wire T0 parameters into their parsed form */
+static int decode_ccid_pars_t0(struct ccid_pars_decoded *out, const struct ccid_proto_data_t0 *in)
+{
+	/* input validation: only 0x00 and 0x02 permitted for bmTCCKST0 */
+	if (in->bmTCCKST0 & 0xFD)
+		return -11;
+	/* input validation: only 0x00 to 0x03 permitted for bClockSTop */
+	if (in->bClockStop & 0xFC)
+		return -14;
+
+	out->fi = in->bmFindexDindex >> 4;
+	out->di = in->bmFindexDindex & 0xF;
+	if (in->bmTCCKST0 & 2)
+		out->inverse_convention = true;
+	else
+		out->inverse_convention = false;
+	if (in->bGuardTimeT0 == 0xff)
+		out->t0.guard_time_etu = 0;
+	else
+		out->t0.guard_time_etu = in->bGuardTimeT0;
+	out->t0.waiting_integer = in->bWaitingIntegerT0;
+	out->clock_stop = in->bClockStop & 0x03;
+
+	return 0;
+}
+
+/* encode T0 parameters from parsed form into on-the-wire encoding */
+static void encode_ccid_pars_t0(struct ccid_proto_data_t0 *out, const struct ccid_pars_decoded *in)
+{
+	out->bmFindexDindex = ((in->fi << 4) & 0xF0) | (in->di & 0x0F);
+	if (in->inverse_convention)
+		out->bmTCCKST0 = 0x02;
+	else
+		out->bmTCCKST0 = 0x00;
+	out->bGuardTimeT0 = in->t0.guard_time_etu;
+	out->bWaitingIntegerT0 = in->t0.waiting_integer;
+	out->bClockStop = in->clock_stop & 0x03;
+}
+
+/* decode on-the-wire T1 parameters into their parsed form */
+static int decode_ccid_pars_t1(struct ccid_pars_decoded *out, const struct ccid_proto_data_t1 *in)
+{
+	/* input validation: only some values permitted for bmTCCKST0 */
+	if (in->bmTCCKST1 & 0xE8)
+		return -11;
+	/* input validation: only 0x00 to 0x9F permitted for bmWaitingIntegersT1 */
+	if (in->bWaitingIntegersT1 > 0x9F)
+		return -13;
+	/* input validation: only 0x00 to 0x03 permitted for bClockSTop */
+	if (in->bClockStop & 0xFC)
+		return -14;
+	/* input validation: only 0x00 to 0xFE permitted for bIFSC */
+	if (in->bIFSC > 0xFE)
+		return -15;
+
+	out->fi = in->bmFindexDindex >> 4;
+	out->di = in->bmFindexDindex & 0xF;
+	if (in->bmTCCKST1 & 1)
+		out->t1.csum_type = CCID_CSUM_TYPE_CRC;
+	else
+		out->t1.csum_type = CCID_CSUM_TYPE_LRC;
+	if (in->bmTCCKST1 & 2)
+		out->inverse_convention = true;
+	else
+		out->inverse_convention = false;
+	out->t1.guard_time_t1 = in->bGuardTimeT1;
+	out->t1.bwi = in->bWaitingIntegersT1 >> 4;
+	out->t1.cwi = in->bWaitingIntegersT1 & 0xF;
+	out->clock_stop = in->bClockStop & 0x03;
+	out->t1.ifsc = in->bIFSC;
+	out->t1.nad = in->bNadValue;
+
+	return 0;
+}
+
+/* encode T1 parameters from parsed form into on-the-wire encoding */
+static void encode_ccid_pars_t1(struct ccid_proto_data_t1 *out, const struct ccid_pars_decoded *in)
+{
+	out->bmFindexDindex = ((in->fi << 4) & 0xF0) | (in->di & 0x0F);
+	out->bmTCCKST1 = 0x10;
+	if (in->t1.csum_type == CCID_CSUM_TYPE_CRC)
+		out->bmTCCKST1 |= 0x01;
+	if (in->inverse_convention)
+		out->bmTCCKST1 |= 0x02;
+	out->bGuardTimeT1 = in->t1.guard_time_t1;
+	out->bWaitingIntegersT1 = ((in->t1.bwi << 4) & 0xF0) | (in->t1.cwi & 0x0F);
+	out->bClockStop = in->clock_stop & 0x03;
+	out->bIFSC = in->t1.ifsc;
+	out->bNadValue = in->t1.nad;
+}
 
 struct ccid_ops {
 	int (*send_in)(struct ccid_instance *ci, struct msgb *msg);
@@ -154,48 +268,46 @@ static struct msgb *ccid_gen_slot_status(struct ccid_slot *cs, uint8_t seq, uint
 /* Section 6.2.3 */
 static struct msgb *ccid_gen_parameters_t0_nr(uint8_t slot_nr, uint8_t icc_status,
 					      uint8_t seq, uint8_t cmd_sts, enum ccid_error_code err,
-					      const struct ccid_proto_data_t0 *t0)
+					      const struct ccid_pars_decoded *dec_par)
 {
 	struct msgb *msg = ccid_msgb_alloc();
 	struct ccid_rdr_to_pc_parameters *par =
-		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(*t0));
+		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(par->abProtocolData.t0));
 	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
 	SET_HDR_IN(par, RDR_to_PC_Parameters, slot_nr, seq, sts, err);
-	if (t0) {
-		osmo_store32le(sizeof(*t0), &par->hdr.hdr.dwLength);
-		par->abProtocolData.t0 = *t0;
+	if (dec_par) {
+		osmo_store32le(sizeof(par->abProtocolData.t0), &par->hdr.hdr.dwLength);
+		encode_ccid_pars_t0(&par->abProtocolData.t0, dec_par);
 	}
 	return msg;
 }
 static struct msgb *ccid_gen_parameters_t0(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-					   enum ccid_error_code err,
-					   const struct ccid_proto_data_t0 *t0)
+					   enum ccid_error_code err)
 {
-	return ccid_gen_parameters_t0_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, t0);
+	return ccid_gen_parameters_t0_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, &cs->pars);
 }
 
 static struct msgb *ccid_gen_parameters_t1_nr(uint8_t slot_nr, uint8_t icc_status,
 					      uint8_t seq, uint8_t cmd_sts, enum ccid_error_code err,
-					      const struct ccid_proto_data_t1 *t1)
+					      const struct ccid_pars_decoded *dec_par)
 {
 	struct msgb *msg = ccid_msgb_alloc();
 	struct ccid_rdr_to_pc_parameters *par =
-		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(*t1));
+		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(par->abProtocolData.t1));
 	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
 	SET_HDR_IN(par, RDR_to_PC_Parameters, slot_nr, seq, sts, err);
-	if (t1) {
-		osmo_store32le(sizeof(*t1), &par->hdr.hdr.dwLength);
-		par->abProtocolData.t1 = *t1;
+	if (dec_par) {
+		osmo_store32le(sizeof(par->abProtocolData.t1), &par->hdr.hdr.dwLength);
+		encode_ccid_pars_t1(&par->abProtocolData.t1, dec_par);
 	}
 	return msg;
 }
 static struct msgb *ccid_gen_parameters_t1(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-					   enum ccid_error_code err,
-					   const struct ccid_proto_data_t1 *t1)
+					   enum ccid_error_code err)
 {
-	return ccid_gen_parameters_t1_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, t1);
+	return ccid_gen_parameters_t1_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, &cs->pars);
 }
 
 
@@ -372,7 +484,8 @@ static int ccid_handle_get_parameters(struct ccid_slot *cs, struct msgb *msg)
 	uint8_t seq = u->get_parameters.hdr.bSeq;
 	struct msgb *resp;
 
-	/* FIXME */
+	/* FIXME: T=1 */
+	resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
 	return ccid_slot_send_unbusy(cs, resp);
 }
 
@@ -384,7 +497,9 @@ static int ccid_handle_reset_parameters(struct ccid_slot *cs, struct msgb *msg)
 	uint8_t seq = u->reset_parameters.hdr.bSeq;
 	struct msgb *resp;
 
-	/* FIXME */
+	/* FIXME: copy default parameters from somewhere */
+	/* FIXME: T=1 */
+	resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
 	return ccid_slot_send_unbusy(cs, resp);
 }
 
@@ -392,11 +507,34 @@ static int ccid_handle_reset_parameters(struct ccid_slot *cs, struct msgb *msg)
 static int ccid_handle_set_parameters(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	const struct ccid_pc_to_rdr_set_parameters *spar = &u->set_parameters;
 	const struct ccid_header *ch = (const struct ccid_header *) u;
 	uint8_t seq = u->set_parameters.hdr.bSeq;
+	struct ccid_pars_decoded pars_dec;
 	struct msgb *resp;
+	int rc;
 
-	/* FIXME */
+	switch (spar->bProtocolNum) {
+	case CCID_PROTOCOL_NUM_T0:
+		rc = decode_ccid_pars_t0(&pars_dec, &spar->abProtocolData.t0);
+		if (rc < 0)
+			resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
+		/* FIXME: validate parameters; abort if they are not supported */
+		cs->pars = pars_dec;
+		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
+		break;
+	case CCID_PROTOCOL_NUM_T1:
+		rc = decode_ccid_pars_t1(&pars_dec, &spar->abProtocolData.t1);
+		if (rc < 0)
+			resp = ccid_gen_parameters_t1(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
+		/* FIXME: validate parameters; abort if they are not supported */
+		cs->pars = pars_dec;
+		resp = ccid_gen_parameters_t1(cs, seq, CCID_CMD_STATUS_OK, 0);
+		break;
+	default:
+		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, 0);
+		break;
+	}
 	return ccid_slot_send_unbusy(cs, resp);
 }
 

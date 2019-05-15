@@ -132,6 +132,23 @@ struct ccid_pc_to_rdr_reset_parameters {
 /* Response: RDR_to_PC_Parameters */
 
 /* Section 6.1.7 */
+enum ccid_protocol_num {
+	CCID_PROTOCOL_NUM_T0	= 0x00,
+	CCID_PROTOCOL_NUM_T1	= 0x01,
+	CCID_PROTOCOL_NUM_2WIRE	= 0x80,
+	CCID_PROTOCOL_NUM_3WIRE	= 0x81,
+	CCID_PROTOCOL_NUM_I2C	= 0x82,
+};
+enum ccid_clock_stop {
+	CCID_CLOCK_STOP_NOTALLOWED	= 0x00,
+	CCID_CLOCK_STOP_LOW		= 0x01,
+	CCID_CLOCK_STOP_HIGH		= 0x02,
+	CCID_CLOCK_STOP_EITHER		= 0x03,
+};
+enum ccid_t1_csum_type {
+	CCID_CSUM_TYPE_LRC	= 0,
+	CCID_CSUM_TYPE_CRC	= 1,
+};
 struct ccid_proto_data_t0 {
 	uint8_t bmFindexDindex;
 	uint8_t bmTCCKST0;
@@ -145,7 +162,7 @@ struct ccid_proto_data_t1 {
 	uint8_t bGuardTimeT1;
 	uint8_t bWaitingIntegersT1;
 	uint8_t bClockStop;
-	uint8_t bFSC;
+	uint8_t bIFSC;
 	uint8_t bNadValue;
 } __attribute__ ((packed));
 struct ccid_pc_to_rdr_set_parameters {
