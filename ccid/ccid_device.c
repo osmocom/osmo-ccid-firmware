@@ -6,6 +6,7 @@
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/core/logging.h>
 
 #include "ccid_proto.h"
 #include "ccid_device.h"
@@ -157,6 +158,15 @@ static struct msgb *ccid_msgb_alloc(void)
 /* Send given CCID message */
 static int ccid_send(struct ccid_instance *ci, struct msgb *msg)
 {
+	struct ccid_header *ch = (struct ccid_header *) msgb_ccid_in(msg);
+	struct ccid_slot *cs = get_ccid_slot(ci, ch->bSlot);
+	if (cs) {
+		LOGPCS(cs, LOGL_DEBUG, "Tx CCID(IN) %s %s\n",
+			get_value_string(ccid_msg_type_vals, ch->bMessageType), msgb_hexdump(msg));
+	} else {
+		LOGPCI(ci, LOGL_DEBUG, "Tx CCID(IN) %s %s\n",
+			get_value_string(ccid_msg_type_vals, ch->bMessageType), msgb_hexdump(msg));
+	}
 	return ci->ops->send_in(ci, msg);
 }
 
@@ -470,24 +480,32 @@ static int ccid_handle_set_parameters(struct ccid_slot *cs, struct msgb *msg)
 	switch (spar->bProtocolNum) {
 	case CCID_PROTOCOL_NUM_T0:
 		rc = decode_ccid_pars_t0(&pars_dec, &spar->abProtocolData.t0);
-		if (rc < 0)
+		if (rc < 0) {
+			LOGP(DCCID, LOGL_ERROR, "SetParameters: Unable to parse T0: %d\n", rc);
 			resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
+			goto out;
+		}
 		/* FIXME: validate parameters; abort if they are not supported */
 		cs->pars = pars_dec;
 		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
 		break;
 	case CCID_PROTOCOL_NUM_T1:
 		rc = decode_ccid_pars_t1(&pars_dec, &spar->abProtocolData.t1);
-		if (rc < 0)
+		if (rc < 0) {
+			LOGP(DCCID, LOGL_ERROR, "SetParameters: Unable to parse T1: %d\n", rc);
 			resp = ccid_gen_parameters_t1(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
+			goto out;
+		}
 		/* FIXME: validate parameters; abort if they are not supported */
 		cs->pars = pars_dec;
 		resp = ccid_gen_parameters_t1(cs, seq, CCID_CMD_STATUS_OK, 0);
 		break;
 	default:
+		LOGP(DCCID, LOGL_ERROR, "SetParameters: Invalid Protocol 0x%02x\n",spar->bProtocolNum);
 		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, 0);
 		break;
 	}
+out:
 	return ccid_slot_send_unbusy(cs, resp);
 }
 
@@ -573,6 +591,7 @@ static int ccid_handle_abort(struct ccid_slot *cs, struct msgb *msg)
 	//case PC_to_RDR_Abort: /* seriously? WTF! */
 		break;
 	default:
+		LOGP(DCCID, LOGL_ERROR, "Abort for non-Abortable Message Type\n");
 		/* CCID spec lists CMD_NOT_ABORTED, but gives no numberic value ?!? */
 		resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_FAILED, CCID_ERR_CMD_NOT_SUPPORTED);
 		return ccid_slot_send_unbusy(cs, resp);
@@ -617,17 +636,22 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 	/* Check for invalid slot number */
 	cs = get_ccid_slot(ci, ch->bSlot);
 	if (!cs) {
+		LOGPCI(ci, LOGL_ERROR, "Invalid bSlot %u\n", ch->bSlot);
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, CCID_ICC_STATUS_NO_ICC, ch->bSeq, 5);
 		return ccid_send(ci, resp);
 	}
 
 	/* Check if slot is already busy; Reject any additional commands meanwhile */
 	if (cs->cmd_busy) {
+		LOGPCS(cs, LOGL_ERROR, "Slot Busy, but another cmd received\n");
 		/* FIXME: ABORT logic as per section 5.3.1 of CCID Spec v1.1 */
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, get_icc_status(cs), ch->bSeq,
 					CCID_ERR_CMD_SLOT_BUSY);
 		return ccid_send(ci, resp);
 	}
+
+	LOGPCS(cs, LOGL_DEBUG, "Rx CCID(OUT) %s %s\n",
+		get_value_string(ccid_msg_type_vals, ch->bMessageType), msgb_hexdump(msg));
 
 	/* we're now processing a command for the slot; mark slot as busy */
 	cs->cmd_busy = true;
@@ -707,6 +731,7 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		break;
 	default:
 		/* generic response with bERror = 0 (command not supported) */
+		LOGP(DCCID, LOGL_NOTICE, "Unknown CCID Message received: 0x%02x\n", ch->bMessageType);
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, CCID_ICC_STATUS_NO_ICC, ch->bSeq,
 				    CCID_ERR_CMD_NOT_SUPPORTED);
 		return ccid_slot_send_unbusy(cs, resp);
@@ -714,7 +739,7 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 	return 0;
 
 short_msg:
-	/* FIXME */
+	LOGP(DCCID, LOGL_ERROR, "Short CCID message received: %s; ignoring\n", msgb_hexdump(msg));
 	return -1;
 }
 

@@ -2,12 +2,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+enum {
+	DCCID,
+	DUSB,
+};
 
 #define NR_SLOTS	8
 
 #define LOGPCI(ci, lvl, fmt, args ...) LOGP(DCCID, lvl, "%s: " fmt, (ci)->name, ## args)
 #define LOGPCS(cs, lvl, fmt, args ...) \
-	LOGP(DCCID, lvl, "%s(%u): " fmt, (cc)->ci->name, (cc)->slot_nr, ## args)
+	LOGP(DCCID, lvl, "%s(%u): " fmt, (cs)->ci->name, (cs)->slot_nr, ## args)
 
 struct msgb;
 

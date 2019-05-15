@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <stdint.h>
 #include <endian.h>
 #include <sys/types.h>
@@ -132,6 +133,9 @@ static const struct {
 #include <osmocom/core/select.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/msgb.h>
+#include <osmocom/core/utils.h>
+#include <osmocom/core/application.h>
+#include <osmocom/core/logging.h>
 
 #include "ccid_device.h"
 
@@ -161,7 +165,7 @@ struct ufunc_handle {
 
 static int ep_int_cb(struct osmo_fd *ofd, unsigned int what)
 {
-	printf("INT\n");
+	LOGP(DUSB, LOGL_DEBUG, "%s\n", __func__);
 	return 0;
 }
 
@@ -171,7 +175,7 @@ static int ep_out_cb(struct osmo_fd *ofd, unsigned int what)
 	struct msgb *msg = msgb_alloc(512, "OUT-Rx");
 	int rc;
 
-	printf("OUT\n");
+	LOGP(DUSB, LOGL_DEBUG, "%s\n", __func__);
 	if (what & BSC_FD_READ) {
 		rc = read(ofd->fd, msgb_data(msg), msgb_tailroom(msg));
 		if (rc <= 0) {
@@ -187,7 +191,7 @@ static int ep_out_cb(struct osmo_fd *ofd, unsigned int what)
 
 static int ep_in_cb(struct osmo_fd *ofd, unsigned int what)
 {
-	printf("IN\n");
+	LOGP(DUSB, LOGL_DEBUG, "%s\n", __func__);
 	if (what & BSC_FD_WRITE) {
 		/* write what we have to write */
 	}
@@ -207,11 +211,10 @@ const struct value_string ffs_evt_type_names[] = {
 
 static void handle_setup(const struct usb_ctrlrequest *setup)
 {
-	printf("bRequestType = %d\n", setup->bRequestType);
-	printf("bRequest     = %d\n", setup->bRequest);
-	printf("wValue       = %d\n", le16_to_cpu(setup->wValue));
-	printf("wIndex       = %d\n", le16_to_cpu(setup->wIndex));
-	printf("wLength      = %d\n", le16_to_cpu(setup->wLength));
+	LOGP(DUSB, LOGL_NOTICE, "EP0 SETUP bRequestType=0x%02x, bRequest=0x%02x wValue=0x%04x, "
+		"wIndex=0x%04x, wLength=%u\n", setup->bRequestType, setup->bRequest,
+		le16_to_cpu(setup->wValue), le16_to_cpu(setup->wIndex), le16_to_cpu(setup->wLength));
+	/* FIXME: Handle control transfer */
 }
 
 static void aio_refill_out(struct ufunc_handle *uh);
@@ -221,14 +224,12 @@ static int ep_0_cb(struct osmo_fd *ofd, unsigned int what)
 	struct ufunc_handle *uh = (struct ufunc_handle *) ofd->data;
 	int rc;
 
-	printf("EP0\n");
-
 	if (what & BSC_FD_READ) {
 		struct usb_functionfs_event evt;
 		rc = read(ofd->fd, (uint8_t *)&evt, sizeof(evt));
 		if (rc < sizeof(evt))
 			return -23;
-		printf("\t%s\n", get_value_string(ffs_evt_type_names, evt.type));
+		LOGP(DUSB, LOGL_NOTICE, "EP0 %s\n", get_value_string(ffs_evt_type_names, evt.type));
 		switch (evt.type) {
 		case FUNCTIONFS_ENABLE:
 			aio_refill_out(uh);
@@ -248,6 +249,8 @@ static void aio_refill_out(struct ufunc_handle *uh)
 {
 	int rc;
 	struct aio_help *ah = &uh->aio_out;
+
+	LOGP(DUSB, LOGL_DEBUG, "%s\n", __func__);
 	msgb_reset(ah->msg);
 	io_prep_pread(ah->iocb, uh->ep_out.fd, msgb_data(ah->msg), msgb_tailroom(ah->msg), 0);
 	io_set_eventfd(ah->iocb, uh->aio_evfd.fd);
@@ -266,24 +269,31 @@ static int evfd_cb(struct osmo_fd *ofd, unsigned int what)
 	assert(rc == sizeof(ev_cnt));
 
 	rc = io_getevents(uh->aio_ctx, 1, 3, evt, NULL);
-	if (rc <= 0)
+	if (rc <= 0) {
+		LOGP(DUSB, LOGL_ERROR, "error in io_getevents(): %d\n", rc);
 		return rc;
+	}
 
 	for (i = 0; i < rc; i++) {
 		int fd = evt[i].obj->aio_fildes;
 		if (fd == uh->ep_int.fd) {
 			/* interrupt endpoint AIO has completed. This means the IRQ transfer
 			 * which we generated has reached the host */
+			LOGP(DUSB, LOGL_DEBUG, "IRQ AIO completed, free()ing msgb\n");
+			msgb_free(uh->aio_in.msg);
+			uh->aio_in.msg = NULL;
 		} else if (fd == uh->ep_in.fd) {
 			/* IN endpoint AIO has completed. This means the IN transfer which
 			 * we sent to the host has completed */
+			LOGP(DUSB, LOGL_DEBUG, "IN AIO completed, free()ing msgb\n");
 			msgb_free(uh->aio_in.msg);
 			uh->aio_in.msg = NULL;
 		} else if (fd == uh->ep_out.fd) {
-			/* IN endpoint AIO has completed. This means the host has sent us
+			/* OUT endpoint AIO has completed. This means the host has sent us
 			 * some OUT data */
+			LOGP(DUSB, LOGL_DEBUG, "OUT AIO completed, dispatching received msg\n");
 			msgb_put(uh->aio_out.msg, evt[i].res);
-			printf("\t%s\n", msgb_hexdump(uh->aio_out.msg));
+			//printf("\t%s\n", msgb_hexdump(uh->aio_out.msg));
 			//ccid_handle_out(uh->ccid_handle, uh->aio_out.buf, evt[i].res);
 			ccid_handle_out(uh->ccid_handle, uh->aio_out.msg);
 			aio_refill_out(uh);
@@ -304,11 +314,15 @@ static int ep0_init(struct ufunc_handle *uh)
 	osmo_fd_setup(&uh->ep0, rc, BSC_FD_READ, &ep_0_cb, uh, 0);
 	osmo_fd_register(&uh->ep0);
 	rc = write(uh->ep0.fd, &descriptors, sizeof(descriptors));
-	if (rc != sizeof(descriptors))
+	if (rc != sizeof(descriptors)) {
+		LOGP(DUSB, LOGL_ERROR, "Cannot write descriptors: %s\n", strerror(errno));
 		return -1;
+	}
 	rc = write(uh->ep0.fd, &strings, sizeof(strings));
-	if (rc != sizeof(strings))
+	if (rc != sizeof(strings)) {
+		LOGP(DUSB, LOGL_ERROR, "Cannot write strings: %s\n", strerror(errno));
 		return -1;
+	}
 
 	/* open other endpoint file descriptors */
 	rc = open("ep1", O_RDWR);
@@ -378,20 +392,52 @@ static const struct ccid_ops c_ops = {
 	.send_in = ccid_ops_send_in,
 };
 
+static const struct log_info_cat log_info_cat[] = {
+	[DUSB] = {
+		.name = "USB",
+		.description = "USB Transport",
+		.enabled = 1,
+		.loglevel = LOGL_NOTICE,
+	},
+	[DCCID] = {
+		.name = "CCID",
+		.description = "CCID Core",
+		.color = "\033[1;35m",
+		.enabled = 1,
+		.loglevel = LOGL_DEBUG,
+	},
+};
+
+static const struct log_info log_info = {
+	.cat = log_info_cat,
+	.num_cat = ARRAY_SIZE(log_info_cat),
+};
+
+static void *tall_main_ctx;
+
 int main(int argc, char **argv)
 {
 	struct ufunc_handle ufh = (struct ufunc_handle) { 0, };
 	struct ccid_instance ci = (struct ccid_instance) { 0, };
 	int rc;
 
+	tall_main_ctx = talloc_named_const(NULL, 0, "ccid_main_functionfs");
+	msgb_talloc_ctx_init(tall_main_ctx, 0);
+	osmo_init_logging2(tall_main_ctx, &log_info);
+
 	ccid_instance_init(&ci, &c_ops, "", &ufh);
 	ufh.ccid_handle = &ci;
+
+	if (argc < 2) {
+		fprintf(stderr, "You have to specify the mount-path of the functionfs\n");
+		exit(2);
+	}
 
 	chdir(argv[1]);
 	rc = ep0_init(&ufh);
 	if (rc < 0) {
 		fprintf(stderr, "Error %d\n", rc);
-		exit(2);
+		exit(1);
 	}
 
 	while (1) {
