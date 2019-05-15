@@ -8,40 +8,7 @@
 #include <osmocom/core/utils.h>
 
 #include "ccid_proto.h"
-
-#define NR_SLOTS	8
-
-struct ccid_pars_decoded {
-	/* global for T0/T1 */
-	uint8_t fi;
-	uint8_t di;
-	enum ccid_clock_stop clock_stop;
-	bool inverse_convention;
-
-	struct {
-		uint8_t guard_time_etu;
-		uint8_t waiting_integer;
-	} t0;
-
-	struct {
-		enum ccid_t1_csum_type csum_type;
-		uint8_t guard_time_t1;
-		uint8_t bwi;
-		uint8_t cwi;
-		uint8_t ifsc;
-		uint8_t nad;
-	} t1;
-};
-
-struct ccid_slot {
-	struct ccid_instance *ci;
-	uint8_t slot_nr;
-	bool icc_present;
-	bool icc_powered;
-	bool icc_in_reset;
-	bool cmd_busy;
-	struct ccid_pars_decoded pars;
-};
+#include "ccid_device.h"
 
 /* decode on-the-wire T0 parameters into their parsed form */
 static int decode_ccid_pars_t0(struct ccid_pars_decoded *out, const struct ccid_proto_data_t0 *in)
@@ -134,22 +101,8 @@ static void encode_ccid_pars_t1(struct ccid_proto_data_t1 *out, const struct cci
 	out->bNadValue = in->t1.nad;
 }
 
-struct ccid_ops {
-	int (*send_in)(struct ccid_instance *ci, struct msgb *msg);
-};
-
-struct ccid_instance {
-	struct ccid_slot slot[NR_SLOTS];
-	struct ccid_ops ops;
-	const char *name;
-};
-
 #define msgb_ccid_out(x) (union ccid_pc_to_rdr *)msgb_data(x)
 #define msgb_ccid_in(x) (union ccid_rdr_to_pc *)msgb_data(x)
-
-#define LOGPCI(ci, lvl, fmt, args ...) LOGP(DCCID, lvl, "%s: " fmt, (ci)->name, ## args)
-#define LOGPCS(cs, lvl, fmt, args ...) \
-	LOGP(DCCID, lvl, "%s(%u): " fmt, (cc)->ci->name, (cc)->slot_nr, ## args)
 
 static struct ccid_slot *get_ccid_slot(struct ccid_instance *ci, uint8_t slot_nr)
 {
