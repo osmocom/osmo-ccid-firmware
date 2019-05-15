@@ -6,7 +6,6 @@
 
 #include "ccid_proto.h"
 
-
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define cpu_to_le16(x)  (x)
 #define cpu_to_le32(x)  (x)
@@ -132,11 +131,14 @@ static const struct {
 #include <sys/stat.h>
 #include <osmocom/core/select.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/core/msgb.h>
+
+#include "ccid_device.h"
 
 #ifndef FUNCTIONFS_SUPPORTS_POLL
 #include <libaio.h>
 struct aio_help {
-	uint8_t buf[64];
+	struct msgb *msg;
 	struct iocb *iocb;
 };
 #endif
@@ -154,6 +156,7 @@ struct ufunc_handle {
 	struct aio_help aio_out;
 	struct aio_help aio_int;
 #endif
+	struct ccid_instance *ccid_handle;
 };
 
 static int ep_int_cb(struct osmo_fd *ofd, unsigned int what)
@@ -164,13 +167,20 @@ static int ep_int_cb(struct osmo_fd *ofd, unsigned int what)
 
 static int ep_out_cb(struct osmo_fd *ofd, unsigned int what)
 {
-	uint8_t buf[64];
+	struct ufunc_handle *uh = (struct ufunc_handle *) ofd->data;
+	struct msgb *msg = msgb_alloc(512, "OUT-Rx");
 	int rc;
 
 	printf("OUT\n");
 	if (what & BSC_FD_READ) {
-		rc = read(ofd->fd, buf, sizeof(buf));
-		ccid_handle_out(uh->ccid_handle, buf, rc);
+		rc = read(ofd->fd, msgb_data(msg), msgb_tailroom(msg));
+		if (rc <= 0) {
+			msgb_free(msg);
+			return rc;
+		}
+		msgb_put(msg, rc);
+		ccid_handle_out(uh->ccid_handle, msg);
+		msgb_free(msg);
 	}
 	return 0;
 }
@@ -238,7 +248,8 @@ static void aio_refill_out(struct ufunc_handle *uh)
 {
 	int rc;
 	struct aio_help *ah = &uh->aio_out;
-	io_prep_pread(ah->iocb, uh->ep_out.fd, ah->buf, sizeof(ah->buf), 0);
+	msgb_reset(ah->msg);
+	io_prep_pread(ah->iocb, uh->ep_out.fd, msgb_data(ah->msg), msgb_tailroom(ah->msg), 0);
 	io_set_eventfd(ah->iocb, uh->aio_evfd.fd);
 	rc = io_submit(uh->aio_ctx, 1, &ah->iocb);
 	OSMO_ASSERT(rc >= 0);
@@ -270,7 +281,9 @@ static int evfd_cb(struct osmo_fd *ofd, unsigned int what)
 			/* IN endpoint AIO has completed. This means the host has sent us
 			 * some OUT data */
 			//printf("\t%s\n", osmo_hexdump(uh->aio_out.buf, evt[i].res));
-			ccid_handle_out(uh->ccid_handle, uh->aio_out.buf, evt[i].res);
+			//ccid_handle_out(uh->ccid_handle, uh->aio_out.buf, evt[i].res);
+			msgb_put(uh->aio_out.msg, evt[i].res);
+			ccid_handle_out(uh->ccid_handle, uh->aio_out.msg);
 			aio_refill_out(uh);
 		}
 	}
@@ -332,6 +345,7 @@ static int ep0_init(struct ufunc_handle *uh)
 	osmo_fd_setup(&uh->aio_evfd, rc, BSC_FD_READ, &evfd_cb, uh, 0);
 	osmo_fd_register(&uh->aio_evfd);
 
+	uh->aio_out.msg = msgb_alloc(512, "OUT-Rx-AIO");
 	uh->aio_out.iocb = malloc(sizeof(struct iocb));
 
 #endif
