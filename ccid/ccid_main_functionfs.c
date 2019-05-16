@@ -24,6 +24,14 @@
  * Actual USB CCID Descriptors
  ***********************************************************************/
 
+static uint32_t clock_freqs[] = {
+	2500000
+};
+
+static uint32_t data_rates[] = {
+	9600
+};
+
 static const struct {
 	struct usb_functionfs_descs_head_v2 header;
 	__le32 fs_count;
@@ -56,12 +64,12 @@ static const struct {
 			.bMaxSlotIndex = 7,
 			.bVoltageSupport = 0x07, /* 5/3/1.8V */
 			.dwProtocols = cpu_to_le32(1), /* T=0 only */
-			.dwDefaultClock = cpu_to_le32(5000),
-			.dwMaximumClock = cpu_to_le32(20000),
-			.bNumClockSupported = 0,
+			.dwDefaultClock = cpu_to_le32(2500000),
+			.dwMaximumClock = cpu_to_le32(20000000),
+			.bNumClockSupported = ARRAY_SIZE(clock_freqs),
 			.dwDataRate = cpu_to_le32(9600),
 			.dwMaxDataRate = cpu_to_le32(921600),
-			.bNumDataRatesSupported = 0,
+			.bNumDataRatesSupported = ARRAY_SIZE(data_rates),
 			.dwMaxIFSD = cpu_to_le32(0),
 			.dwSynchProtocols = cpu_to_le32(0),
 			.dwMechanical = cpu_to_le32(0),
@@ -167,6 +175,8 @@ struct ufunc_handle {
 	struct ccid_instance *ccid_handle;
 };
 
+static struct ccid_instance g_ci;
+
 static int ep_int_cb(struct osmo_fd *ofd, unsigned int what)
 {
 	LOGP(DUSB, LOGL_DEBUG, "%s\n", __func__);
@@ -212,12 +222,38 @@ const struct value_string ffs_evt_type_names[] = {
 	{ 0, NULL }
 };
 
-static void handle_setup(const struct usb_ctrlrequest *setup)
+static void handle_setup(int fd, const struct usb_ctrlrequest *setup)
 {
+	const uint8_t *data_in = NULL;
+	int rc;
+
 	LOGP(DUSB, LOGL_NOTICE, "EP0 SETUP bRequestType=0x%02x, bRequest=0x%02x wValue=0x%04x, "
 		"wIndex=0x%04x, wLength=%u\n", setup->bRequestType, setup->bRequest,
 		le16_to_cpu(setup->wValue), le16_to_cpu(setup->wIndex), le16_to_cpu(setup->wLength));
+
 	/* FIXME: Handle control transfer */
+	rc = ccid_handle_ctrl(&g_ci, (const uint8_t *) setup, &data_in);
+	switch (rc) {
+	case CCID_CTRL_RET_INVALID:
+		if (setup->bRequestType & USB_DIR_IN)
+			read(fd, NULL, 0); /* cause stall */
+		else
+			write(fd, NULL, 0); /* cause stall */
+		break;
+	case CCID_CTRL_RET_UNKNOWN:
+		/* FIXME: is this correct behavior? */
+		if (setup->bRequestType & USB_DIR_IN)
+			write(fd, NULL, 0); /* send ZLP */
+		else
+			read(fd, NULL, 0);
+		break;
+	case CCID_CTRL_RET_OK:
+		if (setup->bRequestType & USB_DIR_IN)
+			write(fd, data_in, le16_to_cpu(setup->wLength));
+		else
+			read(fd, NULL, 0); /* FIXME: control OUT? */
+		break;
+	}
 }
 
 static void aio_refill_out(struct ufunc_handle *uh);
@@ -238,7 +274,7 @@ static int ep_0_cb(struct osmo_fd *ofd, unsigned int what)
 			aio_refill_out(uh);
 			break;
 		case FUNCTIONFS_SETUP:
-			handle_setup(&evt.u.setup);
+			handle_setup(ofd->fd, &evt.u.setup);
 			break;
 		}
 
@@ -501,7 +537,6 @@ static void signal_handler(int signal)
 int main(int argc, char **argv)
 {
 	struct ufunc_handle ufh = (struct ufunc_handle) { 0, };
-	struct ccid_instance ci = (struct ccid_instance) { 0, };
 	int rc;
 
 	tall_main_ctx = talloc_named_const(NULL, 0, "ccid_main_functionfs");
@@ -510,8 +545,9 @@ int main(int argc, char **argv)
 
 	signal(SIGUSR1, &signal_handler);
 
-	ccid_instance_init(&ci, &c_ops, &slotsim_slot_ops, "", &ufh);
-	ufh.ccid_handle = &ci;
+	ccid_instance_init(&g_ci, &c_ops, &slotsim_slot_ops, &descriptors.fs_descs.ccid,
+			   data_rates, clock_freqs, "", &ufh);
+	ufh.ccid_handle = &g_ci;
 
 	if (argc < 2) {
 		fprintf(stderr, "You have to specify the mount-path of the functionfs\n");

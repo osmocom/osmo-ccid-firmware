@@ -96,6 +96,12 @@ struct ccid_instance {
 	/* set of function pointers implementing specific operations */
 	const struct ccid_ops *ops;
 	const struct ccid_slot_ops *slot_ops;
+	/* USB CCID Class Specific Descriptor */
+	const struct usb_ccid_class_descriptor *class_desc;
+	/* array of permitted data rates; length: bNumDataRatesSupported */
+	const uint32_t *data_rates;
+	/* array of permitted clock frequencies; length: bNumClockSupported */
+	const uint32_t *clock_freqs;
 	const char *name;
 	/* user-supplied opaque data */
 	void *priv;
@@ -111,5 +117,17 @@ struct msgb *ccid_gen_data_block(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_
 				 uint32_t data_len);
 
 void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops,
-			const struct ccid_slot_ops *slot_ops, const char *name, void *priv);
+			const struct ccid_slot_ops *slot_ops,
+			const struct usb_ccid_class_descriptor *class_desc,
+			const uint32_t *data_rates, const uint32_t *clock_freqs,
+			const char *name, void *priv);
 int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg);
+
+/* Invalid request received: Please return STALL */
+#define CCID_CTRL_RET_INVALID	-1
+/* Unknown request received: Not something CCID is supposed to handle */
+#define CCID_CTRL_RET_UNKNOWN	0
+/* Request OK.  In case of a CTRL-IN: continue by sending wLength bytes to host */
+#define CCID_CTRL_RET_OK	1
+
+int ccid_handle_ctrl(struct ccid_instance *ci, const uint8_t *ctrl_req, const uint8_t **data_in);

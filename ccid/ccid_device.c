@@ -11,6 +11,15 @@
 #include "ccid_proto.h"
 #include "ccid_device.h"
 
+/* local, stand-alone definition of a USB control request */
+struct _usb_ctrl_req {
+	uint8_t bRequestType;
+	uint8_t bRequest;
+	uint16_t wValue;
+	uint16_t wIndex;
+	uint16_t wLength;
+} __attribute__ ((packed));;
+
 /* decode on-the-wire T0 parameters into their parsed form */
 static int decode_ccid_pars_t0(struct ccid_pars_decoded *out, const struct ccid_proto_data_t0 *in)
 {
@@ -758,13 +767,112 @@ short_msg:
 	return -1;
 }
 
+/* Section 5.3.1 ABORT */
+static int ccid_handle_ctrl_abort(struct ccid_instance *ci, const struct _usb_ctrl_req *req)
+{
+	uint16_t w_value = osmo_load16le(&req->wValue);
+	uint8_t slot_nr = w_value & 0xff;
+	uint8_t seq = w_value >> 8;
+	struct ccid_slot *cs;
+
+	if (slot_nr >= ARRAY_SIZE(ci->slot))
+		return CCID_CTRL_RET_INVALID;
+
+	cs = &ci->slot[slot_nr];
+
+	LOGP(DCCID, LOGL_NOTICE, "Not handling PC_to_RDR_Abort; please implement it\n");
+	/* Upon receiving the Control pipe ABORT request the CCID should check
+	 * the state of the requested slot. */
+
+	/* If the last Bulk-OUT message received by the CCID was a
+	 * PC_to_RDR_Abort command with the same bSlot and bSeq as the ABORT
+	 * request, then the CCID will respond to the Bulk-OUT message with
+	 * the RDR_to_PC_SlotStatus response. */
+
+	/* FIXME */
+
+	/* If the previous Bulk-OUT message received by the CCID was not a
+	 * PC_to_RDR_Abort command with the same bSlot and bSeq as the ABORT
+	 * request, then the CCID will fail all Bulk-Out commands to that slot
+	 * until the PC_to_RDR_Abort command with the same bSlot and bSeq is
+	 * received. Bulk-OUT commands will be failed by sending a response
+	 * with bmCommandStatus=Failed and bError=CMD_ABORTED. */
+
+	/* FIXME */
+	return CCID_CTRL_RET_OK;
+}
+
+/* Section 5.3.2 GET_CLOCK_FREQUENCIES */
+static int ccid_handle_ctrl_get_clock_freq(struct ccid_instance *ci, const struct _usb_ctrl_req *req,
+					   const uint8_t **data_in)
+{
+	uint16_t len = osmo_load16le(&req->wLength);
+
+	if (len != sizeof(uint32_t) * ci->class_desc->bNumClockSupported)
+		return CCID_CTRL_RET_INVALID;
+
+	*data_in = (const uint8_t *) ci->clock_freqs;
+	return CCID_CTRL_RET_OK;
+}
+
+/* Section 5.3.3 GET_DATA_RATES */
+static int ccid_handle_ctrl_get_data_rates(struct ccid_instance *ci, const struct _usb_ctrl_req *req,
+					   const uint8_t **data_in)
+{
+	uint16_t len = osmo_load16le(&req->wLength);
+
+	if (len != sizeof(uint32_t) * ci->class_desc->bNumClockSupported)
+		return CCID_CTRL_RET_INVALID;
+
+	*data_in = (const uint8_t *) ci->data_rates;
+	return CCID_CTRL_RET_OK;
+}
+
+/*! Handle [class specific] CTRL request. We assume the caller has already verified that the
+ *  request was made to the correct interface as well as it is a class-specific request.
+ *  \param[in] ci CCID Instance for which CTRL request was received
+ *  \param[in] ctrl_req buffer holding the 8 bytes CTRL transfer header
+ *  \param[out] data_in data to be returned to the host in the IN transaction (if any)
+ *  \returns CCID_CTRL_RET_OK, CCID_CTRL_RET_INVALID or CCID_CTRL_RET_UNKNOWN
+ */
+int ccid_handle_ctrl(struct ccid_instance *ci, const uint8_t *ctrl_req, const uint8_t **data_in)
+{
+	const struct _usb_ctrl_req *req = (const struct _usb_ctrl_req *) ctrl_req;
+	int rc;
+
+	LOGPCI(ci, LOGL_DEBUG, "CTRL bmReqT=0x%02X bRequest=%s, wValue=0x%04X, wIndex=0x%04X, wLength=%d\n",
+		req->bRequestType, get_value_string(ccid_class_spec_req_vals, req->bRequest),
+		req->wValue, req->wIndex, req->wLength);
+
+	switch (req->bRequest) {
+	case CLASS_SPEC_CCID_ABORT:
+		rc = ccid_handle_ctrl_abort(ci, req);
+		break;
+	case CLASS_SPEC_CCID_GET_CLOCK_FREQ:
+		rc = ccid_handle_ctrl_get_clock_freq(ci, req, data_in);
+		break;
+	case CLASS_SPEC_CCID_GET_DATA_RATES:
+		rc = ccid_handle_ctrl_get_data_rates(ci, req, data_in);
+		break;
+	default:
+		return CCID_CTRL_RET_UNKNOWN;
+	}
+	return rc;
+}
+
 void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops,
-			const struct ccid_slot_ops *slot_ops, const char *name, void *priv)
+			const struct ccid_slot_ops *slot_ops,
+			const struct usb_ccid_class_descriptor *class_desc,
+			const uint32_t *data_rates, const uint32_t *clock_freqs,
+			const char *name, void *priv)
 {
 	int i;
 
 	ci->ops = ops;
 	ci->slot_ops = slot_ops;
+	ci->class_desc = class_desc;
+	ci->clock_freqs = clock_freqs;
+	ci->data_rates = data_rates;
 	ci->name = name;
 	ci->priv = priv;
 
