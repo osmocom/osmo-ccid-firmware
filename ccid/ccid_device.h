@@ -60,6 +60,7 @@ struct ccid_slot {
 /* CCID operations */
 struct ccid_ops {
 	int (*send_in)(struct ccid_instance *ci, struct msgb *msg);
+	int (*send_int)(struct ccid_instance *ci, struct msgb *msg);
 };
 
 /* An instance of CCID (i.e. a card reader device) */

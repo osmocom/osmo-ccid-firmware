@@ -461,6 +461,7 @@ static int ccid_ops_send_int(struct ccid_instance *ci, struct msgb *msg)
 
 static const struct ccid_ops c_ops = {
 	.send_in = ccid_ops_send_in,
+	.send_int = ccid_ops_send_int,
 };
 
 static const struct log_info_cat log_info_cat[] = {
