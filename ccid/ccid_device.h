@@ -59,6 +59,9 @@ struct ccid_slot {
 
 /* CCID operations */
 struct ccid_ops {
+	/* msgb ownership in below functions is transferred, i.e. whoever
+	 * provides the callback function must make sure to msgb_free() them
+	 * once transmission on IN or INT EP has completed. */
 	int (*send_in)(struct ccid_instance *ci, struct msgb *msg);
 	int (*send_int)(struct ccid_instance *ci, struct msgb *msg);
 };

@@ -617,7 +617,9 @@ static int ccid_handle_set_rate_and_clock(struct ccid_slot *cs, struct msgb *msg
 
 /*! Handle data arriving from the host on the OUT endpoint.
  *  \param[in] cs CCID Instance on which to operate
- *  \param[in] msgb received message buffer containing one CCID OUT EP message from the host
+ *  \param[in] msgb received message buffer containing one CCID OUT EP message from the host.
+ *  		    Ownership of message buffer is transferred, i.e. it's our job to msgb_free()
+ *  		    it eventually, after we're done with it (could be asynchronously).
  *  \returns 0 on success; negative on error */
 int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 {
