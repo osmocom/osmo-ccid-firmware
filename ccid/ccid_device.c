@@ -171,7 +171,7 @@ static int ccid_send(struct ccid_instance *ci, struct msgb *msg)
 }
 
 /* Send given CCID message for given slot; patch bSlot into message */
-static int ccid_slot_send(struct ccid_slot *cs, struct msgb *msg)
+int ccid_slot_send(struct ccid_slot *cs, struct msgb *msg)
 {
 	struct ccid_header *ch = (struct ccid_header *) msgb_ccid_in(msg);
 
@@ -181,7 +181,7 @@ static int ccid_slot_send(struct ccid_slot *cs, struct msgb *msg)
 }
 
 /* Send given CCID message and mark slot as un-busy */
-static int ccid_slot_send_unbusy(struct ccid_slot *cs, struct msgb *msg)
+int ccid_slot_send_unbusy(struct ccid_slot *cs, struct msgb *msg)
 {
 	cs->cmd_busy = false;
 	return ccid_slot_send(cs, msg);
@@ -202,9 +202,9 @@ static struct msgb *ccid_gen_data_block_nr(uint8_t slot_nr, uint8_t icc_status, 
 	memcpy(db->abData, data, data_len);
 	return msg;
 }
-static struct msgb *ccid_gen_data_block(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-					 enum ccid_error_code err, const uint8_t *data,
-					 uint32_t data_len)
+struct msgb *ccid_gen_data_block(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+				 enum ccid_error_code err, const uint8_t *data,
+				 uint32_t data_len)
 {
 	return ccid_gen_data_block_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, data, data_len);
 }
@@ -222,8 +222,8 @@ static struct msgb *ccid_gen_slot_status_nr(uint8_t slot_nr, uint8_t icc_status,
 	SET_HDR_IN(ss, RDR_to_PC_SlotStatus, slot_nr, seq, sts, err);
 	return msg;
 }
-static struct msgb *ccid_gen_slot_status(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
-					 enum ccid_error_code err)
+struct msgb *ccid_gen_slot_status(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+				  enum ccid_error_code err)
 {
 	return ccid_gen_slot_status_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err);
 }

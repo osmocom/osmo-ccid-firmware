@@ -97,6 +97,15 @@ struct ccid_instance {
 	void *priv;
 };
 
+int ccid_slot_send(struct ccid_slot *cs, struct msgb *msg);
+int ccid_slot_send_unbusy(struct ccid_slot *cs, struct msgb *msg);
+struct msgb *ccid_gen_slot_status(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+				  enum ccid_error_code err);
+
+struct msgb *ccid_gen_data_block(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+				 enum ccid_error_code err, const uint8_t *data,
+				 uint32_t data_len);
+
 void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops,
 			const struct ccid_slot_ops *slot_ops, const char *name, void *priv);
 int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg);
