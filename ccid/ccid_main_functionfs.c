@@ -332,8 +332,8 @@ static int evfd_cb(struct osmo_fd *ofd, unsigned int what)
 			/* interrupt endpoint AIO has completed. This means the IRQ transfer
 			 * which we generated has reached the host */
 			LOGP(DUSB, LOGL_DEBUG, "IRQ AIO completed, free()ing msgb\n");
-			msgb_free(uh->aio_in.msg);
-			uh->aio_in.msg = NULL;
+			msgb_free(uh->aio_int.msg);
+			uh->aio_int.msg = NULL;
 			dequeue_aio_write_int(uh);
 		} else if (fd == uh->ep_in.fd) {
 			/* IN endpoint AIO has completed. This means the IN transfer which
