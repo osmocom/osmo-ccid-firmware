@@ -403,14 +403,10 @@ static int ccid_handle_icc_power_on(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
 	const struct ccid_header *ch = (const struct ccid_header *) u;
-	uint8_t seq = u->icc_power_on.hdr.bSeq;
-	struct msgb *resp;
 
-	/* TODO: send actual ATR; handle error cases */
-	/* TODO: handle this asynchronously */
-	resp = ccid_gen_data_block(cs, seq, CCID_CMD_STATUS_OK, 0, NULL, 0);
-
-	return ccid_slot_send_unbusy(cs, resp);
+	/* handle this asynchronously */
+	cs->ci->slot_ops->icc_power_on_async(cs, msg, &u->icc_power_on);
+	return 1;
 }
 
 /* Section 6.1.2 */
@@ -431,12 +427,10 @@ static int ccid_handle_xfr_block(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
 	const struct ccid_header *ch = (const struct ccid_header *) u;
-	uint8_t seq = u->xfr_block.hdr.bSeq;
-	struct msgb *resp;
 
-	/* FIXME: handle this asynchronously */
-	resp = ccid_gen_data_block(cs, seq, CCID_CMD_STATUS_OK, 0, NULL, 0);
-	return ccid_slot_send_unbusy(cs, resp);
+	/* handle this asynchronously */
+	cs->ci->slot_ops->xfr_block_async(cs, msg, &u->xfr_block);
+	return 1;
 }
 
 /* Section 6.1.5 */

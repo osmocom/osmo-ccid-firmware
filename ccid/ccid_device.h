@@ -78,6 +78,10 @@ struct ccid_slot_ops {
 	 * update the (power/clock/...) status from the hardware */
 	void (*pre_proc_cb)(struct ccid_slot *cs, struct msgb *msg);
 
+	void (*icc_power_on_async)(struct ccid_slot *cs, struct msgb *msg,
+				   const struct ccid_pc_to_rdr_icc_power_on *ipo);
+	void (*xfr_block_async)(struct ccid_slot *cs, struct msgb *msg,
+				const struct ccid_pc_to_rdr_xfr_block *xfb);
 	void (*set_power)(struct ccid_slot *cs, bool enable);
 	void (*set_clock)(struct ccid_slot *cs, enum ccid_clock_command cmd);
 	int (*set_params)(struct ccid_slot *cs, enum ccid_protocol_num proto,
