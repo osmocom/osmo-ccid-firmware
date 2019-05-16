@@ -3,6 +3,7 @@
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/timer.h>
+#include <osmocom/core/logging.h>
 
 #include "ccid_device.h"
 
@@ -24,6 +25,11 @@ struct slotsim_slot *ccid_slot2slotsim_slot(struct ccid_slot *cs)
 	OSMO_ASSERT(cs->slot_nr < ARRAY_SIZE(g_si.slot));
 	return &g_si.slot[cs->slot_nr];
 }
+
+static const uint8_t sysmousim_sjs1_atr[] = {
+		0x3B, 0x9F, 0x96, 0x80, 0x1F, 0xC7, 0x80, 0x31,
+		0xA0, 0x73, 0xBE, 0x21, 0x13, 0x67, 0x43, 0x20,
+		0x07, 0x18, 0x00, 0x00, 0x01, 0xA5 };
 
 static const struct ccid_pars_decoded slotsim_def_pars = {
 	.fi = 0,
@@ -48,6 +54,7 @@ static void slotsim_icc_power_on_async(struct ccid_slot *cs, struct msgb *msg,
 	struct slotsim_slot *ss = ccid_slot2slotsim_slot(cs);
 
 	ss->seq = ipo->hdr.bSeq;
+	LOGPCS(cs, LOGL_DEBUG, "scheduling pwron_timer\n");
 	osmo_timer_schedule(&ss->pwron_timer, 1, 0);
 	msgb_free(msg);
 	/* continues in timer call-back below */
@@ -58,7 +65,10 @@ static void slotsim_pwron_timer_cb(void *data)
 	struct slotsim_slot *ss = ccid_slot2slotsim_slot(cs);
 	struct msgb *resp;
 
-	resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, NULL, 0);
+	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
+
+	resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0,
+				   sysmousim_sjs1_atr, sizeof(sysmousim_sjs1_atr));
 	ccid_slot_send_unbusy(cs, resp);
 }
 
@@ -68,6 +78,7 @@ static void slotsim_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	struct slotsim_slot *ss = ccid_slot2slotsim_slot(cs);
 
 	ss->seq = xfb->hdr.bSeq;
+	LOGPCS(cs, LOGL_DEBUG, "scheduling xfr_timer\n");
 	osmo_timer_schedule(&ss->xfr_timer, 0, 50000);
 	msgb_free(msg);
 	/* continues in timer call-back below */
@@ -77,6 +88,8 @@ static void slotsim_xfr_timer_cb(void *data)
 	struct ccid_slot *cs = data;
 	struct slotsim_slot *ss = ccid_slot2slotsim_slot(cs);
 	struct msgb *resp;
+
+	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 
 	resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, NULL, 0);
 	ccid_slot_send_unbusy(cs, resp);
@@ -123,6 +136,10 @@ static int slotsim_set_rate_and_clock(struct ccid_slot *cs, uint32_t freq_hz, ui
 static int slotsim_init(struct ccid_slot *cs)
 {
 	struct slotsim_slot *ss = ccid_slot2slotsim_slot(cs);
+
+	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
+	cs->icc_present = true;
+	cs->icc_powered = true;
 	osmo_timer_setup(&ss->pwron_timer, slotsim_pwron_timer_cb, cs);
 	osmo_timer_setup(&ss->xfr_timer, slotsim_xfr_timer_cb, cs);
 	cs->default_pars = &slotsim_def_pars;
