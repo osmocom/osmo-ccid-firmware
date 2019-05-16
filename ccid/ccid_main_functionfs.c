@@ -139,6 +139,7 @@ static const struct {
 #include <osmocom/core/logging.h>
 
 #include "ccid_device.h"
+#include "ccid_slot_sim.h"
 
 #ifndef FUNCTIONFS_SUPPORTS_POLL
 #include <libaio.h>
@@ -509,7 +510,7 @@ int main(int argc, char **argv)
 
 	signal(SIGUSR1, &signal_handler);
 
-	ccid_instance_init(&ci, &c_ops, "", &ufh);
+	ccid_instance_init(&ci, &c_ops, &slotsim_slot_ops, "", &ufh);
 	ufh.ccid_handle = &ci;
 
 	if (argc < 2) {

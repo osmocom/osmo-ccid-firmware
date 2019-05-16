@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "ccid_proto.h"
+
 enum {
 	DCCID,
 	DUSB,
@@ -55,9 +57,11 @@ struct ccid_slot {
 	bool cmd_busy;
 	/* decided CCID parameters */
 	struct ccid_pars_decoded pars;
+	/* default parameters; applied on ResetParameters */
+	const struct ccid_pars_decoded *default_pars;
 };
 
-/* CCID operations */
+/* CCID operations provided by USB transport layer */
 struct ccid_ops {
 	/* msgb ownership in below functions is transferred, i.e. whoever
 	 * provides the callback function must make sure to msgb_free() them
@@ -66,17 +70,33 @@ struct ccid_ops {
 	int (*send_int)(struct ccid_instance *ci, struct msgb *msg);
 };
 
+/* CCID operations provided by actual slot hardware */
+struct ccid_slot_ops {
+	/* called once on start-up for initialization */
+	int (*init)(struct ccid_slot *cs);
+	/* called before processing any command for a slot; used e.g. to
+	 * update the (power/clock/...) status from the hardware */
+	void (*pre_proc_cb)(struct ccid_slot *cs, struct msgb *msg);
+
+	void (*set_power)(struct ccid_slot *cs, bool enable);
+	void (*set_clock)(struct ccid_slot *cs, enum ccid_clock_command cmd);
+	int (*set_params)(struct ccid_slot *cs, enum ccid_protocol_num proto,
+			  const struct ccid_pars_decoded *pars_dec);
+	int (*set_rate_and_clock)(struct ccid_slot *cs, uint32_t freq_hz, uint32_t rate_bps);
+};
+
 /* An instance of CCID (i.e. a card reader device) */
 struct ccid_instance {
 	/* slots within the reader */
 	struct ccid_slot slot[NR_SLOTS];
 	/* set of function pointers implementing specific operations */
 	const struct ccid_ops *ops;
+	const struct ccid_slot_ops *slot_ops;
 	const char *name;
 	/* user-supplied opaque data */
 	void *priv;
 };
 
-void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops, const char *name,
-			void *priv);
+void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops,
+			const struct ccid_slot_ops *slot_ops, const char *name, void *priv);
 int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg);

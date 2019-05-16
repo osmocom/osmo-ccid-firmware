@@ -421,7 +421,7 @@ static int ccid_handle_icc_power_off(struct ccid_slot *cs, struct msgb *msg)
 	uint8_t seq = u->icc_power_off.hdr.bSeq;
 	struct msgb *resp;
 
-	/* FIXME */
+	cs->ci->slot_ops->set_power(cs, false);
 	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
 	return ccid_slot_send_unbusy(cs, resp);
 }
@@ -434,7 +434,7 @@ static int ccid_handle_xfr_block(struct ccid_slot *cs, struct msgb *msg)
 	uint8_t seq = u->xfr_block.hdr.bSeq;
 	struct msgb *resp;
 
-	/* FIXME */
+	/* FIXME: handle this asynchronously */
 	resp = ccid_gen_data_block(cs, seq, CCID_CMD_STATUS_OK, 0, NULL, 0);
 	return ccid_slot_send_unbusy(cs, resp);
 }
@@ -460,8 +460,11 @@ static int ccid_handle_reset_parameters(struct ccid_slot *cs, struct msgb *msg)
 	uint8_t seq = u->reset_parameters.hdr.bSeq;
 	struct msgb *resp;
 
-	/* FIXME: copy default parameters from somewhere */
+	/* copy default parameters from somewhere */
 	/* FIXME: T=1 */
+	cs->ci->slot_ops->set_params(cs, CCID_PROTOCOL_NUM_T0, cs->default_pars);
+	cs->pars = *cs->default_pars;
+
 	resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
 	return ccid_slot_send_unbusy(cs, resp);
 }
@@ -480,30 +483,29 @@ static int ccid_handle_set_parameters(struct ccid_slot *cs, struct msgb *msg)
 	switch (spar->bProtocolNum) {
 	case CCID_PROTOCOL_NUM_T0:
 		rc = decode_ccid_pars_t0(&pars_dec, &spar->abProtocolData.t0);
-		if (rc < 0) {
-			LOGP(DCCID, LOGL_ERROR, "SetParameters: Unable to parse T0: %d\n", rc);
-			resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
-			goto out;
-		}
-		/* FIXME: validate parameters; abort if they are not supported */
-		cs->pars = pars_dec;
-		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
 		break;
 	case CCID_PROTOCOL_NUM_T1:
 		rc = decode_ccid_pars_t1(&pars_dec, &spar->abProtocolData.t1);
-		if (rc < 0) {
-			LOGP(DCCID, LOGL_ERROR, "SetParameters: Unable to parse T1: %d\n", rc);
-			resp = ccid_gen_parameters_t1(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
-			goto out;
-		}
-		/* FIXME: validate parameters; abort if they are not supported */
-		cs->pars = pars_dec;
-		resp = ccid_gen_parameters_t1(cs, seq, CCID_CMD_STATUS_OK, 0);
 		break;
 	default:
 		LOGP(DCCID, LOGL_ERROR, "SetParameters: Invalid Protocol 0x%02x\n",spar->bProtocolNum);
 		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, 0);
-		break;
+		goto out;
+	}
+
+	if (rc < 0) {
+		LOGP(DCCID, LOGL_ERROR, "SetParameters: Unable to parse: %d\n", rc);
+		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
+		goto out;
+	}
+
+	/* validate parameters; abort if they are not supported */
+	rc = cs->ci->slot_ops->set_params(cs, spar->bProtocolNum, &pars_dec);
+	if (rc < 0) {
+		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
+	} else {
+		cs->pars = pars_dec;
+		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
 	}
 out:
 	return ccid_slot_send_unbusy(cs, resp);
@@ -529,7 +531,7 @@ static int ccid_handle_icc_clock(struct ccid_slot *cs, struct msgb *msg)
 	uint8_t seq = u->icc_clock.hdr.bSeq;
 	struct msgb *resp;
 
-	/* FIXME: Actually Stop/Start the clock */
+	cs->ci->slot_ops->set_clock(cs, u->icc_clock.bClockCommand);
 	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
 	return ccid_slot_send_unbusy(cs, resp);
 }
@@ -542,7 +544,7 @@ static int ccid_handle_t0apdu(struct ccid_slot *cs, struct msgb *msg)
 	uint8_t seq = u->t0apdu.hdr.bSeq;
 	struct msgb *resp;
 
-	/* FIXME */
+	/* FIXME: Required for APDU level exchange */
 	//resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
 	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_FAILED, CCID_ERR_CMD_NOT_SUPPORTED);
 	return ccid_slot_send_unbusy(cs, resp);
@@ -608,10 +610,17 @@ static int ccid_handle_set_rate_and_clock(struct ccid_slot *cs, struct msgb *msg
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
 	const struct ccid_header *ch = (const struct ccid_header *) u;
 	uint8_t seq = u->set_rate_and_clock.hdr.bSeq;
+	uint32_t freq_hz = osmo_load32le(&u->set_rate_and_clock.dwClockFrequency);
+	uint32_t rate_bps = osmo_load32le(&u->set_rate_and_clock.dwDataRate);
 	struct msgb *resp;
+	int rc;
 
-	/* FIXME */
-	resp = ccid_gen_clock_and_rate(cs, seq, CCID_CMD_STATUS_OK, 0, 9600, 2500000);
+	/* FIXME: which rate to return in failure case? */
+	rc = cs->ci->slot_ops->set_rate_and_clock(cs, freq_hz, rate_bps);
+	if (rc < 0)
+		resp = ccid_gen_clock_and_rate(cs, seq, CCID_CMD_STATUS_FAILED, -rc, 9600, 2500000);
+	else
+		resp = ccid_gen_clock_and_rate(cs, seq, CCID_CMD_STATUS_OK, 0, rate_bps, freq_hz);
 	return ccid_slot_send_unbusy(cs, resp);
 }
 
@@ -659,6 +668,10 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 	cs->cmd_busy = true;
 
 	/* TODO: enqueue into the per-slot specific input queue */
+
+	/* call pre-processing call-back function; allows reader to update state */
+	if (ci->slot_ops->pre_proc_cb)
+		ci->slot_ops->pre_proc_cb(cs, msg);
 
 	switch (ch->bMessageType) {
 	case PC_to_RDR_GetSlotStatus:
@@ -751,8 +764,8 @@ short_msg:
 	return -1;
 }
 
-void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops, const char *name,
-			void *priv)
+void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops,
+			const struct ccid_slot_ops *slot_ops, const char *name, void *priv)
 {
 	int i;
 
@@ -761,7 +774,8 @@ void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops, co
 		cs->slot_nr = i;
 		cs->ci = ci;
 	}
-	ci->ops= ops;
+	ci->ops = ops;
+	ci->slot_ops = slot_ops;
 	ci->name = name;
 	ci->priv = priv;
 }
