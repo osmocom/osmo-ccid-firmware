@@ -980,15 +980,6 @@ DEFUN(v_talloc_free, cmd_talloc_free, "talloc-free", "Release all memory")
 	g_tall_ctx = NULL;
 }
 
-/* dependency of libosmocore. FIXME: Implement it bsed on jiffies and/or RTC! */
-#include <sys/time.h>
-int _gettimeofday(struct timeval *tv, void *tz)
-{
-	tv->tv_sec = 0;
-	tv->tv_usec = 0;
-	return 0;
-}
-
 /* Section 9.6 of SAMD5x/E5x Family Data Sheet */
 static int get_chip_unique_serial(uint8_t *out, size_t len)
 {
