@@ -14,15 +14,21 @@ void *g_msgb_ctx;
  ***********************************************************************/
 
 #include <sys/time.h>
+#include "driver_init.h"
 
-/* FIXME: Implement it bsed on jiffies and/or RTC! */
-int _gettimeofday(struct timeval *tv, void *tz)
+volatile uint64_t jiffies;
+
+void SysTick_Handler(void)
 {
-	tv->tv_sec = 0;
-	tv->tv_usec = 0;
-	return 0;
+	jiffies++;
 }
 
+int _gettimeofday(struct timeval *tv, void *tz)
+{
+	tv->tv_sec = jiffies / 1000;
+	tv->tv_usec = (jiffies % 1000) * 1000;
+	return 0;
+}
 
 /***********************************************************************
  * Logging
@@ -124,4 +130,7 @@ void libosmo_emb_init(void)
 	stderr_target = log_target_create_stderr_raw();
 	log_add_target(stderr_target);
 	log_set_all_filter(stderr_target, 1);
+
+	/* timer */
+	SysTick_Config(SystemCoreClock / 1000);
 }
