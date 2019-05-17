@@ -47,29 +47,29 @@ endif
 
 # List the subdirectories for creating object files
 SUB_DIRS +=  \
- \
-hal/src \
-hpl/ramecc \
-hpl/oscctrl \
-stdio_redirect/gcc \
-gcc \
-hpl/osc32kctrl \
-usb \
-hpl/dmac \
-usb/class/cdc/device \
-usb/class/ccid/device \
-stdio_redirect \
-hal/utils/src \
-hpl/usb \
-dma_m2m \
-hpl/pm \
-hpl/cmcc \
-hpl/gclk \
-gcc/gcc \
-hpl/mclk \
-usb/device \
-hpl/sercom \
-hpl/core
+	dma_m2m \
+	gcc \
+	gcc/gcc \
+	hal/src \
+	hal/utils/src \
+	hpl/cmcc \
+	hpl/core \
+	hpl/dmac \
+	hpl/gclk \
+	hpl/mclk \
+	hpl/osc32kctrl \
+	hpl/oscctrl \
+	hpl/pm \
+	hpl/ramecc \
+	hpl/sercom \
+	hpl/usb \
+	stdio_redirect \
+	stdio_redirect/gcc \
+	usb \
+	usb/class/ccid/device \
+	usb/class/cdc/device \
+	usb/device \
+	$(NULL)
 
 INC_DIRS = \
 	-I"../" \
@@ -92,69 +92,70 @@ INC_DIRS = \
 	-I"../hpl/usb" \
 	-I"../hri" \
 	-I"../include" \
+	-I"../stdio_redirect" \
 	-I"../usb" \
-	-I"../usb/class/cdc" \
-	-I"../usb/class/cdc/device" \
 	-I"../usb/class/ccid" \
 	-I"../usb/class/ccid/device" \
+	-I"../usb/class/cdc" \
+	-I"../usb/class/cdc/device" \
 	-I"../usb/device" \
-	-I"../stdio_redirect" \
 	$(NULL)
 
 # List the object files
 OBJS +=  \
-hal/src/hal_io.o \
-stdio_redirect/stdio_io.o \
-stdio_redirect/gcc/write.o \
-hpl/core/hpl_core_m4.o \
-hal/src/hal_cache.o \
-usb/class/cdc/device/cdcdf_acm.o \
-usb/class/ccid/device/ccid_df.o \
-hal/utils/src/utils_syscalls.o \
-stdio_redirect/gcc/read.o \
-gcc/system_same54.o \
-hpl/usb/hpl_usb.o \
-dma_m2m/dma_memory.o \
-hal/src/hal_delay.o \
-hpl/pm/hpl_pm.o \
-hpl/core/hpl_init.o \
-hpl/gclk/hpl_gclk.o \
-hal/utils/src/utils_list.o \
-hal/utils/src/utils_assert.o \
-hpl/dmac/hpl_dmac.o \
-hpl/oscctrl/hpl_oscctrl.o \
-hal/src/hal_usart_sync.o \
-hpl/mclk/hpl_mclk.o \
-hpl/ramecc/hpl_ramecc.o \
-stdio_start.o \
-usb/usb_protocol.o \
-hal/src/hal_init.o \
-gcc/gcc/startup_same54.o \
-hal/src/hal_usb_device.o \
-main.o \
-libosmo_emb.o \
-manual_test.o \
-talloc.o \
-usb_descriptors.o \
-i2c_bitbang.o \
-octsim_i2c.o \
-ncn8025.o \
-command.o \
-iso7816_3.o \
-hpl/osc32kctrl/hpl_osc32kctrl.o \
-driver_init.o \
-hal/src/hal_usart_async.o \
-hal/src/hal_usart_async_rings.o \
-hpl/sercom/hpl_sercom.o \
-hal/utils/src/utils_ringbuffer.o \
-hal/src/hal_gpio.o \
-hal/utils/src/utils_event.o \
-hal/src/hal_sleep.o \
-usb_start.o \
-hpl/cmcc/hpl_cmcc.o \
-atmel_start.o \
-usb/device/usbdc.o \
-hal/src/hal_atomic.o
+	atmel_start.o \
+	command.o \
+	dma_m2m/dma_memory.o \
+	driver_init.o \
+	gcc/gcc/startup_same54.o \
+	gcc/system_same54.o \
+	hal/src/hal_atomic.o \
+	hal/src/hal_cache.o \
+	hal/src/hal_delay.o \
+	hal/src/hal_gpio.o \
+	hal/src/hal_init.o \
+	hal/src/hal_io.o \
+	hal/src/hal_sleep.o \
+	hal/src/hal_usart_async.o \
+	hal/src/hal_usart_async_rings.o \
+	hal/src/hal_usart_sync.o \
+	hal/src/hal_usb_device.o \
+	hal/utils/src/utils_assert.o \
+	hal/utils/src/utils_event.o \
+	hal/utils/src/utils_list.o \
+	hal/utils/src/utils_ringbuffer.o \
+	hal/utils/src/utils_syscalls.o \
+	hpl/cmcc/hpl_cmcc.o \
+	hpl/core/hpl_core_m4.o \
+	hpl/core/hpl_init.o \
+	hpl/dmac/hpl_dmac.o \
+	hpl/gclk/hpl_gclk.o \
+	hpl/mclk/hpl_mclk.o \
+	hpl/osc32kctrl/hpl_osc32kctrl.o \
+	hpl/oscctrl/hpl_oscctrl.o \
+	hpl/pm/hpl_pm.o \
+	hpl/ramecc/hpl_ramecc.o \
+	hpl/sercom/hpl_sercom.o \
+	hpl/usb/hpl_usb.o \
+	i2c_bitbang.o \
+	iso7816_3.o \
+	libosmo_emb.o \
+	main.o \
+	manual_test.o \
+	ncn8025.o \
+	octsim_i2c.o \
+	stdio_redirect/gcc/read.o \
+	stdio_redirect/gcc/write.o \
+	stdio_redirect/stdio_io.o \
+	stdio_start.o \
+	talloc.o \
+	usb/class/ccid/device/ccid_df.o \
+	usb/class/cdc/device/cdcdf_acm.o \
+	usb/device/usbdc.o \
+	usb/usb_protocol.o \
+	usb_descriptors.o \
+	usb_start.o \
+	$(NULL)
 
 # List the dependency files
 DEPS := $(OBJS:%.o=%.d)
