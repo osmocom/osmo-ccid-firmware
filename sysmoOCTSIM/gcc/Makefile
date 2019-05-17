@@ -1,5 +1,5 @@
 ################################################################################
-# Automatically-generated file. Do not edit!
+# Manually edited. Do not overwrite with Automatically-generated file.
 ################################################################################
 
 EXTRA_LIBS=/usr/local/arm-none-eabi/lib/libosmocore.a
