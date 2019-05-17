@@ -159,7 +159,7 @@ hal/src/hal_atomic.o
 # List the dependency files
 DEPS := $(OBJS:%.o=%.d)
 
-OUTPUT_FILE_NAME :=AtmelStart
+OUTPUT_FILE_NAME := sysmoOCTSIM
 QUOTE := "
 OUTPUT_FILE_PATH +=$(OUTPUT_FILE_NAME).elf
 OUTPUT_FILE_PATH_AS_ARGS +=$(OUTPUT_FILE_NAME).elf
