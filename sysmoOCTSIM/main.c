@@ -1020,12 +1020,37 @@ static int get_chip_unique_serial_str(char *out, size_t len)
 	return 0;
 }
 
+#define RSTCAUSE_STR_SIZE	64
+static void get_rstcause_str(char *out)
+{
+	uint8_t val = hri_rstc_read_RCAUSE_reg(RSTC);
+	*out = '\0';
+	if (val & RSTC_RCAUSE_POR)
+		strcat(out, "POR ");
+	if (val & RSTC_RCAUSE_BODCORE)
+		strcat(out, "BODCORE ");
+	if (val & RSTC_RCAUSE_BODVDD)
+		strcat(out, "BODVDD ");
+	if (val & RSTC_RCAUSE_NVM)
+		strcat(out, "NVM ");
+	if (val & RSTC_RCAUSE_EXT)
+		strcat(out, "EXT ");
+	if (val & RSTC_RCAUSE_WDT)
+		strcat(out, "WDT ");
+	if (val & RSTC_RCAUSE_SYST)
+		strcat(out, "SYST ");
+	if (val & RSTC_RCAUSE_BACKUP)
+		strcat(out, "BACKUP ");
+}
+
 int main(void)
 {
 	char sernr_buf[16*2+1];
+	char rstcause_buf[RSTCAUSE_STR_SIZE];
 
 	atmel_start_init();
 	get_chip_unique_serial_str(sernr_buf, sizeof(sernr_buf));
+	get_rstcause_str(rstcause_buf);
 
 	usb_start();
 
@@ -1051,6 +1076,7 @@ int main(void)
 		"(C) 2018-2019 by sysmocom - s.f.m.c. GmbH and contributors\n\r"
 		"=============================================================================\n\r");
 	printf("Chip ID: %s\r\n", sernr_buf);
+	printf("Reset cause: %s\r\n", rstcause_buf);
 
 	talloc_enable_null_tracking();
 	g_tall_ctx = talloc_named_const(NULL, 0, "global");
