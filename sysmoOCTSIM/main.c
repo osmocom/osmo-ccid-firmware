@@ -1034,7 +1034,7 @@ int main(void)
 	command_register(&cmd_talloc_report);
 	command_register(&cmd_talloc_free);
 
-	printf("\r\n\r\nsysmocom sysmoOCTSIM\r\n");
+	printf("\r\n\r\nsysmocom sysmoOCTSIM firmware %s\r\n", GIT_VERSION);
 	printf("Chip-Id %s\r\n", sernr_buf);
 
 	talloc_enable_null_tracking();

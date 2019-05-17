@@ -20,6 +20,10 @@ SIZE = $(CROSS_COMPILE)size
 GDB = $(CROSS_COMPILE)gdb
 NM = $(CROSS_COMPILE)nm
 
+TOP=../..
+GIT_VERSION=$(shell $(TOP)/git-version-gen $(TOP)/.tarvers)
+CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+
 ifdef SystemRoot
 	SHELL = cmd.exe
 	MK_DIR = mkdir
