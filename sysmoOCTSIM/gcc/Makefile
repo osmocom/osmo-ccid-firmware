@@ -83,6 +83,7 @@ hal/src/hal_init.o \
 gcc/gcc/startup_same54.o \
 hal/src/hal_usb_device.o \
 main.o \
+libosmo_emb.o \
 manual_test.o \
 talloc.o \
 usb_descriptors.o \
@@ -136,6 +137,7 @@ OBJS_AS_ARGS +=  \
 "gcc/gcc/startup_same54.o" \
 "hal/src/hal_usb_device.o" \
 "main.o" \
+"libosmo_emb.o" \
 "manual_test.o" \
 "talloc.o" \
 "usb_descriptors.o" \
@@ -195,6 +197,7 @@ DEPS_AS_ARGS +=  \
 "hal/src/hal_usart_async_rings.d" \
 "hpl/osc32kctrl/hpl_osc32kctrl.d" \
 "main.d" \
+"libosmo_emb.d" \
 "manual_test.d" \
 "talloc.d" \
 "usb_descriptors.d" \

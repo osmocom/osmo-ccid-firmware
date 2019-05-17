@@ -946,11 +946,12 @@ DEFUN(sim_iccid, cmd_sim_iccid, "sim-iccid", "Read ICCID from SIM card")
 }
 
 extern void testmode_init(void);
+extern void libosmo_emb_init(void);
 
 #include "talloc.h"
+#include "logging.h"
 #include <osmocom/core/msgb.h>
 void *g_tall_ctx;
-void *g_msgb_ctx;
 
 DEFUN(_talloc_report, cmd_talloc_report, "talloc-report", "Generate a talloc report")
 {
@@ -1039,8 +1040,10 @@ int main(void)
 	talloc_enable_null_tracking();
 	g_tall_ctx = talloc_named_const(NULL, 0, "global");
 	printf("g_tall_ctx=%p\r\n", g_tall_ctx);
-	g_msgb_ctx = talloc_pool(g_tall_ctx, 20480);
-	talloc_set_memlimit(g_msgb_ctx, 20480);
+
+	libosmo_emb_init();
+
+	LOGP(DUSB, LOGL_ERROR, "foobar usb\n");
 
 	command_print_prompt();
 	while (true) { // main loop
