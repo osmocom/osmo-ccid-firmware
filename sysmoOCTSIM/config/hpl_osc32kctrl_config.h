@@ -7,7 +7,7 @@
 // <e> RTC Source configuration
 // <id> enable_rtc_source
 #ifndef CONF_RTCCTRL_CONFIG
-#define CONF_RTCCTRL_CONFIG 0
+#define CONF_RTCCTRL_CONFIG 1
 #endif
 
 // <h> RTC source control
@@ -24,7 +24,7 @@
 // <id> rtc_1khz_selection
 #ifndef CONF_RTCCTRL_1KHZ
 
-#define CONF_RTCCTRL_1KHZ 0
+#define CONF_RTCCTRL_1KHZ 1
 
 #endif
 
@@ -71,21 +71,21 @@
 // <i> Indicates whether On Demand Control is enabled or not
 // <id> xosc32k_arch_ondemand
 #ifndef CONF_XOSC32K_ONDEMAND
-#define CONF_XOSC32K_ONDEMAND 1
+#define CONF_XOSC32K_ONDEMAND 0
 #endif
 
 // <q> Run in Standby
 // <i> Indicates whether Run in Standby is enabled or not
 // <id> xosc32k_arch_runstdby
 #ifndef CONF_XOSC32K_RUNSTDBY
-#define CONF_XOSC32K_RUNSTDBY 0
+#define CONF_XOSC32K_RUNSTDBY 1
 #endif
 
 // <q> 1kHz Output Enable
 // <i> Indicates whether 1kHz Output is enabled or not
 // <id> xosc32k_arch_en1k
 #ifndef CONF_XOSC32K_EN1K
-#define CONF_XOSC32K_EN1K 0
+#define CONF_XOSC32K_EN1K 1
 #endif
 
 // <q> 32kHz Output Enable
