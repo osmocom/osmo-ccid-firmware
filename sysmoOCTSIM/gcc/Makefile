@@ -5,6 +5,10 @@
 EXTRA_LIBS=/usr/local/arm-none-eabi/lib/libosmocore.a
 EXTRA_CFLAGS=-I/usr/local/arm-none-eabi/include -I../../ccid
 
+CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
+CFLAGS=-x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls \
+       -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU)
+
 ifdef SystemRoot
 	SHELL = cmd.exe
 	MK_DIR = mkdir
@@ -178,32 +182,24 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 # Compiler targets
 
 
-
-
 %.o: %.c
 	@echo Building file: $<
 	@echo ARM/GNU C Compiler
-	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
--D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
-$(INC_DIRS) $(EXTRA_CFLAGS) \
+	$(QUOTE)arm-none-eabi-gcc$(QUOTE) $(CFLAGS) $(INC_DIRS) $(EXTRA_CFLAGS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
 %.o: %.s
 	@echo Building file: $<
 	@echo ARM/GNU Assembler
-	$(QUOTE)arm-none-eabi-as$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
--D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
-$(INC_DIRS) \
+	$(QUOTE)arm-none-eabi-as$(QUOTE) $(CFLAGS) $(INC_DIRS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
 %.o: %.S
 	@echo Building file: $<
 	@echo ARM/GNU Preprocessing Assembler
-	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
--D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
-$(INC_DIRS) \
+	$(QUOTE)arm-none-eabi-gcc$(QUOTE) $(CFLAGS) $(INC_DIRS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
