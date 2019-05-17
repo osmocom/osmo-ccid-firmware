@@ -47,6 +47,7 @@ endif
 
 # List the subdirectories for creating object files
 SUB_DIRS +=  \
+	ccid \
 	dma_m2m \
 	gcc \
 	gcc/gcc \
@@ -74,6 +75,7 @@ SUB_DIRS +=  \
 INC_DIRS = \
 	-I"../" \
 	-I"../CMSIS/Core/Include" \
+	-I"../ccid" \
 	-I"../config" \
 	-I"../dma_m2m" \
 	-I"../hal/include" \
@@ -103,6 +105,8 @@ INC_DIRS = \
 
 # List the object files
 OBJS +=  \
+	ccid/ccid_proto.o \
+	ccid/ccid_device.o \
 	atmel_start.o \
 	command.o \
 	dma_m2m/dma_memory.o \
