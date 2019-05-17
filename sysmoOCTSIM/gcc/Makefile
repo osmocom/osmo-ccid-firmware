@@ -90,6 +90,7 @@ INC_DIRS = \
 	-I"../hpl/pm" \
 	-I"../hpl/port" \
 	-I"../hpl/ramecc" \
+	-I"../hpl/rtc" \
 	-I"../hpl/sercom" \
 	-I"../hpl/usb" \
 	-I"../hri" \
@@ -115,6 +116,7 @@ OBJS +=  \
 	gcc/system_same54.o \
 	hal/src/hal_atomic.o \
 	hal/src/hal_cache.o \
+	hal/src/hal_calendar.o \
 	hal/src/hal_delay.o \
 	hal/src/hal_gpio.o \
 	hal/src/hal_init.o \
@@ -139,6 +141,7 @@ OBJS +=  \
 	hpl/oscctrl/hpl_oscctrl.o \
 	hpl/pm/hpl_pm.o \
 	hpl/ramecc/hpl_ramecc.o \
+	hpl/rtc/hpl_rtc.o \
 	hpl/sercom/hpl_sercom.o \
 	hpl/usb/hpl_usb.o \
 	i2c_bitbang.o \

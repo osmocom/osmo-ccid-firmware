@@ -94,6 +94,7 @@ static void board_init()
 
 	cache_init();
 	cache_enable(CMCC);
+	calendar_enable(&CALENDAR_0);
 
 	/* increase drive strength of 20Mhz SIM clock output to 8mA
 	 * (there are 8 inputs + traces to drive!) */

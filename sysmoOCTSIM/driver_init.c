@@ -52,9 +52,21 @@ static uint8_t SIM5_buffer[SIM5_BUFFER_SIZE];
 static uint8_t SIM6_buffer[SIM6_BUFFER_SIZE];
 
 struct usart_async_rings_descriptor UART_debug;
+struct calendar_descriptor CALENDAR_0;
 
 static uint8_t UART_DEBUG_buffer_rx[UART_DEBUG_BUFFER_SIZE];
 static uint8_t UART_DEBUG_buffer_tx[UART_DEBUG_BUFFER_SIZE];
+
+void CALENDAR_0_CLOCK_init(void)
+{
+	hri_mclk_set_APBAMASK_RTC_bit(MCLK);
+}
+
+void CALENDAR_0_init(void)
+{
+	CALENDAR_0_CLOCK_init();
+	calendar_init(&CALENDAR_0, RTC);
+}
 
 /**
  * \brief USART Clock initialization function
@@ -903,6 +915,7 @@ void system_init(void)
 
 	gpio_set_pin_function(SDA4, GPIO_PIN_FUNCTION_OFF);
 
+	CALENDAR_0_init();
 	SIM0_init();
 	SIM1_init();
 	SIM2_init();

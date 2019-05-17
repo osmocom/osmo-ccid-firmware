@@ -21,12 +21,14 @@ extern "C" {
 #include <hal_io.h>
 #include <hal_sleep.h>
 
+#include <hal_calendar.h>
 #include <hal_usart_sync.h>
 #include <hal_usart_async.h>
 #include <hal_usart_async_rings.h>
 
 #include "hal_usb_device.h"
 
+extern struct calendar_descriptor CALENDAR_0;
 extern struct usart_async_descriptor SIM0;
 extern struct usart_async_descriptor SIM1;
 extern struct usart_async_descriptor SIM2;
@@ -35,6 +37,9 @@ extern struct usart_async_descriptor SIM4;
 extern struct usart_async_descriptor SIM5;
 extern struct usart_async_descriptor SIM6;
 extern struct usart_async_rings_descriptor UART_debug;
+
+void CALENDAR_0_CLOCK_init(void);
+void CALENDAR_0_init(void);
 
 void SIM0_PORT_init(void);
 void SIM0_CLOCK_init(void);
