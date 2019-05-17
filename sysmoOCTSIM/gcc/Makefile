@@ -52,6 +52,36 @@ usb/device \
 hpl/sercom \
 hpl/core
 
+INC_DIRS = \
+	-I"../" \
+	-I"../CMSIS/Core/Include" \
+	-I"../config" \
+	-I"../dma_m2m" \
+	-I"../hal/include" \
+	-I"../hal/utils/include" \
+	-I"../hpl/cmcc" \
+	-I"../hpl/core" \
+	-I"../hpl/dmac" \
+	-I"../hpl/gclk" \
+	-I"../hpl/mclk" \
+	-I"../hpl/osc32kctrl" \
+	-I"../hpl/oscctrl" \
+	-I"../hpl/pm" \
+	-I"../hpl/port" \
+	-I"../hpl/ramecc" \
+	-I"../hpl/sercom" \
+	-I"../hpl/usb" \
+	-I"../hri" \
+	-I"../include" \
+	-I"../usb" \
+	-I"../usb/class/cdc" \
+	-I"../usb/class/cdc/device" \
+	-I"../usb/class/ccid" \
+	-I"../usb/class/ccid/device" \
+	-I"../usb/device" \
+	-I"../stdio_redirect" \
+	$(NULL)
+
 # List the object files
 OBJS +=  \
 hal/src/hal_io.o \
@@ -155,7 +185,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo ARM/GNU C Compiler
 	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
 -D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
--I"../" -I"../config" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/class/ccid" -I"../usb/class/ccid/device" -I"../usb/device" -I"../" -I"../config" -I"../stdio_redirect" -I"../" -I"../dma_m2m" -I"../" -I"../CMSIS/Core/Include" -I"../include" $(EXTRA_CFLAGS) \
+$(INC_DIRS) $(EXTRA_CFLAGS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
@@ -164,7 +194,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo ARM/GNU Assembler
 	$(QUOTE)arm-none-eabi-as$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
 -D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
--I"../" -I"../config" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/class/ccid" -I"../usb/class/ccid/device" -I"../usb/device" -I"../" -I"../config" -I"../stdio_redirect" -I"../" -I"../dma_m2m" -I"../" -I"../CMSIS/Core/Include" -I"../include"  \
+$(INC_DIRS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
@@ -173,7 +203,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo ARM/GNU Preprocessing Assembler
 	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls -g3 -Wall -c -std=gnu99 \
 -D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 \
--I"../" -I"../config" -I"../hal/include" -I"../hal/utils/include" -I"../hpl/cmcc" -I"../hpl/core" -I"../hpl/dmac" -I"../hpl/gclk" -I"../hpl/mclk" -I"../hpl/osc32kctrl" -I"../hpl/oscctrl" -I"../hpl/pm" -I"../hpl/port" -I"../hpl/ramecc" -I"../hpl/sercom" -I"../hpl/usb" -I"../hri" -I"../" -I"../config" -I"../usb" -I"../usb/class/cdc" -I"../usb/class/cdc/device" -I"../usb/class/ccid" -I"../usb/class/ccid/device" -I"../usb/device" -I"../" -I"../config" -I"../stdio_redirect" -I"../" -I"../dma_m2m" -I"../" -I"../CMSIS/Core/Include" -I"../include"  \
+$(INC_DIRS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
