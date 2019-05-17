@@ -954,9 +954,23 @@ DEFUN(get_time, cmd_get_time, "get-time", "Read Time from RTC")
 		dt.time.hour, dt.time.min, dt.time.sec);
 }
 
+#include <osmocom/core/timer.h>
+static struct osmo_timer_list t;
+static void tmr_cb(void *data)
+{
+	printf("timer fired!\r\n");
+}
+DEFUN(test_timer, cmd_test_timer, "test-timer", "Test osmo_timer")
+{
+	printf("Setting up timer for 3s...\n\r");
+	osmo_timer_setup(&t, &tmr_cb, NULL);
+	osmo_timer_schedule(&t, 3, 0);
+}
+
 
 extern void testmode_init(void);
 extern void libosmo_emb_init(void);
+extern void libosmo_emb_mainloop(void);
 
 #include "talloc.h"
 #include "logging.h"
@@ -1060,6 +1074,7 @@ int main(void)
 	command_register(&cmd_talloc_report);
 	command_register(&cmd_talloc_free);
 	command_register(&cmd_get_time);
+	command_register(&cmd_test_timer);
 
 	printf("\r\n\r\n"
 		"=============================================================================\n\r"
@@ -1081,5 +1096,6 @@ int main(void)
 	while (true) { // main loop
 		command_try_recv();
 		poll_card_detect();
+		osmo_timers_update();
 	}
 }
