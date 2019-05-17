@@ -107,115 +107,8 @@ atmel_start.o \
 usb/device/usbdc.o \
 hal/src/hal_atomic.o
 
-OBJS_AS_ARGS +=  \
-"hal/src/hal_io.o" \
-"stdio_redirect/stdio_io.o" \
-"stdio_redirect/gcc/write.o" \
-"hpl/core/hpl_core_m4.o" \
-"hal/src/hal_cache.o" \
-"usb/class/cdc/device/cdcdf_acm.o" \
-"usb/class/ccid/device/ccid_df.o" \
-"hal/utils/src/utils_syscalls.o" \
-"stdio_redirect/gcc/read.o" \
-"gcc/system_same54.o" \
-"hpl/usb/hpl_usb.o" \
-"dma_m2m/dma_memory.o" \
-"hal/src/hal_delay.o" \
-"hpl/pm/hpl_pm.o" \
-"hpl/core/hpl_init.o" \
-"hpl/gclk/hpl_gclk.o" \
-"hal/utils/src/utils_list.o" \
-"hal/utils/src/utils_assert.o" \
-"hpl/dmac/hpl_dmac.o" \
-"hpl/oscctrl/hpl_oscctrl.o" \
-"hal/src/hal_usart_sync.o" \
-"hpl/mclk/hpl_mclk.o" \
-"hpl/ramecc/hpl_ramecc.o" \
-"stdio_start.o" \
-"usb/usb_protocol.o" \
-"hal/src/hal_init.o" \
-"gcc/gcc/startup_same54.o" \
-"hal/src/hal_usb_device.o" \
-"main.o" \
-"libosmo_emb.o" \
-"manual_test.o" \
-"talloc.o" \
-"usb_descriptors.o" \
-"i2c_bitbang.o" \
-"octsim_i2c.o" \
-"ncn8025.o" \
-"command.o" \
-"iso7816_3.o" \
-"hpl/osc32kctrl/hpl_osc32kctrl.o" \
-"driver_init.o" \
-"hal/src/hal_usart_async.o" \
-"hal/src/hal_usart_async_rings.o" \
-"hpl/sercom/hpl_sercom.o" \
-"hal/utils/src/utils_ringbuffer.o" \
-"hal/src/hal_gpio.o" \
-"hal/utils/src/utils_event.o" \
-"hal/src/hal_sleep.o" \
-"usb_start.o" \
-"hpl/cmcc/hpl_cmcc.o" \
-"atmel_start.o" \
-"usb/device/usbdc.o" \
-"hal/src/hal_atomic.o"
-
 # List the dependency files
 DEPS := $(OBJS:%.o=%.d)
-
-DEPS_AS_ARGS +=  \
-"dma_m2m/dma_memory.d" \
-"stdio_redirect/stdio_io.d" \
-"hal/utils/src/utils_event.d" \
-"hal/src/hal_io.d" \
-"hpl/ramecc/hpl_ramecc.d" \
-"hpl/core/hpl_core_m4.d" \
-"hal/utils/src/utils_syscalls.d" \
-"usb/class/cdc/device/cdcdf_acm.d" \
-"stdio_redirect/gcc/write.d" \
-"gcc/gcc/startup_same54.d" \
-"hpl/usb/hpl_usb.d" \
-"hal/utils/src/utils_list.d" \
-"hpl/cmcc/hpl_cmcc.d" \
-"hpl/dmac/hpl_dmac.d" \
-"hal/utils/src/utils_assert.d" \
-"hal/src/hal_delay.d" \
-"hpl/core/hpl_init.d" \
-"hpl/pm/hpl_pm.d" \
-"usb/usb_protocol.d" \
-"stdio_start.d" \
-"hpl/gclk/hpl_gclk.d" \
-"hal/src/hal_usb_device.d" \
-"usb_start.d" \
-"hal/src/hal_init.d" \
-"hal/src/hal_usart_sync.d" \
-"hpl/mclk/hpl_mclk.d" \
-"driver_init.d" \
-"stdio_redirect/gcc/read.d" \
-"hal/src/hal_usart_async.d" \
-"hal/src/hal_usart_async_rings.d" \
-"hpl/osc32kctrl/hpl_osc32kctrl.d" \
-"main.d" \
-"libosmo_emb.d" \
-"manual_test.d" \
-"talloc.d" \
-"usb_descriptors.d" \
-"i2c_bitbang.d" \
-"octsim_i2c.d" \
-"ncn8025.d" \
-"command.d" \
-"iso7816_3.d" \
-"hal/src/halcache.d" \
-"hal/src/hal_sleep.d" \
-"hal/utils/src/utils_ringbuffer.d" \
-"hpl/sercom/hpl_sercom.d" \
-"hal/src/hal_gpio.d" \
-"hal/src/hal_atomic.d" \
-"usb/device/usbdc.d" \
-"hpl/oscctrl/hpl_oscctrl.d" \
-"gcc/system_same54.d" \
-"atmel_start.d"
 
 OUTPUT_FILE_NAME :=AtmelStart
 QUOTE := "
@@ -234,7 +127,7 @@ all: $(SUB_DIRS) $(OUTPUT_FILE_PATH)
 $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo Building target: $@
 	@echo Invoking: ARM/GNU Linker
-	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -o $(OUTPUT_FILE_NAME).elf $(OBJS_AS_ARGS) $(EXTRA_LIBS) -Wl,--start-group -lm -Wl,--end-group -mthumb \
+	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -o $(OUTPUT_FILE_NAME).elf $(OBJS) $(EXTRA_LIBS) -Wl,--start-group -lm -Wl,--end-group -mthumb \
 -Wl,-Map="$(OUTPUT_FILE_NAME).map" --specs=nano.specs -Wl,--gc-sections -mcpu=cortex-m4 \
  \
 -T"../gcc/gcc/same54n19a_dfu.ld" \
@@ -295,9 +188,9 @@ $(SUB_DIRS):
 	$(MK_DIR) "$@"
 
 clean:
-	rm -f $(OBJS_AS_ARGS)
+	rm -f $(OBJS)
 	rm -f $(OUTPUT_FILE_PATH)
-	rm -f $(DEPS_AS_ARGS)
+	rm -f $(DEPS)
 	rm -f $(OUTPUT_FILE_NAME).a $(OUTPUT_FILE_NAME).hex $(OUTPUT_FILE_NAME).bin \
         $(OUTPUT_FILE_NAME).lss $(OUTPUT_FILE_NAME).eep $(OUTPUT_FILE_NAME).map \
         $(OUTPUT_FILE_NAME).srec
