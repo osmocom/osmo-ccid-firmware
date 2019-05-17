@@ -3,7 +3,7 @@
  *
  * \brief Instance description for DSU
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \asf_license_start
  *
@@ -42,8 +42,6 @@
 #define REG_DSU_DCC1               (0x41002014) /**< \brief (DSU) Debug Communication Channel 1 */
 #define REG_DSU_DID                (0x41002018) /**< \brief (DSU) Device Identification */
 #define REG_DSU_CFG                (0x4100201C) /**< \brief (DSU) Configuration */
-#define REG_DSU_DCFG0              (0x410020F0) /**< \brief (DSU) Device Configuration 0 */
-#define REG_DSU_DCFG1              (0x410020F4) /**< \brief (DSU) Device Configuration 1 */
 #define REG_DSU_ENTRY0             (0x41003000) /**< \brief (DSU) CoreSight ROM Table Entry 0 */
 #define REG_DSU_ENTRY1             (0x41003004) /**< \brief (DSU) CoreSight ROM Table Entry 1 */
 #define REG_DSU_END                (0x41003008) /**< \brief (DSU) CoreSight ROM Table End */
@@ -71,8 +69,6 @@
 #define REG_DSU_DCC1               (*(RwReg  *)0x41002014UL) /**< \brief (DSU) Debug Communication Channel 1 */
 #define REG_DSU_DID                (*(RoReg  *)0x41002018UL) /**< \brief (DSU) Device Identification */
 #define REG_DSU_CFG                (*(RwReg  *)0x4100201CUL) /**< \brief (DSU) Configuration */
-#define REG_DSU_DCFG0              (*(RwReg  *)0x410020F0UL) /**< \brief (DSU) Device Configuration 0 */
-#define REG_DSU_DCFG1              (*(RwReg  *)0x410020F4UL) /**< \brief (DSU) Device Configuration 1 */
 #define REG_DSU_ENTRY0             (*(RoReg  *)0x41003000UL) /**< \brief (DSU) CoreSight ROM Table Entry 0 */
 #define REG_DSU_ENTRY1             (*(RoReg  *)0x41003004UL) /**< \brief (DSU) CoreSight ROM Table Entry 1 */
 #define REG_DSU_END                (*(RoReg  *)0x41003008UL) /**< \brief (DSU) CoreSight ROM Table End */

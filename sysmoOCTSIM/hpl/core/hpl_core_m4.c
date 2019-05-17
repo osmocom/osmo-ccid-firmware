@@ -216,8 +216,14 @@ void _delay_cycles(void *const hw, uint32_t cycles)
 #ifndef _UNIT_TEST_
 	(void)hw;
 	(void)cycles;
-#if defined __GNUC__
+#if defined(__GNUC__) && (__ARMCOMPILER_VERSION > 6000000) /*  Keil MDK with ARM Compiler 6 */
+	__asm(".align 3 \n"
+	      "__delay:\n"
+	      "subs r1, r1, #1\n"
+	      "bhi __delay\n");
+#elif defined __GNUC__
 	__asm(".syntax unified\n"
+	      ".align 3 \n"
 	      "__delay:\n"
 	      "subs r1, r1, #1\n"
 	      "bhi __delay\n"

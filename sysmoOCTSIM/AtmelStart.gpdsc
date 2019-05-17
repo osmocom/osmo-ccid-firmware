@@ -24,7 +24,7 @@
     <condition id="CMSIS Device Startup">
       <description>Dependency on CMSIS core and Device Startup components</description>
       <require Cclass="CMSIS" Cgroup="CORE" Cversion="5.1.2"/>
-      <require Cclass="Device" Cgroup="Startup" Cversion="1.0.0"/>
+      <require Cclass="Device" Cgroup="Startup" Cversion="1.1.0"/>
     </condition>
     <condition id="ARMCC, GCC, IAR">
       <require Dname="ATSAME54N19A"/>

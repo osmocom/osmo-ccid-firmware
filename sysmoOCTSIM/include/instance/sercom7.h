@@ -3,7 +3,7 @@
  *
  * \brief Instance description for SERCOM7
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \asf_license_start
  *
@@ -145,6 +145,18 @@
 #define SERCOM7_GCLK_ID_CORE        37      
 #define SERCOM7_GCLK_ID_SLOW        3       
 #define SERCOM7_INT_MSB             6       
+#define SERCOM7_I2CM                1        // I2C Master mode implemented?
+#define SERCOM7_I2CS                1        // I2C Slave mode implemented?
+#define SERCOM7_I2CS_AUTO_ACK       1        // I2C slave automatic acknowledge implemented?
+#define SERCOM7_I2CS_GROUP_CMD      1        // I2C slave group command implemented?
+#define SERCOM7_I2CS_SDASETUP_CNT_SIZE 8        // I2CS sda setup count size
+#define SERCOM7_I2CS_SDASETUP_SIZE  4        // I2CS sda setup size
+#define SERCOM7_I2CS_SUDAT          1        // I2C slave SDA setup implemented?
+#define SERCOM7_I2C_FASTMP          1        // I2C fast mode plus implemented?
+#define SERCOM7_I2C_HSMODE          1        // USART mode implemented?
+#define SERCOM7_I2C_SCLSM_MODE      1        // I2C SCL clock stretch mode implemented?
+#define SERCOM7_I2C_SMB_TIMEOUTS    1        // I2C SMBus timeouts implemented?
+#define SERCOM7_I2C_TENBIT_ADR      1        // I2C ten bit enabled?
 #define SERCOM7_PMSB                3       
 #define SERCOM7_RETENTION_SUPPORT   0        // Retention supported?
 #define SERCOM7_SE_CNT              1        // SE counter included?
@@ -154,18 +166,6 @@
 #define SERCOM7_SPI_OZMO            0        // OZMO features implemented?
 #define SERCOM7_SPI_WAKE_ON_SSL     1        // _SS low detect implemented?
 #define SERCOM7_TTBIT_EXTENSION     1        // 32-bit extension implemented?
-#define SERCOM7_TWIM                1        // TWI Master mode implemented?
-#define SERCOM7_TWIS                1        // TWI Slave mode implemented?
-#define SERCOM7_TWIS_AUTO_ACK       1        // TWI slave automatic acknowledge implemented?
-#define SERCOM7_TWIS_GROUP_CMD      1        // TWI slave group command implemented?
-#define SERCOM7_TWIS_SDASETUP_CNT_SIZE 8        // TWIS sda setup count size
-#define SERCOM7_TWIS_SDASETUP_SIZE  4        // TWIS sda setup size
-#define SERCOM7_TWIS_SUDAT          1        // TWI slave SDA setup implemented?
-#define SERCOM7_TWI_FASTMP          1        // TWI fast mode plus implemented?
-#define SERCOM7_TWI_HSMODE          1        // USART mode implemented?
-#define SERCOM7_TWI_SCLSM_MODE      1        // TWI SCL clock stretch mode implemented?
-#define SERCOM7_TWI_SMB_TIMEOUTS    1        // TWI SMBus timeouts implemented?
-#define SERCOM7_TWI_TENBIT_ADR      1        // TWI ten bit enabled?
 #define SERCOM7_USART               1        // USART mode implemented?
 #define SERCOM7_USART_AUTOBAUD      1        // USART autobaud implemented?
 #define SERCOM7_USART_COLDET        1        // USART collision detection implemented?

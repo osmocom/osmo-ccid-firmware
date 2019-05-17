@@ -3,7 +3,7 @@
  *
  * \brief Instance description for SUPC
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \asf_license_start
  *
@@ -37,7 +37,6 @@
 #define REG_SUPC_INTFLAG           (0x40001808) /**< \brief (SUPC) Interrupt Flag Status and Clear */
 #define REG_SUPC_STATUS            (0x4000180C) /**< \brief (SUPC) Power and Clocks Status */
 #define REG_SUPC_BOD33             (0x40001810) /**< \brief (SUPC) BOD33 Control */
-#define REG_SUPC_BOD12             (0x40001814) /**< \brief (SUPC) BOD12 Control */
 #define REG_SUPC_VREG              (0x40001818) /**< \brief (SUPC) VREG Control */
 #define REG_SUPC_VREF              (0x4000181C) /**< \brief (SUPC) VREF Control */
 #define REG_SUPC_BBPS              (0x40001820) /**< \brief (SUPC) Battery Backup Power Switch */
@@ -49,7 +48,6 @@
 #define REG_SUPC_INTFLAG           (*(RwReg  *)0x40001808UL) /**< \brief (SUPC) Interrupt Flag Status and Clear */
 #define REG_SUPC_STATUS            (*(RoReg  *)0x4000180CUL) /**< \brief (SUPC) Power and Clocks Status */
 #define REG_SUPC_BOD33             (*(RwReg  *)0x40001810UL) /**< \brief (SUPC) BOD33 Control */
-#define REG_SUPC_BOD12             (*(RwReg  *)0x40001814UL) /**< \brief (SUPC) BOD12 Control */
 #define REG_SUPC_VREG              (*(RwReg  *)0x40001818UL) /**< \brief (SUPC) VREG Control */
 #define REG_SUPC_VREF              (*(RwReg  *)0x4000181CUL) /**< \brief (SUPC) VREF Control */
 #define REG_SUPC_BBPS              (*(RwReg  *)0x40001820UL) /**< \brief (SUPC) Battery Backup Power Switch */

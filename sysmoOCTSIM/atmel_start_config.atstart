@@ -4,10 +4,10 @@ versions:
   api: '1.0'
   backend: 1.5.122
   commit: 820baecf7dd115d94b0d42ee3b0b9d6ba2da7113
-  content: 1.0.1465
+  content: 1.0.1507
   content_pack_name: acme-packs-all
   format: '2'
-  frontend: 1.5.1826
+  frontend: 1.5.1877
 board:
   identifier: CustomBoard
   device: SAME54N19A-AF

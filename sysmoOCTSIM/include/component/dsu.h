@@ -3,7 +3,7 @@
  *
  * \brief Component description for DSU
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \asf_license_start
  *
@@ -113,14 +113,12 @@ typedef union {
     uint8_t  DCCD1:1;          /*!< bit:      3  Debug Communication Channel 1 Dirty */
     uint8_t  HPE:1;            /*!< bit:      4  Hot-Plugging Enable                */
     uint8_t  CELCK:1;          /*!< bit:      5  Chip Erase Locked                  */
-    uint8_t  TDCCD0:1;         /*!< bit:      6  Test Debug Communication Channel 0 Dirty */
-    uint8_t  TDCCD1:1;         /*!< bit:      7  Test Debug Communication Channel 1 Dirty */
+    uint8_t  :2;               /*!< bit:  6.. 7  Reserved                           */
   } bit;                       /*!< Structure used for bit  access                  */
   struct {
     uint8_t  :2;               /*!< bit:  0.. 1  Reserved                           */
     uint8_t  DCCD:2;           /*!< bit:  2.. 3  Debug Communication Channel x Dirty */
-    uint8_t  :2;               /*!< bit:  4.. 5  Reserved                           */
-    uint8_t  TDCCD:2;          /*!< bit:  6.. 7  Test Debug Communication Channel x Dirty */
+    uint8_t  :4;               /*!< bit:  4.. 7  Reserved                           */
   } vec;                       /*!< Structure used for vec  access                  */
   uint8_t reg;                 /*!< Type      used for register access              */
 } DSU_STATUSB_Type;
@@ -144,14 +142,7 @@ typedef union {
 #define DSU_STATUSB_HPE             (_U_(0x1) << DSU_STATUSB_HPE_Pos)
 #define DSU_STATUSB_CELCK_Pos       5            /**< \brief (DSU_STATUSB) Chip Erase Locked */
 #define DSU_STATUSB_CELCK           (_U_(0x1) << DSU_STATUSB_CELCK_Pos)
-#define DSU_STATUSB_TDCCD0_Pos      6            /**< \brief (DSU_STATUSB) Test Debug Communication Channel 0 Dirty */
-#define DSU_STATUSB_TDCCD0          (_U_(1) << DSU_STATUSB_TDCCD0_Pos)
-#define DSU_STATUSB_TDCCD1_Pos      7            /**< \brief (DSU_STATUSB) Test Debug Communication Channel 1 Dirty */
-#define DSU_STATUSB_TDCCD1          (_U_(1) << DSU_STATUSB_TDCCD1_Pos)
-#define DSU_STATUSB_TDCCD_Pos       6            /**< \brief (DSU_STATUSB) Test Debug Communication Channel x Dirty */
-#define DSU_STATUSB_TDCCD_Msk       (_U_(0x3) << DSU_STATUSB_TDCCD_Pos)
-#define DSU_STATUSB_TDCCD(value)    (DSU_STATUSB_TDCCD_Msk & ((value) << DSU_STATUSB_TDCCD_Pos))
-#define DSU_STATUSB_MASK            _U_(0xFF)    /**< \brief (DSU_STATUSB) MASK Register */
+#define DSU_STATUSB_MASK            _U_(0x3F)    /**< \brief (DSU_STATUSB) MASK Register */
 
 /* -------- DSU_ADDR : (DSU Offset: 0x0004) (R/W 32) Address -------- */
 #if !(defined(__ASSEMBLY__) || defined(__IAR_SYSTEMS_ASM__))
@@ -317,24 +308,6 @@ typedef union {
 #define DSU_CFG_ETBRAMEN_Pos        4            /**< \brief (DSU_CFG) Trace Control */
 #define DSU_CFG_ETBRAMEN            (_U_(0x1) << DSU_CFG_ETBRAMEN_Pos)
 #define DSU_CFG_MASK                _U_(0x0000001F) /**< \brief (DSU_CFG) MASK Register */
-
-/* -------- DSU_DCFG : (DSU Offset: 0x00F0) (R/W 32) Device Configuration -------- */
-#if !(defined(__ASSEMBLY__) || defined(__IAR_SYSTEMS_ASM__))
-typedef union {
-  struct {
-    uint32_t DCFG:32;          /*!< bit:  0..31  Device Configuration               */
-  } bit;                       /*!< Structure used for bit  access                  */
-  uint32_t reg;                /*!< Type      used for register access              */
-} DSU_DCFG_Type;
-#endif /* !(defined(__ASSEMBLY__) || defined(__IAR_SYSTEMS_ASM__)) */
-
-#define DSU_DCFG_OFFSET             0x00F0       /**< \brief (DSU_DCFG offset) Device Configuration */
-#define DSU_DCFG_RESETVALUE         _U_(0x00000000) /**< \brief (DSU_DCFG reset_value) Device Configuration */
-
-#define DSU_DCFG_DCFG_Pos           0            /**< \brief (DSU_DCFG) Device Configuration */
-#define DSU_DCFG_DCFG_Msk           (_U_(0xFFFFFFFF) << DSU_DCFG_DCFG_Pos)
-#define DSU_DCFG_DCFG(value)        (DSU_DCFG_DCFG_Msk & ((value) << DSU_DCFG_DCFG_Pos))
-#define DSU_DCFG_MASK               _U_(0xFFFFFFFF) /**< \brief (DSU_DCFG) MASK Register */
 
 /* -------- DSU_ENTRY0 : (DSU Offset: 0x1000) (R/  32) CoreSight ROM Table Entry 0 -------- */
 #if !(defined(__ASSEMBLY__) || defined(__IAR_SYSTEMS_ASM__))
@@ -648,13 +621,11 @@ typedef struct {
   __IO DSU_DCC_Type              DCC[2];      /**< \brief Offset: 0x0010 (R/W 32) Debug Communication Channel n */
   __I  DSU_DID_Type              DID;         /**< \brief Offset: 0x0018 (R/  32) Device Identification */
   __IO DSU_CFG_Type              CFG;         /**< \brief Offset: 0x001C (R/W 32) Configuration */
-       RoReg8                    Reserved2[0xD0];
-  __IO DSU_DCFG_Type             DCFG[2];     /**< \brief Offset: 0x00F0 (R/W 32) Device Configuration */
-       RoReg8                    Reserved3[0xF08];
+       RoReg8                    Reserved2[0xFE0];
   __I  DSU_ENTRY0_Type           ENTRY0;      /**< \brief Offset: 0x1000 (R/  32) CoreSight ROM Table Entry 0 */
   __I  DSU_ENTRY1_Type           ENTRY1;      /**< \brief Offset: 0x1004 (R/  32) CoreSight ROM Table Entry 1 */
   __I  DSU_END_Type              END;         /**< \brief Offset: 0x1008 (R/  32) CoreSight ROM Table End */
-       RoReg8                    Reserved4[0xFC0];
+       RoReg8                    Reserved3[0xFC0];
   __I  DSU_MEMTYPE_Type          MEMTYPE;     /**< \brief Offset: 0x1FCC (R/  32) CoreSight ROM Table Memory Type */
   __I  DSU_PID4_Type             PID4;        /**< \brief Offset: 0x1FD0 (R/  32) Peripheral Identification 4 */
   __I  DSU_PID5_Type             PID5;        /**< \brief Offset: 0x1FD4 (R/  32) Peripheral Identification 5 */

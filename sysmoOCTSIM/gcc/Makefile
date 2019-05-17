@@ -105,9 +105,9 @@ INC_DIRS = \
 
 # List the object files
 OBJS +=  \
+	atmel_start.o \
 	ccid/ccid_proto.o \
 	ccid/ccid_device.o \
-	atmel_start.o \
 	command.o \
 	dma_m2m/dma_memory.o \
 	driver_init.o \
