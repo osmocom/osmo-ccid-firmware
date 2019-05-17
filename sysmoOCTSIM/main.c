@@ -946,6 +946,15 @@ DEFUN(sim_iccid, cmd_sim_iccid, "sim-iccid", "Read ICCID from SIM card")
 	ncn8025_set(slotnr, &settings);
 }
 
+DEFUN(get_time, cmd_get_time, "get-time", "Read Time from RTC")
+{
+	struct calendar_date_time dt;
+	calendar_get_date_time(&CALENDAR_0, &dt);
+	printf("%04u-%02u-%02u %02u:%02u:%02u\r\n", dt.date.year, dt.date.month, dt.date.day,
+		dt.time.hour, dt.time.min, dt.time.sec);
+}
+
+
 extern void testmode_init(void);
 extern void libosmo_emb_init(void);
 
@@ -1034,6 +1043,7 @@ int main(void)
 	command_register(&cmd_talloc_test);
 	command_register(&cmd_talloc_report);
 	command_register(&cmd_talloc_free);
+	command_register(&cmd_get_time);
 
 	printf("\r\n\r\n"
 		"=============================================================================\n\r"
