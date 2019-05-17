@@ -4,10 +4,21 @@
 
 EXTRA_LIBS=/usr/local/arm-none-eabi/lib/libosmocore.a
 EXTRA_CFLAGS=-I/usr/local/arm-none-eabi/include -I../../ccid
+CROSS_COMPILE= arm-none-eabi-
 
 CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
 CFLAGS=-x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls \
        -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU)
+
+CC = $(CROSS_COMPILE)gcc
+LD = $(CROSS_COMPILE)ld
+SIZE = $(CROSS_COMPILE)size
+STRIP = $(CROSS_COMPILE)strip
+OBJCOPY = $(CROSS_COMPILE)objcopy
+OBJDUMP = $(CROSS_COMPILE)objdump
+SIZE = $(CROSS_COMPILE)size
+GDB = $(CROSS_COMPILE)gdb
+NM = $(CROSS_COMPILE)nm
 
 ifdef SystemRoot
 	SHELL = cmd.exe
@@ -161,23 +172,22 @@ all: $(SUB_DIRS) $(OUTPUT_FILE_PATH)
 $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo Building target: $@
 	@echo Invoking: ARM/GNU Linker
-	$(QUOTE)arm-none-eabi-gcc$(QUOTE) -o $(OUTPUT_FILE_NAME).elf $(OBJS) $(EXTRA_LIBS) -Wl,--start-group -lm -Wl,--end-group -mthumb \
+	$(CC) -o $(OUTPUT_FILE_NAME).elf $(OBJS) $(EXTRA_LIBS) -Wl,--start-group -lm -Wl,--end-group -mthumb \
 -Wl,-Map="$(OUTPUT_FILE_NAME).map" --specs=nano.specs -Wl,--gc-sections -mcpu=cortex-m4 \
  \
 -T"../gcc/gcc/same54n19a_dfu.ld" \
 -L"../gcc/gcc"
 	@echo Finished building target: $@
 
-	"arm-none-eabi-objcopy" -O binary "$(OUTPUT_FILE_NAME).elf" "$(OUTPUT_FILE_NAME).bin"
-	"arm-none-eabi-objcopy" -O ihex -R .eeprom -R .fuse -R .lock -R .signature  \
-        "$(OUTPUT_FILE_NAME).elf" "$(OUTPUT_FILE_NAME).hex"
-	"arm-none-eabi-objcopy" -j .eeprom --set-section-flags=.eeprom=alloc,load --change-section-lma \
-        .eeprom=0 --no-change-warnings -O binary "$(OUTPUT_FILE_NAME).elf" \
-        "$(OUTPUT_FILE_NAME).eep" || exit 0
-	"arm-none-eabi-objdump" -h -S "$(OUTPUT_FILE_NAME).elf" > "$(OUTPUT_FILE_NAME).lss"
-	"arm-none-eabi-size" "$(OUTPUT_FILE_NAME).elf"
+	$(OBJCOPY) -O binary "$(OUTPUT_FILE_NAME).elf" "$(OUTPUT_FILE_NAME).bin"
+	$(OBJCOPY) -O ihex -R .eeprom -R .fuse -R .lock -R .signature  \
+		"$(OUTPUT_FILE_NAME).elf" "$(OUTPUT_FILE_NAME).hex"
+	$(OBJCOPY) -j .eeprom --set-section-flags=.eeprom=alloc,load --change-section-lma \
+		.eeprom=0 --no-change-warnings -O binary "$(OUTPUT_FILE_NAME).elf" \
+		"$(OUTPUT_FILE_NAME).eep" || exit 0
+	$(OBJDUMP) -h -S "$(OUTPUT_FILE_NAME).elf" > "$(OUTPUT_FILE_NAME).lss"
+	$(SIZE) "$(OUTPUT_FILE_NAME).elf"
 
-	
 
 # Compiler targets
 
@@ -185,21 +195,21 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 %.o: %.c
 	@echo Building file: $<
 	@echo ARM/GNU C Compiler
-	$(QUOTE)arm-none-eabi-gcc$(QUOTE) $(CFLAGS) $(INC_DIRS) $(EXTRA_CFLAGS) \
+	$(CC) $(CFLAGS) $(INC_DIRS) $(EXTRA_CFLAGS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
 %.o: %.s
 	@echo Building file: $<
 	@echo ARM/GNU Assembler
-	$(QUOTE)arm-none-eabi-as$(QUOTE) $(CFLAGS) $(INC_DIRS) \
+	$(CC) $(CFLAGS) $(INC_DIRS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
 %.o: %.S
 	@echo Building file: $<
 	@echo ARM/GNU Preprocessing Assembler
-	$(QUOTE)arm-none-eabi-gcc$(QUOTE) $(CFLAGS) $(INC_DIRS) \
+	$(CC) $(CFLAGS) $(INC_DIRS) \
 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"  -o "$@" "$<"
 	@echo Finished building: $<
 
