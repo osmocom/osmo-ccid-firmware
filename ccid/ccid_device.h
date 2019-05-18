@@ -19,8 +19,8 @@ struct msgb;
 
 struct ccid_pars_decoded {
 	/* global for T0/T1 */
-	uint8_t fi;
-	uint8_t di;
+	uint32_t fi;
+	uint32_t di;
 	enum ccid_clock_stop clock_stop;
 	bool inverse_convention;
 

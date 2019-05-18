@@ -32,8 +32,8 @@ static const uint8_t sysmousim_sjs1_atr[] = {
 		0x07, 0x18, 0x00, 0x00, 0x01, 0xA5 };
 
 static const struct ccid_pars_decoded slotsim_def_pars = {
-	.fi = 0,
-	.di = 0,
+	.fi = 372,
+	.di = 1,
 	.clock_stop = CCID_CLOCK_STOP_NOTALLOWED,
 	.inverse_convention = false,
 	.t0 = {
