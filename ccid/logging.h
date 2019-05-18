@@ -1,5 +1,4 @@
 #pragma once
-
 #include <osmocom/core/logging.h>
 
 enum {
@@ -8,6 +7,7 @@ enum {
 	DISO7816,
 	DATR,
 	DTPDU,
-	DPPS
-	DCARD,
+	DPPS,
 };
+
+extern const struct log_info log_info;

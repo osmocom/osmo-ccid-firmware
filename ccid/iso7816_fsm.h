@@ -1,0 +1,40 @@
+#pragma once
+
+#include <osmocom/core/fsm.h>
+struct card_uart;
+
+enum iso7816_3_event {
+	ISO7816_E_RX_SINGLE,		/*!< single-byte data received on UART */
+	ISO7816_E_RX_COMPL,		/*!< data receive complete on UART */
+	ISO7816_E_TX_COMPL,		/*!< data transmit complete on UART */
+	ISO7816_E_POWER_UP_IND,		/*!< Card powered up */
+	ISO7816_E_RESET_REL_IND,	/*!< Reset released */
+	ISO7816_E_RX_ERR_IND,		/*!< Uncorrectable Rx [parity] error */
+	ISO7816_E_TX_ERR_IND,		/*!< Uncorrectable Rx [parity] error */
+	ISO7816_E_XCEIVE_TPDU_CMD,	/*!< Ask for start of TPDU transmission */
+	/* allstate events */
+	ISO7816_E_WTIME_EXP,		/*!< WTIME expired */
+	ISO7816_E_HW_ERR_IND,		/*!< Hardware error (overcurrent, ...) */
+	ISO7816_E_SW_ERR_IND,		/*!< Software error */
+	ISO7816_E_CARD_REMOVAL,		/*!< card has been removed from slot */
+	ISO7816_E_POWER_DN_IND,		/*!< Card powered down */
+	ISO7816_E_RESET_ACT_IND,	/*!< Reset activated */
+	ISO7816_E_ABORT_REQ,		/*!< Abort request (e.g. from CCID) */
+	/* TODO: PPS request */
+	/* TODO: Clock stop request */
+	/* TODO: Rx FIFO overrun */
+	/* TODO: Rx buffer overrun */
+
+	/* internal events between FSMs in this file */
+	ISO7816_E_ATR_DONE_IND,		/*!< ATR Done indication from ATR child FSM */
+	ISO7816_E_TPDU_DONE_IND,	/*!< TPDU Done indication from TPDU child FSM */
+	ISO7816_E_TPDU_CLEAR_REQ,	/*!< Return TPDU FSM to TPDU_S_INIT */
+};
+
+typedef void (*iso7816_user_cb)(struct osmo_fsm_inst *fi, int event, int cause, void *data);
+
+struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id,
+					struct card_uart *cuart, iso7816_user_cb user_cb,
+					void *ussr_priv);
+
+void *iso7816_fsm_get_user_priv(struct osmo_fsm_inst *fi);
