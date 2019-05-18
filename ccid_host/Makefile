@@ -3,6 +3,7 @@ LIBS?=-lasan $(shell pkg-config --libs libosmocore)
 
 ccid_functionfs: ccid_main_functionfs.o \
 		 ccid_slot_sim.o \
+		 logging.o \
 		 ../ccid_common/ccid_proto.o \
 		 ../ccid_common/ccid_device.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -laio
