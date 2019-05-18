@@ -7,6 +7,7 @@
 #include <linux/usb/functionfs.h>
 
 #include "ccid_proto.h"
+#include "logging.h"
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define cpu_to_le16(x)  (x)
@@ -502,27 +503,6 @@ static int ccid_ops_send_int(struct ccid_instance *ci, struct msgb *msg)
 static const struct ccid_ops c_ops = {
 	.send_in = ccid_ops_send_in,
 	.send_int = ccid_ops_send_int,
-};
-
-static const struct log_info_cat log_info_cat[] = {
-	[DUSB] = {
-		.name = "USB",
-		.description = "USB Transport",
-		.enabled = 1,
-		.loglevel = LOGL_NOTICE,
-	},
-	[DCCID] = {
-		.name = "CCID",
-		.description = "CCID Core",
-		.color = "\033[1;35m",
-		.enabled = 1,
-		.loglevel = LOGL_DEBUG,
-	},
-};
-
-static const struct log_info log_info = {
-	.cat = log_info_cat,
-	.num_cat = ARRAY_SIZE(log_info_cat),
 };
 
 static void *tall_main_ctx;

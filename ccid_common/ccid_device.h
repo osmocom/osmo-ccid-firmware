@@ -3,11 +3,7 @@
 #include <stdint.h>
 
 #include "ccid_proto.h"
-
-enum {
-	DCCID,
-	DUSB,
-};
+#include "logging.h"
 
 #define NR_SLOTS	8
 
