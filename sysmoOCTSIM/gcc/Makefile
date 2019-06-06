@@ -46,34 +46,6 @@ else
 	endif
 endif
 
-# List the subdirectories for creating object files
-SUB_DIRS +=  \
-	ccid \
-	dma_m2m \
-	gcc \
-	gcc/gcc \
-	hal/src \
-	hal/utils/src \
-	hpl/cmcc \
-	hpl/core \
-	hpl/dmac \
-	hpl/gclk \
-	hpl/mclk \
-	hpl/osc32kctrl \
-	hpl/oscctrl \
-	hpl/pm \
-	hpl/ramecc \
-	hpl/sercom \
-	hpl/rtc \
-	hpl/usb \
-	stdio_redirect \
-	stdio_redirect/gcc \
-	usb \
-	usb/class/ccid/device \
-	usb/class/cdc/device \
-	usb/device \
-	$(NULL)
-
 INC_DIRS = \
 	-I"../" \
 	-I"../CMSIS/Core/Include" \
@@ -168,6 +140,8 @@ OBJS +=  \
 
 # List the dependency files
 DEPS := $(OBJS:%.o=%.d)
+# List the subdirectories for creating object files
+SUB_DIRS := $(sort $(foreach obj,$(OBJS),$(dir $(obj))))
 
 OUTPUT_FILE_NAME := sysmoOCTSIM
 QUOTE := "
