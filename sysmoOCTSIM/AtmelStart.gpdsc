@@ -127,8 +127,6 @@
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_i2s_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_icm_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_mclk_e54.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_mpu_e54.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_nvic_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_nvmctrl_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_osc32kctrl_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_oscctrl_e54.h"/>
@@ -144,8 +142,6 @@
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_sdhc_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_sercom_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_supc_e54.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_systemcontrol_e54.h"/>
-        <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_systick_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_tc_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_tcc_e54.h"/>
         <file category="header" condition="ARMCC, GCC, IAR" name="hri/hri_trng_e54.h"/>
