@@ -3,7 +3,7 @@
  *
  * \brief Top level header file
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \license_start
  *

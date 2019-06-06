@@ -3,7 +3,7 @@
  *
  * \brief Component description for ICM
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \asf_license_start
  *

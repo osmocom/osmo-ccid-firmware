@@ -3,7 +3,7 @@
  *
  * \brief Instance description for CAN1
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \asf_license_start
  *

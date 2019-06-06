@@ -3,7 +3,7 @@
  *
  * \brief Top header file for SAME54
  *
- * Copyright (c) 2018 Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \asf_license_start
  *
