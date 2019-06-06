@@ -63,6 +63,7 @@ SUB_DIRS +=  \
 	hpl/pm \
 	hpl/ramecc \
 	hpl/sercom \
+	hpl/rtc \
 	hpl/usb \
 	stdio_redirect \
 	stdio_redirect/gcc \
