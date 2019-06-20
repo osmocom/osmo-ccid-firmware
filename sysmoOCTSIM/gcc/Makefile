@@ -143,7 +143,7 @@ DEPS := $(OBJS:%.o=%.d)
 # List the subdirectories for creating object files
 SUB_DIRS := $(sort $(foreach obj,$(OBJS),$(dir $(obj))))
 
-OUTPUT_FILE_NAME := sysmoOCTSIM
+OUTPUT_FILE_NAME := sysmoOCTSIM-$(GIT_VERSION)
 QUOTE := "
 OUTPUT_FILE_PATH +=$(OUTPUT_FILE_NAME).elf
 OUTPUT_FILE_PATH_AS_ARGS +=$(OUTPUT_FILE_NAME).elf
