@@ -2,7 +2,8 @@ Requirements
 ============
 
 * you need dummy_hcd.ko, i.e. a kernel compiled with CONFIG_USB_DUMMY_HCD=m
-* you need a fixed usb_f_fs.ko, which doesn't make blind assumptions about
+* kernel version >= 5.0 does NOT require patching
+* kernel version < 5.0 needs a fixed usb_f_fs.ko, which doesn't make blind assumptions about
   everything being a HID descriptor.  See CCID.patch
 
 On a stock Debian system, this works as follows (kernel versions will change over time,

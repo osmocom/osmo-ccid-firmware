@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <endian.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <linux/usb/functionfs.h>
 
@@ -87,20 +88,22 @@ static const struct {
 			.bEndpointAddress = 1 | USB_DIR_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_INT,
 			.wMaxPacketSize = 64,
+			.bInterval = 1,
 		},
+		// dummy_hcd expects a valid wMaxPacketSize!
 		.ep_out = {
 			.bLength = sizeof(descriptors.fs_descs.ep_out),
 			.bDescriptorType = USB_DT_ENDPOINT,
 			.bEndpointAddress = 2 | USB_DIR_OUT,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
-			/* .wMaxPacketSize = autoconfiguration (kernel) */
+			.wMaxPacketSize = 64,
 		},
 		.ep_in = {
 			.bLength = sizeof(descriptors.fs_descs.ep_in),
 			.bDescriptorType = USB_DT_ENDPOINT,
 			.bEndpointAddress = 3 | USB_DIR_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
-			/* .wMaxPacketSize = autoconfiguration (kernel) */
+			.wMaxPacketSize = 64,
 		},
 	},
 };
