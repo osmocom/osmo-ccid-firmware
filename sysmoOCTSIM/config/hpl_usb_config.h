@@ -39,7 +39,7 @@
 // <CONF_USB_D_N_EP_MAX"> Max possible (by "Max Endpoint Number" config)
 // <id> usbd_num_ep_sp
 #ifndef CONF_USB_D_NUM_EP_SP
-#define CONF_USB_D_NUM_EP_SP CONF_USB_N_6
+#define CONF_USB_D_NUM_EP_SP CONF_USB_N_7
 #endif
 
 // </h>

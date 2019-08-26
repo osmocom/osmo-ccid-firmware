@@ -7,6 +7,11 @@ GADGET_CONFIGFS=/sys/kernel/config/usb_gadget
 set -e
 set -x
 
+
+[ -z "$(pidof ccid_functionfs)" ] || kill -9 $(pidof ccid_functionfs)
+
+sleep 1
+
 gadgetdir="$GADGET_CONFIGFS/$GADGET_NAME"
 
 # unmount the endpoints from the filesystem
@@ -31,3 +36,5 @@ rmdir "$gadgetdir/functions/ffs.usb0"
 rmdir "$gadgetdir/strings/0x409"
 
 rmdir $gadgetdir
+
+rmmod usb_f_fs

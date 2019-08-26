@@ -98,6 +98,7 @@ static void slotsim_xfr_timer_cb(void *data)
 
 static void slotsim_set_power(struct ccid_slot *cs, bool enable)
 {
+	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 	if (enable) {
 		cs->icc_powered = true;
 		/* FIXME: What to do about ATR? */
@@ -108,6 +109,7 @@ static void slotsim_set_power(struct ccid_slot *cs, bool enable)
 
 static void slotsim_set_clock(struct ccid_slot *cs, enum ccid_clock_command cmd)
 {
+	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 	/* FIXME */
 	switch (cmd) {
 	case CCID_CLOCK_CMD_STOP:
@@ -122,12 +124,14 @@ static void slotsim_set_clock(struct ccid_slot *cs, enum ccid_clock_command cmd)
 static int slotsim_set_params(struct ccid_slot *cs, enum ccid_protocol_num proto,
 				const struct ccid_pars_decoded *pars_dec)
 {
+	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 	/* we always acknowledge all parameters */
 	return 0;
 }
 
 static int slotsim_set_rate_and_clock(struct ccid_slot *cs, uint32_t freq_hz, uint32_t rate_bps)
 {
+	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 	/* we always acknowledge all rates/clocks */
 	return 0;
 }

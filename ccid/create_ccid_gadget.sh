@@ -5,6 +5,7 @@ GADGET_NAME=osmo-ccid
 
 
 GADGET_CONFIGFS=/sys/kernel/config/usb_gadget
+SRCD=$(pwd)
 
 die() {
 	echo ERROR: $1
@@ -41,6 +42,13 @@ echo "sysmoOCTSIM config" > configs/c.1/strings/0x409/configuration
 [ -d /dev/ffs-ccid ] || mkdir /dev/ffs-ccid
 [ -e /dev/ffs-ccid/ep0 ] || mount -t functionfs usb0 /dev/ffs-ccid/
 
+sleep 1
+
+${SRCD}/ccid_functionfs /dev/ffs-ccid &
+
+sleep 1
+
 # enable device, only works after program has opened EP FDs
 #echo dummy_udc.0 > UDC
+echo dummy_udc.0 | sudo tee /sys/kernel/config/usb_gadget/osmo-ccid/UDC
 
