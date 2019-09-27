@@ -1,6 +1,8 @@
 CFLAGS=-Wall -g $(shell pkg-config --cflags libosmocore) -I../ccid_common -I.
 LIBS?=-lasan $(shell pkg-config --libs libosmocore)
 
+all: ccid_functionfs hub_functionfs cuart_test
+
 ccid_functionfs: ccid_main_functionfs.o \
 		 ccid_slot_sim.o \
 		 logging.o \
@@ -11,8 +13,14 @@ ccid_functionfs: ccid_main_functionfs.o \
 hub_functionfs: hub_main_functionfs.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -laio
 
+cuart_test:	cuart_test.o \
+		cuart_driver_tty.o \
+		utils_ringbuffer.o \
+		../ccid_common/cuart.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $^
 
 clean:
-	rm -f ccid_functionfs hub_functionfs *.o
+	rm -f ccid_functionfs hub_functionfs cuart_test *.o
