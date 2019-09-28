@@ -113,7 +113,6 @@ void card_uart_notification(struct card_uart *cuart, enum card_uart_event evt, v
 	case CUART_E_TX_COMPLETE:
 		cuart->tx_busy = false;
 		/* re-enable receiver if we're done with transmit */
-		sleep(1);
 		card_uart_ctrl(cuart, CUART_CTL_RX, true);
 		break;
 	default:

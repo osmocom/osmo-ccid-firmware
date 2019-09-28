@@ -125,7 +125,21 @@ static int tty_uart_fd_cb(struct osmo_fd *ofd, unsigned int what)
 		rc = read(ofd->fd, buf, sizeof(buf));
 		OSMO_ASSERT(rc > 0);
 		for (i = 0; i < rc; i++) {
+#ifndef CREAD_ACTUALLY_WORKS
 			/* work-around for https://bugzilla.kernel.org/show_bug.cgi?id=205033 */
+			if (cuart->tx_busy) {
+				if (cuart->u.tty.rx_count_during_tx < cuart->u.tty.tx_buf_len) {
+					/* FIXME: compare! */
+					cuart->u.tty.rx_count_during_tx += 1;
+					if (cuart->u.tty.rx_count_during_tx == cuart->u.tty.tx_buf_len) {
+						cuart->tx_busy = false;
+						card_uart_notification(cuart, CUART_E_TX_COMPLETE,
+									(void *)cuart->u.tty.tx_buf);
+					}
+					continue;
+				}
+			}
+#endif
 			if (!cuart->rx_enabled)
 				continue;
 
@@ -152,12 +166,15 @@ static int tty_uart_fd_cb(struct osmo_fd *ofd, unsigned int what)
 		/* if no more bytes to transmit, disable OSMO_FD_WRITE */
 		if (cuart->u.tty.tx_index >= cuart->u.tty.tx_buf_len) {
 			ofd->when &= ~BSC_FD_WRITE;
+#ifndef CREAD_ACTUALLY_WORKS
+			/* don't immediately notify user; first wait for characters to be received */
+#else
 			/* ensure everything is written (tx queue/fifo drained) */
 			tcdrain(cuart->u.tty.ofd.fd);
-			osmo_select_main(true);
 			cuart->tx_busy = false;
 			/* notify */
 			card_uart_notification(cuart, CUART_E_TX_COMPLETE, (void *)cuart->u.tty.tx_buf);
+#endif
 		}
 	}
 	return 0;
@@ -209,7 +226,8 @@ static int tty_uart_async_tx(struct card_uart *cuart, const uint8_t *data, size_
 
 	cuart->u.tty.tx_buf = data;
 	cuart->u.tty.tx_buf_len = len;
-	cuart->u.tty.tx_buf_len = len;
+	cuart->u.tty.tx_index = 0;
+	cuart->u.tty.rx_count_during_tx = 0;
 	cuart->tx_busy = true;
 	cuart->u.tty.ofd.when |= OSMO_FD_WRITE;
 

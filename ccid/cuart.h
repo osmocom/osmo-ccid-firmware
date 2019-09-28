@@ -77,6 +77,8 @@ struct card_uart {
 			size_t tx_buf_len;
 			/* index: offset of next to be transmitted byte in tx_buf */
 			size_t tx_index;
+			/* number of bytes we have received echoed back during transmit */
+			uint32_t rx_count_during_tx;
 
 			struct osmo_fd ofd;
 			unsigned int baudrate;
@@ -104,4 +106,3 @@ void card_uart_set_rx_threshold(struct card_uart *cuart, size_t rx_threshold);
 void card_uart_notification(struct card_uart *cuart, enum card_uart_event evt, void *data);
 
 int card_uart_driver_register(struct card_uart_driver *drv);
-
