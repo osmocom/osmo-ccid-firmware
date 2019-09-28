@@ -31,10 +31,16 @@ struct iso_fsm_slot_instance {
 
 static struct iso_fsm_slot_instance g_si;
 
-struct iso_fsm_slot *ccid_slot2iso_fsm_slot(struct ccid_slot *cs)
+static struct iso_fsm_slot *ccid_slot2iso_fsm_slot(struct ccid_slot *cs)
 {
 	OSMO_ASSERT(cs->slot_nr < ARRAY_SIZE(g_si.slot));
 	return &g_si.slot[cs->slot_nr];
+}
+
+struct card_uart *cuart4slot_nr(uint8_t slot_nr)
+{
+	OSMO_ASSERT(slot_nr < ARRAY_SIZE(g_si.slot));
+	return g_si.slot[slot_nr].cuart;
 }
 
 static const uint8_t sysmousim_sjs1_atr[] = {
@@ -74,9 +80,10 @@ static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *m
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_POWER_UP_IND, NULL);
 	cs->icc_powered = true;
 	card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK, true);
-	usleep(10000);
-	card_uart_ctrl(ss->cuart, CUART_CTL_RST, false);
+	delay_us(10000);
+
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_RESET_REL_IND, NULL);
+	card_uart_ctrl(ss->cuart, CUART_CTL_RST, false);
 
 	msgb_free(msg);
 	/* continues in iso_fsm_clot_user_cb once ATR is received */
@@ -145,8 +152,10 @@ static void iso_fsm_slot_set_power(struct ccid_slot *cs, bool enable)
 
 	if (enable) {
 		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, true);
+		cs->icc_powered = true;
 	} else {
 		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, false);
+		cs->icc_powered = false;
 	}
 }
 
@@ -179,31 +188,35 @@ static int iso_fsm_slot_set_rate_and_clock(struct ccid_slot *cs, uint32_t freq_h
 	return 0;
 }
 
-
+extern void *g_tall_ctx;
 static int iso_fsm_slot_init(struct ccid_slot *cs)
 {
-	void *ctx = NULL; /* FIXME */
+	void *ctx = g_tall_ctx; /* FIXME */
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct card_uart *cuart = talloc_zero(ctx, struct card_uart);
-	char id_buf[16];
-	char *devname = NULL;
+	char id_buf[16] = "SIM0";
+	char devname[] = "foobar";
 	int rc;
 
 	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 
 	/* HACK: make this in some way configurable so it works both in the firmware
 	 * and on the host (functionfs) */
-	if (cs->slot_nr == 0) {
-		cs->icc_present = true;
-		devname = "/dev/ttyUSB5";
-	}
+//	if (cs->slot_nr == 0) {
+//		cs->icc_present = true;
+//		devname = "/dev/ttyUSB5";
+//	}
+	devname[0] = cs->slot_nr +0x30;
+	devname[1] = 0;
+	//sprintf(devname, "%d", cs->slot_nr);
 
 	if (!cuart)
 		return -ENOMEM;
 
-	snprintf(id_buf, sizeof(id_buf), "SIM%d", cs->slot_nr);
+	//snprintf(id_buf, sizeof(id_buf), "SIM%d", cs->slot_nr);
+	id_buf[3] = cs->slot_nr +0x30;
 	if (devname) {
-		rc = card_uart_open(cuart, "tty", devname);
+		rc = card_uart_open(cuart, "asf4", devname);
 		if (rc < 0) {
 			LOGPCS(cs, LOGL_ERROR, "Cannot open UART %s: %d\n", devname, rc);
 			talloc_free(cuart);
