@@ -31,10 +31,16 @@ struct iso_fsm_slot_instance {
 
 static struct iso_fsm_slot_instance g_si;
 
-struct iso_fsm_slot *ccid_slot2iso_fsm_slot(struct ccid_slot *cs)
+static struct iso_fsm_slot *ccid_slot2iso_fsm_slot(struct ccid_slot *cs)
 {
 	OSMO_ASSERT(cs->slot_nr < ARRAY_SIZE(g_si.slot));
 	return &g_si.slot[cs->slot_nr];
+}
+
+struct card_uart *cuart4slot_nr(uint8_t slot_nr)
+{
+	OSMO_ASSERT(slot_nr < ARRAY_SIZE(g_si.slot));
+	return g_si.slot[slot_nr].cuart;
 }
 
 static const uint8_t sysmousim_sjs1_atr[] = {
