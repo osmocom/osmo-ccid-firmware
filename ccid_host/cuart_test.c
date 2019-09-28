@@ -47,6 +47,8 @@ static void test_apdu(void)
 	card_uart_tx(&g_cuart, select_mf, 5, true);
 
 	osmo_select_main(true);
+	sleep(1);
+	osmo_select_main(true);
 	/* we should get an RX_SINGLE event here */
 }
 
