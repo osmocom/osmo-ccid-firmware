@@ -7,6 +7,8 @@
 #include <osmocom/core/select.h>
 #include "utils_ringbuffer.h"
 
+struct usart_async_descriptor;
+
 enum card_uart_event {
 	/* a single byte was received, it's present at the (uint8_t *) data location */
 	CUART_E_RX_SINGLE,
@@ -90,6 +92,10 @@ struct card_uart {
 			struct osmo_fd ofd;
 			unsigned int baudrate;
 		} tty;
+		struct {
+			struct usart_async_descriptor *usa_pd;
+			uint8_t slot_nr;
+		} asf4;
 	} u;
 };
 
