@@ -1,0 +1,4 @@
+*.o
+ccid/ccid_functionfs
+ccid/cuart_test
+ccid/hub_functionfs
