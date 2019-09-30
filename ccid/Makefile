@@ -3,7 +3,9 @@ LIBS?=-lasan $(shell pkg-config --libs libosmocore)
 
 all: ccid_functionfs hub_functionfs cuart_test cuart_fsm_test
 
-ccid_functionfs: ccid_main_functionfs.o logging.o ccid_proto.o ccid_device.o ccid_slot_sim.o
+ccid_functionfs: ccid_main_functionfs.o logging.o ccid_proto.o ccid_device.o \
+		 cuart.o utils_ringbuffer.o cuart_driver_tty.o \
+		 ccid_slot_fsm.o iso7816_fsm.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -laio
 
 hub_functionfs: hub_main_functionfs.o

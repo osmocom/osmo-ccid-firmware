@@ -152,6 +152,7 @@ static const struct {
 
 #include "ccid_device.h"
 #include "ccid_slot_sim.h"
+extern struct ccid_slot_ops iso_fsm_slot_ops;
 
 #ifndef FUNCTIONFS_SUPPORTS_POLL
 #include <libaio.h>
@@ -528,7 +529,7 @@ int main(int argc, char **argv)
 
 	signal(SIGUSR1, &signal_handler);
 
-	ccid_instance_init(&g_ci, &c_ops, &slotsim_slot_ops, &descriptors.fs_descs.ccid,
+	ccid_instance_init(&g_ci, &c_ops, &iso_fsm_slot_ops, &descriptors.fs_descs.ccid,
 			   data_rates, clock_freqs, "", &ufh);
 	ufh.ccid_handle = &g_ci;
 
