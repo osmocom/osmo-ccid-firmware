@@ -100,9 +100,10 @@ static void slotsim_set_power(struct ccid_slot *cs, bool enable)
 {
 	if (enable) {
 		cs->icc_powered = true;
-		/* FIXME: What to do about ATR? */
+		cs->icc_in_reset = false;
 	} else {
 		cs->icc_powered = false;
+		cs->icc_in_reset = true;
 	}
 }
 
