@@ -220,7 +220,9 @@ static int submit_next_irq(void)
 	struct msgb *msg;
 	int rc;
 
-	OSMO_ASSERT(!ep_q->in_progress);
+	if (ep_q->in_progress)
+		return 0;
+
 	msg = msgb_dequeue_irqsafe(&ep_q->list);
 	if (!msg)
 		return 0;
@@ -1110,6 +1112,7 @@ int main(void)
 	while (true) { // main loop
 		command_try_recv();
 		poll_card_detect();
+		submit_next_irq();
 		osmo_timers_update();
 	}
 }
