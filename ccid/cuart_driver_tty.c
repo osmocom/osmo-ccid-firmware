@@ -220,7 +220,7 @@ static int tty_uart_close(struct card_uart *cuart)
 	return 0;
 }
 
-static int tty_uart_async_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after)
+static int tty_uart_async_tx(struct card_uart *cuart, const uint8_t *data, size_t len)
 {
 	OSMO_ASSERT(cuart->driver == &tty_uart_driver);
 

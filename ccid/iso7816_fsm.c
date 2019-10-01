@@ -809,7 +809,7 @@ static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		LOGPFSML(fi, LOGL_DEBUG, "Transmitting TPDU header %s via UART\n",
 			 osmo_hexdump_nospc((uint8_t *) tpduh, sizeof(*tpduh)));
 		osmo_fsm_inst_state_chg(fi, TPDU_S_TX_HDR, 0, 0);
-		card_uart_tx(ip->uart, (uint8_t *) tpduh, sizeof(*tpduh), true);
+		card_uart_tx(ip->uart, (uint8_t *) tpduh, sizeof(*tpduh));
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -855,7 +855,7 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 		} else if (byte == tpduh->ins) {
 			if (msgb_l2len(tfp->tpdu)) {
 				/* transmit all remaining bytes */
-				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu), true);
+				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu));
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_REMAINING, 0, 0);
 			} else {
 				card_uart_set_rx_threshold(ip->uart, tpduh->p3);
