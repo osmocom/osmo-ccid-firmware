@@ -91,9 +91,9 @@ static int32_t ccid_df_enable(struct usbdf_driver *drv, struct usbd_descriptors 
 		ep = usb_find_ep_desc(usb_desc_next(desc->sod), desc->eod);
 	}
 
-	ASSERT(func_data->func_ep_irq);
-	ASSERT(func_data->func_ep_in);
-	ASSERT(func_data->func_ep_out);
+	ASSERT(func_data->func_ep_irq != 0xff);
+	ASSERT(func_data->func_ep_in != 0xff);
+	ASSERT(func_data->func_ep_out != 0xff);
 
 	_ccid_df_funcd.enabled = true;
 	return ERR_NONE;
