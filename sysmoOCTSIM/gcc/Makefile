@@ -83,6 +83,10 @@ OBJS +=  \
 	atmel_start.o \
 	ccid_common/ccid_proto.o \
 	ccid_common/ccid_device.o \
+	ccid_common/iso7816_fsm.o \
+	ccid_common/cuart.o \
+	ccid_common/ccid_slot_fsm.o \
+	cuart_driver_asf4_usart_async.o \
 	command.o \
 	dma_m2m/dma_memory.o \
 	driver_init.o \
