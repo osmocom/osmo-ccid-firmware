@@ -204,7 +204,7 @@
 // <o> bInterfaceNumber <0x00-0xFF>
 // <id> usb_cdcd_acm_comm_bifcnum
 #ifndef CONF_USB_CDCD_ACM_COMM_BIFCNUM
-#define CONF_USB_CDCD_ACM_COMM_BIFCNUM 0x0
+#define CONF_USB_CDCD_ACM_COMM_BIFCNUM 0x1
 #endif
 // <o> bAlternateSetting <0x00-0xFF>
 // <id> usb_cdcd_acm_comm_baltset
@@ -253,7 +253,7 @@
 // <o> bInterfaceNumber <0x00-0xFF>
 // <id> usb_cdcd_acm_data_bifcnum
 #ifndef CONF_USB_CDCD_ACM_DATA_BIFCNUM
-#define CONF_USB_CDCD_ACM_DATA_BIFCNUM 0x1
+#define CONF_USB_CDCD_ACM_DATA_BIFCNUM 0x2
 #endif
 // <o> bAlternateSetting <0x00-0xFF>
 // <id> usb_cdcd_acm_data_baltset
