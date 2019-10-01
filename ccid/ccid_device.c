@@ -678,7 +678,7 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 
 	switch (ch->bMessageType) {
 	case PC_to_RDR_GetSlotStatus:
-		if (len != sizeof(u->get_slot_status))
+		if (len < sizeof(u->get_slot_status))
 			goto short_msg;
 		rc = ccid_handle_get_slot_status(cs, msg);
 		break;
@@ -708,7 +708,8 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		rc = ccid_handle_reset_parameters(cs, msg);
 		break;
 	case PC_to_RDR_SetParameters:
-		if (len != sizeof(u->set_parameters))
+		// smallest union member
+		if (len < (sizeof(u->set_parameters.abProtocolData.t0)+10))
 			goto short_msg;
 		rc = ccid_handle_set_parameters(cs, msg);
 		break;
