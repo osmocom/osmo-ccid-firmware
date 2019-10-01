@@ -301,13 +301,32 @@ static void ccid_irq_write_compl(const uint8_t ep, enum usb_xfer_code code, uint
 }
 
 #include "ccid_proto.h"
-struct msgb *ccid_gen_notify_slot_status(const uint8_t *bitmask, uint8_t bm_len)
+static struct msgb *ccid_gen_notify_slot_status(uint8_t old_bm, uint8_t new_bm)
 {
+	uint8_t statusbytes[2] = {0};
 	//struct msgb *msg = ccid_msgb_alloc();
 	struct msgb *msg = msgb_alloc(64, "IRQ");
-	struct ccid_rdr_to_pc_notify_slot_change *nsc = msgb_put(msg, sizeof(*nsc) + bm_len);
+	struct ccid_rdr_to_pc_notify_slot_change *nsc = msgb_put(msg, sizeof(*nsc) + sizeof(statusbytes));
 	nsc->bMessageType = RDR_to_PC_NotifySlotChange;
-	memcpy(&nsc->bmSlotCCState, bitmask, bm_len);
+
+	for(int i = 0; i <8; i++) {
+		uint8_t byteidx = i >> 2;
+		uint8_t old_bit = old_bm & (1 << i);
+		uint8_t new_bit = new_bm & (1 << i);
+		uint8_t bv;
+		if (old_bit == new_bit && new_bit == 0)
+			bv = 0x00;
+		else if (old_bit == new_bit && new_bit == 1)
+			bv = 0x01;
+		else if (old_bit != new_bit && new_bit == 0)
+			bv = 0x02;
+		else
+			bv = 0x03;
+
+		statusbytes[byteidx] |= bv << ((i % 4) << 1);
+	}
+
+	memcpy(&nsc->bmSlotCCState, statusbytes, sizeof(statusbytes));
 
 	return msg;
 }
@@ -319,19 +338,14 @@ static void poll_card_detect(void)
 	struct msgb *msg;
 	unsigned int i;
 
-	for (i = 0; i < 8; i++) {
-		bool irq_level = ncn8025_interrupt_level(i);
-		if (irq_level)
-			new_mask &= ~(1 << i);
-		else
-			new_mask |= (1 << i);
-	}
+	for (i = 0; i < 8; i++)
+		new_mask |= ncn8025_interrupt_level(i) << i;
 
 	/* notify the user/host about any changes */
 	if (g_ccid_s.card_insert_mask != new_mask) {
 		printf("CARD_DET 0x%02x -> 0x%02x\r\n",
 			g_ccid_s.card_insert_mask, new_mask);
-		msg = ccid_gen_notify_slot_status(&new_mask, 1);
+		msg = ccid_gen_notify_slot_status(g_ccid_s.card_insert_mask, new_mask);
 		msgb_enqueue_irqsafe(&g_ccid_s.irq_ep.list, msg);
 
 		g_ccid_s.card_insert_mask = new_mask;
