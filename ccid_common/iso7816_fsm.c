@@ -779,8 +779,22 @@ static struct osmo_fsm pps_fsm = {
  * TPDU FSM
  ***********************************************************************/
 
+/* In this FSM weu use the msgb for the TPDU as follows:
+ *  - 5-byte TPDU header is at msg->data
+ *  - COMMAND TPDU:
+ *    - command bytes are provided after the header at msg->l2h
+ *    - in case of incremental transmission, l3h points to next to-be-transmitted byte
+ *  - RESPONSE TPDU:
+ *    - any response bytes are stored after the header at msg->l2h
+ */
+
+static inline struct osim_apdu_cmd_hdr *msgb_tpdu_hdr(struct msgb *msg) {
+	return (struct osim_apdu_cmd_hdr *) msgb_data(msg);
+}
+
 struct tpdu_fsm_priv {
 	struct msgb *tpdu;
+	bool is_command; /* is this a command TPDU (true) or a response (false) */
 };
 
 /* type-safe method to obtain iso7816_3_priv from fi */
@@ -805,8 +819,14 @@ static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		tfp->tpdu = (struct msgb *)data;
 		OSMO_ASSERT(msgb_length(tfp->tpdu) >= sizeof(*tpduh));
 		tfp->tpdu->l2h = msgb_data(tfp->tpdu) + sizeof(*tpduh);
-		tpduh = msgb_data(tfp->tpdu);
-		LOGPFSML(fi, LOGL_DEBUG, "Transmitting TPDU header %s via UART\n",
+		if (msgb_l2len(tfp->tpdu)) {
+			tfp->is_command = true;
+			tfp->tpdu->l3h = tfp->tpdu->l2h; /* next tx byte == first byte of body */
+		} else
+			tfp->is_command = false;
+		tpduh = msgb_tpdu_hdr(tfp->tpdu);
+		LOGPFSML(fi, LOGL_DEBUG, "Transmitting %s TPDU header %s via UART\n",
+			 tfp->is_command ? "COMMAND" : "RESPONSE",
 			 osmo_hexdump_nospc((uint8_t *) tpduh, sizeof(*tpduh)));
 		osmo_fsm_inst_state_chg(fi, TPDU_S_TX_HDR, 0, 0);
 		card_uart_tx(ip->uart, (uint8_t *) tpduh, sizeof(*tpduh));
@@ -834,7 +854,7 @@ static void tpdu_s_tx_hdr_action(struct osmo_fsm_inst *fi, uint32_t event, void 
 static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);
-	struct osim_apdu_cmd_hdr *tpduh = msgb_data(tfp->tpdu);
+	struct osim_apdu_cmd_hdr *tpduh = msgb_tpdu_hdr(tfp->tpdu);
 	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
 	uint8_t byte;
@@ -853,7 +873,7 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 			osmo_fsm_inst_state_chg(fi, TPDU_S_SW2, 0, 0);
 			break;
 		} else if (byte == tpduh->ins) {
-			if (msgb_l2len(tfp->tpdu)) {
+			if (tfp->is_command) {
 				/* transmit all remaining bytes */
 				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu));
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_REMAINING, 0, 0);
@@ -862,10 +882,15 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 				osmo_fsm_inst_state_chg(fi, TPDU_S_RX_REMAINING, 0, 0);
 			}
 		} else if (byte == (tpduh->ins ^ 0xFF)) {
-			osmo_panic("unsupported single-byte T=0 case");
-			/* FIXME: transmit single byte then wait for proc */
-			//osmo_fsm_inst_state_chg(fi, TPDU_S_xX_SINGLE, 0, 0);
-			//osmo_fsm_inst_state_chg(fi, TPDU_S_PROCEDURE, 0, 0);
+			/* transmit/recieve single byte then wait for proc */
+			if (tfp->is_command) {
+				/* transmit *next*, not first byte */
+				OSMO_ASSERT(msgb_l3len(tfp->tpdu) >= 0);
+				card_uart_tx(ip->uart, msgb_l3(tfp->tpdu), 1);
+				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_SINGLE, 0, 0);
+			} else {
+				osmo_fsm_inst_state_chg(fi, TPDU_S_RX_SINGLE, 0, 0);
+			}
 		} else
 			OSMO_ASSERT(0);
 		break;
@@ -893,10 +918,15 @@ static void tpdu_s_tx_remaining_action(struct osmo_fsm_inst *fi, uint32_t event,
 /* UART is transmitting single byte of data; we wait for ISO7816_E_TX_COMPL */
 static void tpdu_s_tx_single_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
+	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);
+
 	switch (event) {
 	case ISO7816_E_TX_COMPL:
-		/* TODO: increase pointer/counter? */
-		osmo_fsm_inst_state_chg(fi, TPDU_S_PROCEDURE, 0, 0);
+		tfp->tpdu->l3h += 1;
+		if (msgb_l3len(tfp->tpdu))
+			osmo_fsm_inst_state_chg(fi, TPDU_S_PROCEDURE, 0, 0);
+		else
+			osmo_fsm_inst_state_chg(fi, TPDU_S_SW1, 0, 0);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -907,7 +937,7 @@ static void tpdu_s_tx_single_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 static void tpdu_s_rx_remaining_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);
-	struct osim_apdu_cmd_hdr *tpduh = msgb_data(tfp->tpdu);
+	struct osim_apdu_cmd_hdr *tpduh = msgb_tpdu_hdr(tfp->tpdu);
 	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
 	int rc;
@@ -916,8 +946,12 @@ static void tpdu_s_rx_remaining_action(struct osmo_fsm_inst *fi, uint32_t event,
 	case ISO7816_E_RX_COMPL:
 		/* retrieve pending byte(s) */
 		rc = card_uart_rx(ip->uart, msgb_l2(tfp->tpdu), tpduh->p3);
-		if (rc != tpduh->p3)
-			LOGPFSML(fi, LOGL_ERROR, "expected %u bytes; read %d\n", tpduh->p3, rc);
+		OSMO_ASSERT(rc > 0);
+		msgb_put(tfp->tpdu, rc);
+		if (msgb_l2len(tfp->tpdu) != tpduh->p3) {
+			LOGPFSML(fi, LOGL_ERROR, "expected %u bytes; read %d\n", tpduh->p3,
+				 msgb_l2len(tfp->tpdu));
+		}
 		card_uart_set_rx_threshold(ip->uart, 1);
 		osmo_fsm_inst_state_chg(fi, TPDU_S_SW1, 0, 0);
 		break;
@@ -930,17 +964,18 @@ static void tpdu_s_rx_remaining_action(struct osmo_fsm_inst *fi, uint32_t event,
 static void tpdu_s_rx_single_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);
+	struct osim_apdu_cmd_hdr *tpduh = msgb_tpdu_hdr(tfp->tpdu);
 	uint8_t byte;
 
 	switch (event) {
 	case ISO7816_E_RX_SINGLE:
 		byte = get_rx_byte_evt(fi->proc.parent, data);
 		LOGPFSML(fi, LOGL_DEBUG, "Received 0x%02x from UART\n", byte);
-		/* TODO: record byte */
-		/* FIXME: determine if number of expected bytes received */
-		if (0) {
+		msgb_put_u8(tfp->tpdu, byte);
+		/* determine if number of expected bytes received */
+		if (msgb_l2len(tfp->tpdu) == tpduh->p3)
 			osmo_fsm_inst_state_chg(fi, TPDU_S_SW1, 0, 0);
-		} else
+		else
 			osmo_fsm_inst_state_chg(fi, TPDU_S_PROCEDURE, 0, 0);
 		break;
 	default:
