@@ -75,7 +75,7 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, bool enable)
 	return rc;
 }
 
-int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after_complete)
+int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len)
 {
 	OSMO_ASSERT(cuart);
 	OSMO_ASSERT(cuart->driver);
@@ -87,7 +87,7 @@ int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool 
 	/* disable receiver to avoid receiving what we transmit */
 	card_uart_ctrl(cuart, CUART_CTL_RX, false);
 
-	return cuart->driver->ops->async_tx(cuart, data, len, rx_after_complete);
+	return cuart->driver->ops->async_tx(cuart, data, len);
 }
 
 int card_uart_rx(struct card_uart *cuart, uint8_t *data, size_t len)

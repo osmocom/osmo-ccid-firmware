@@ -30,7 +30,7 @@ struct card_uart;
 struct card_uart_ops {
 	int (*open)(struct card_uart *cuart, const char *device_name);
 	int (*close)(struct card_uart *cuart);
-	int (*async_tx)(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after_complete);
+	int (*async_tx)(struct card_uart *cuart, const uint8_t *data, size_t len);
 	int (*async_rx)(struct card_uart *cuart, uint8_t *data, size_t len);
 
 	int (*ctrl)(struct card_uart *cuart, enum card_uart_ctl ctl, bool enable);
@@ -93,7 +93,7 @@ int card_uart_open(struct card_uart *cuart, const char *driver_name, const char 
 int card_uart_close(struct card_uart *cuart);
 
 /*! Schedule (asynchronous) transmit data via UART; optionally enable Rx after completion */
-int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after_complete);
+int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len);
 
 /*! Schedule (asynchronous) receive data via UART (after CUART_E_RX_COMPLETE) */
 int card_uart_rx(struct card_uart *cuart, uint8_t *data, size_t len);

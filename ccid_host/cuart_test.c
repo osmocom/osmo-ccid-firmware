@@ -44,7 +44,7 @@ static int get_atr(uint8_t *atr, size_t max_len)
 static void test_apdu(void)
 {
 	const uint8_t select_mf[] = "\xa0\xa4\x04\x00\x02\x3f\x00";
-	card_uart_tx(&g_cuart, select_mf, 5, true);
+	card_uart_tx(&g_cuart, select_mf, 5);
 
 	osmo_select_main(true);
 	sleep(1);
