@@ -2,6 +2,7 @@
 #include <string.h>
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/core/timer.h>
 
 #include "cuart.h"
 
@@ -25,6 +26,34 @@ static struct card_uart_driver *cuart_drv_by_name(const char *driver_name)
 	return NULL;
 }
 
+/* obtain the current ETU in us */
+static int get_etu_in_us(struct card_uart *cuart)
+{
+	/* FIXME: actually implement this based on the real baud rate */
+	return (1000000/9600);
+}
+
+/* software waiting-time timer has expired */
+static void card_uart_wtime_cb(void *data)
+{
+	struct card_uart *cuart = (struct card_uart *) data;
+	card_uart_notification(cuart, CUART_E_RX_TIMEOUT, NULL);
+	/* should we automatically disable the receiver? */
+}
+
+void card_uart_wtime_restart(struct card_uart *cuart)
+{
+	int secs, usecs;
+
+	usecs = get_etu_in_us(cuart) * cuart->wtime_etu;
+	if (usecs > 1000000) {
+		secs = usecs / 1000000;
+		usecs = usecs % 1000000;
+	} else
+		secs = 0;
+	osmo_timer_schedule(&cuart->wtime_tmr, secs, usecs);
+}
+
 int card_uart_open(struct card_uart *cuart, const char *driver_name, const char *device_name)
 {
 	struct card_uart_driver *drv = cuart_drv_by_name(driver_name);
@@ -33,8 +62,10 @@ int card_uart_open(struct card_uart *cuart, const char *driver_name, const char 
 	if (!drv)
 		return -ENODEV;
 
+	cuart->wtime_etu = 9600; /* ISO 7816-3 Section 8.1 */
 	cuart->rx_enabled = true;
 	cuart->rx_threshold = 1;
+	osmo_timer_setup(&cuart->wtime_tmr, card_uart_wtime_cb, cuart);
 
 	rc = drv->ops->open(cuart, device_name);
 	if (rc < 0)
@@ -60,13 +91,19 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 	OSMO_ASSERT(cuart->driver);
 	OSMO_ASSERT(cuart->driver->ops);
 	OSMO_ASSERT(cuart->driver->ops->ctrl);
+
 	rc = cuart->driver->ops->ctrl(cuart, ctl, arg);
 	if (rc < 0)
 		return rc;
 
 	switch (ctl) {
+	case CUART_CTL_WTIME:
+		cuart->wtime_etu = arg;
+		break;
 	case CUART_CTL_RX:
 		cuart->rx_enabled = arg ? true : false;
+		if (!cuart->rx_enabled)
+			osmo_timer_del(&cuart->wtime_tmr);
 		break;
 	default:
 		break;

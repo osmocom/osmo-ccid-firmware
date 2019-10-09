@@ -143,6 +143,8 @@ static int tty_uart_fd_cb(struct osmo_fd *ofd, unsigned int what)
 			if (!cuart->rx_enabled)
 				continue;
 
+			card_uart_wtime_restart(cuart);
+
 			if (cuart->rx_threshold == 1) {
 				/* bypass ringbuffer and report byte directly */
 				card_uart_notification(cuart, CUART_E_RX_SINGLE, &buf[i]);
@@ -263,9 +265,10 @@ static int tty_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int ar
 		}
 		/* We do our best here, but lots of [USB] serial drivers seem to ignore
 		 * CREAD, see https://bugzilla.kernel.org/show_bug.cgi?id=205033 */
-		if (arg)
+		if (arg) {
 			tio.c_cflag |= CREAD;
-		else
+			card_uart_wtime_restart(cuart);
+		} else
 			tio.c_cflag &= ~CREAD;
 		rc = tcsetattr(cuart->u.tty.ofd.fd, TCSANOW, &tio);
 		if (rc < 0) {
@@ -277,6 +280,9 @@ static int tty_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int ar
 		_set_rts(cuart->u.tty.ofd.fd, arg ? true : false);
 		if (arg)
 			_flush(cuart->u.tty.ofd.fd);
+		break;
+	case CUART_CTL_WTIME:
+		/* no driver-specific handling of this */
 		break;
 	case CUART_CTL_POWER:
 	case CUART_CTL_CLOCK:

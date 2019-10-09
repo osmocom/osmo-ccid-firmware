@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <osmocom/core/linuxlist.h>
+#include <osmocom/core/timer.h>
 
 #include <osmocom/core/select.h>
 #include "utils_ringbuffer.h"
@@ -23,6 +24,7 @@ enum card_uart_ctl {
 	CUART_CTL_POWER,
 	CUART_CTL_CLOCK,
 	CUART_CTL_RST,
+	CUART_CTL_WTIME,
 };
 
 struct card_uart;
@@ -65,6 +67,9 @@ struct card_uart {
 	 *  issue CUART_E_RX_SINGLE; if it is > 1, we will issue CUART_E_RX_COMPLETE */
 	uint32_t rx_threshold;
 
+	uint32_t wtime_etu;
+	struct osmo_timer_list wtime_tmr;
+
 	/* driver-specific private data */
 	union {
 		struct {
@@ -102,6 +107,9 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg);
 
 /*! Set the Rx notification threshold in number of bytes received */
 void card_uart_set_rx_threshold(struct card_uart *cuart, size_t rx_threshold);
+
+/* (re)start the software WTIME timer */
+void card_uart_wtime_restart(struct card_uart *cuart);
 
 void card_uart_notification(struct card_uart *cuart, enum card_uart_event evt, void *data);
 
