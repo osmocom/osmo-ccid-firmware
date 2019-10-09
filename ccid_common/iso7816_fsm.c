@@ -659,7 +659,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	[ATR_S_WAIT_T0] = {
 		.name = "WAIT_T0",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
-		.out_state_mask =	S(ATR_S_WAIT_TA) |
+		.out_state_mask =	S(ATR_S_WAIT_TS) |
+					S(ATR_S_WAIT_TA) |
 					S(ATR_S_WAIT_TB) |
 					S(ATR_S_WAIT_TC) |
 					S(ATR_S_WAIT_TD) |
@@ -671,7 +672,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	[ATR_S_WAIT_TA] = {
 		.name = "WAIT_TA",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
-		.out_state_mask =	S(ATR_S_WAIT_TB) |
+		.out_state_mask =	S(ATR_S_WAIT_TS) |
+					S(ATR_S_WAIT_TB) |
 					S(ATR_S_WAIT_TC) |
 					S(ATR_S_WAIT_TD) |
 					S(ATR_S_WAIT_HIST) |
@@ -682,7 +684,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	[ATR_S_WAIT_TB] = {
 		.name = "WAIT_TB",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
-		.out_state_mask =	S(ATR_S_WAIT_TC) |
+		.out_state_mask =	S(ATR_S_WAIT_TS) |
+					S(ATR_S_WAIT_TC) |
 					S(ATR_S_WAIT_TD) |
 					S(ATR_S_WAIT_HIST) |
 					S(ATR_S_WAIT_TCK) |
@@ -692,7 +695,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	[ATR_S_WAIT_TC] = {
 		.name = "WAIT_TC",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
-		.out_state_mask =	S(ATR_S_WAIT_TD) |
+		.out_state_mask =	S(ATR_S_WAIT_TS) |
+					S(ATR_S_WAIT_TD) |
 					S(ATR_S_WAIT_HIST) |
 					S(ATR_S_WAIT_TCK) |
 					S(ATR_S_WAIT_T0),
@@ -701,7 +705,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	[ATR_S_WAIT_TD] = {
 		.name = "WAIT_TD",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
-		.out_state_mask =	S(ATR_S_WAIT_TA) |
+		.out_state_mask =	S(ATR_S_WAIT_TS) |
+					S(ATR_S_WAIT_TA) |
 					S(ATR_S_WAIT_TB) |
 					S(ATR_S_WAIT_TC) |
 					S(ATR_S_WAIT_TD) |
@@ -713,20 +718,22 @@ static const struct osmo_fsm_state atr_states[] = {
 	[ATR_S_WAIT_HIST] = {
 		.name = "WAIT_HIST",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
-		.out_state_mask =	S(ATR_S_WAIT_TCK) |
+		.out_state_mask =	S(ATR_S_WAIT_TS) |
+					S(ATR_S_WAIT_TCK) |
 					S(ATR_S_WAIT_T0),
 		.action = atr_wait_tX_action,
 	},
 	[ATR_S_WAIT_TCK] = {
 		.name = "WAIT_TCK",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
-		.out_state_mask =	S(ATR_S_DONE),
+		.out_state_mask =	S(ATR_S_WAIT_TS) |
+					S(ATR_S_DONE),
 		.action = atr_wait_tX_action,
 	},
 	[ATR_S_DONE] = {
 		.name = "DONE",
 		.in_event_mask =	0,
-		.out_state_mask =	S(ATR_S_WAIT_T0),
+		.out_state_mask =	S(ATR_S_WAIT_TS),
 		//.action = atr_done_action,
 	},
 
