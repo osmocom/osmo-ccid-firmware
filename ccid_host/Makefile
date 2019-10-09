@@ -13,4 +13,4 @@ hub_functionfs: hub_main_functionfs.o
 	$(CC) $(CFLAGS) -o $@ -c $^
 
 clean:
-	rm ccid_functionfs hub_functionfs *.o
+	rm -f ccid_functionfs hub_functionfs *.o
