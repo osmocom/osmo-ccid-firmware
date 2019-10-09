@@ -829,7 +829,7 @@ static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 			 tfp->is_command ? "COMMAND" : "RESPONSE",
 			 osmo_hexdump_nospc((uint8_t *) tpduh, sizeof(*tpduh)));
 		osmo_fsm_inst_state_chg(fi, TPDU_S_TX_HDR, 0, 0);
-		card_uart_tx(ip->uart, (uint8_t *) tpduh, sizeof(*tpduh));
+		card_uart_tx(ip->uart, (uint8_t *) tpduh, sizeof(*tpduh), true);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -875,7 +875,7 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 		} else if (byte == tpduh->ins) {
 			if (tfp->is_command) {
 				/* transmit all remaining bytes */
-				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu));
+				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu), true);
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_REMAINING, 0, 0);
 			} else {
 				card_uart_set_rx_threshold(ip->uart, tpduh->p3);
@@ -886,7 +886,7 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 			if (tfp->is_command) {
 				/* transmit *next*, not first byte */
 				OSMO_ASSERT(msgb_l3len(tfp->tpdu) >= 0);
-				card_uart_tx(ip->uart, msgb_l3(tfp->tpdu), 1);
+				card_uart_tx(ip->uart, msgb_l3(tfp->tpdu), 1, false);
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_SINGLE, 0, 0);
 			} else {
 				osmo_fsm_inst_state_chg(fi, TPDU_S_RX_SINGLE, 0, 0);

@@ -62,6 +62,8 @@ struct card_uart {
 	bool tx_busy;
 	/* is the receiver currently enabled or not? */
 	bool rx_enabled;
+	/* should the receiver automatically be nabled after TX completion? */
+	bool rx_after_tx_compl;
 
 	/*! after how many bytes should we notify the user? If this is '1', we will
 	 *  issue CUART_E_RX_SINGLE; if it is > 1, we will issue CUART_E_RX_COMPLETE */
@@ -98,7 +100,7 @@ int card_uart_open(struct card_uart *cuart, const char *driver_name, const char 
 int card_uart_close(struct card_uart *cuart);
 
 /*! Schedule (asynchronous) transmit data via UART; optionally enable Rx after completion */
-int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len);
+int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after_complete);
 
 /*! Schedule (asynchronous) receive data via UART (after CUART_E_RX_COMPLETE) */
 int card_uart_rx(struct card_uart *cuart, uint8_t *data, size_t len);

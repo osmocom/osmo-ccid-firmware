@@ -112,7 +112,7 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 	return rc;
 }
 
-int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len)
+int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after_complete)
 {
 	OSMO_ASSERT(cuart);
 	OSMO_ASSERT(cuart->driver);
@@ -121,6 +121,7 @@ int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len)
 
 	OSMO_ASSERT(!cuart->tx_busy);
 	cuart->tx_busy = true;
+	cuart->rx_after_tx_compl = rx_after_complete;
 	/* disable receiver to avoid receiving what we transmit */
 	card_uart_ctrl(cuart, CUART_CTL_RX, false);
 
@@ -150,7 +151,8 @@ void card_uart_notification(struct card_uart *cuart, enum card_uart_event evt, v
 	case CUART_E_TX_COMPLETE:
 		cuart->tx_busy = false;
 		/* re-enable receiver if we're done with transmit */
-		card_uart_ctrl(cuart, CUART_CTL_RX, true);
+		if (cuart->rx_after_tx_compl)
+			card_uart_ctrl(cuart, CUART_CTL_RX, true);
 		break;
 	default:
 		break;
