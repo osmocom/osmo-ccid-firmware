@@ -294,6 +294,7 @@ static void iso7816_3_wait_tpdu_onenter(struct osmo_fsm_inst *fi, uint32_t prev_
 {
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
+	card_uart_ctrl(ip->uart, CUART_CTL_RX, false);
 	/* reset the TPDU state machine */
 	osmo_fsm_inst_dispatch(ip->tpdu_fi, ISO7816_E_TPDU_CLEAR_REQ, NULL);
 }
