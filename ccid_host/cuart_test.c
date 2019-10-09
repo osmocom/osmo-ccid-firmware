@@ -58,8 +58,15 @@ int main(int argc, char **argv)
 	uint8_t atr[64];
 	int rc;
 
+	if (argc < 2) {
+		fprintf(stderr, "You must specify the UART tty device as argument\n");
+		exit(2);
+	}
+
+	printf("Opening UART device %s\n", argv[1]);
+
 	g_cuart.handle_event = &handle_event;
-	rc = card_uart_open(&g_cuart, "tty", "/dev/ttyUSB5");
+	rc = card_uart_open(&g_cuart, "tty", argv[1]);
 	if (rc < 0) {
 		perror("opening UART");
 		exit(1);

@@ -61,7 +61,14 @@ int main(int argc, char **argv)
 
 	signal(SIGUSR1, &signal_handler);
 
-	rc = card_uart_open(&g_cuart, "tty", "/dev/ttyUSB5");
+	if (argc < 2) {
+		fprintf(stderr, "You must specify the UART tty device as argument\n");
+		exit(2);
+	}
+
+	printf("Opening UART device %s\n", argv[1]);
+
+	rc = card_uart_open(&g_cuart, "tty", argv[1]);
 	if (rc < 0) {
 		perror("opening UART");
 		exit(1);
