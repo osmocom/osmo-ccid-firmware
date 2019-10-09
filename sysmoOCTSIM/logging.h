@@ -8,6 +8,6 @@ enum {
 	DISO7816,
 	DATR,
 	DTPDU,
-	DPPS
+	DPPS,
 	DCARD,
 };
