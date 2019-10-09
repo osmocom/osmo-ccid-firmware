@@ -27,6 +27,7 @@ enum iso7816_3_event {
 
 	/* internal events between FSMs in this file */
 	ISO7816_E_ATR_DONE_IND,		/*!< ATR Done indication from ATR child FSM */
+	ISO7816_E_ATR_ERR_IND,		/*!< ATR Error indication from ATR child FSM */
 	ISO7816_E_TPDU_DONE_IND,	/*!< TPDU Done indication from TPDU child FSM */
 	ISO7816_E_TPDU_CLEAR_REQ,	/*!< Return TPDU FSM to TPDU_S_INIT */
 };

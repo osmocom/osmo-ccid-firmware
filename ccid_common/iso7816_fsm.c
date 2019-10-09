@@ -141,6 +141,7 @@ static const struct value_string iso7816_3_event_names[] = {
 	{ ISO7816_E_RX_ERR_IND,		"RX_ERR_IND" },
 	{ ISO7816_E_TX_ERR_IND,		"TX_ERR_IND" },
 	{ ISO7816_E_ATR_DONE_IND,	"ATR_DONE_IND" },
+	{ ISO7816_E_ATR_ERR_IND,	"ATR_ERR_IND" },
 	{ ISO7816_E_TPDU_DONE_IND,	"TPDU_DONE_IND" },
 	{ ISO7816_E_XCEIVE_TPDU_CMD,	"XCEIVE_TPDU_CMD" },
 	/* allstate events */
@@ -251,6 +252,10 @@ static void iso7816_3_wait_atr_action(struct osmo_fsm_inst *fi, uint32_t event, 
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_IN_ATR, 0, 0);
 		osmo_fsm_inst_dispatch(ip->atr_fi, event, data);
 		break;
+	case ISO7816_E_WTIME_EXP:
+		ip->user_cb(fi, event, 0, NULL);
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -265,6 +270,7 @@ static void iso7816_3_in_atr_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 	switch (event) {
 	case ISO7816_E_RX_SINGLE:
 	case ISO7816_E_RX_ERR_IND:
+	case ISO7816_E_WTIME_EXP:
 		/* simply pass this through to the child FSM for the ATR */
 		osmo_fsm_inst_dispatch(ip->atr_fi, event, data);
 		break;
@@ -273,6 +279,10 @@ static void iso7816_3_in_atr_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 		/* FIXME: verify ATR result: success / failure */
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_TPDU, 0, 0);
 		/* notify user about ATR */
+		ip->user_cb(fi, event, 0, atr);
+		break;
+	case ISO7816_E_ATR_ERR_IND:
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
 		ip->user_cb(fi, event, 0, atr);
 		break;
 	default:
@@ -326,6 +336,10 @@ static void iso7816_3_in_tpdu_action(struct osmo_fsm_inst *fi, uint32_t event, v
 		/* hand finished TPDU to user */
 		ip->user_cb(fi, event, 0, apdu);
 		break;
+	case ISO7816_E_WTIME_EXP:
+		/* FIXME: power off? */
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -336,7 +350,6 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 
 	switch (event) {
-	case ISO7816_E_WTIME_EXP:
 	case ISO7816_E_HW_ERR_IND:
 	case ISO7816_E_CARD_REMOVAL:
 		/* FIXME: power off? */
@@ -366,7 +379,8 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 	},
 	[ISO7816_S_WAIT_ATR] = {
 		.name = "WAIT_ATR",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_IN_ATR),
 		.action = iso7816_3_wait_atr_action,
@@ -375,7 +389,9 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 		.name = "IN_ATR",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
 					S(ISO7816_E_RX_ERR_IND) |
-					S(ISO7816_E_ATR_DONE_IND),
+					S(ISO7816_E_ATR_DONE_IND) |
+					S(ISO7816_E_ATR_ERR_IND) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_IN_ATR) |
 					S(ISO7816_S_WAIT_TPDU),
@@ -398,7 +414,8 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 					S(ISO7816_E_TX_COMPL) |
 					S(ISO7816_E_RX_ERR_IND) |
 					S(ISO7816_E_TX_ERR_IND) |
-					S(ISO7816_E_TPDU_DONE_IND),
+					S(ISO7816_E_TPDU_DONE_IND) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_TPDU),
@@ -435,8 +452,7 @@ static struct osmo_fsm iso7816_3_fsm = {
 	.log_subsys = DISO7816,
 	.event_names = iso7816_3_event_names,
 	.allstate_action = iso7816_3_allstate_action,
-	.allstate_event_mask =	S(ISO7816_E_WTIME_EXP) |
-				S(ISO7816_E_CARD_REMOVAL) |
+	.allstate_event_mask =	S(ISO7816_E_CARD_REMOVAL) |
 				S(ISO7816_E_POWER_DN_IND) |
 				S(ISO7816_E_RESET_ACT_IND) |
 				S(ISO7816_E_HW_ERR_IND) |
@@ -550,6 +566,9 @@ restart:
 		}
 		atp->i = 0; /* first interface byte sub-group is coming (T0 is kind of TD0) */
 		break;
+	case ISO7816_E_WTIME_EXP:
+		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, NULL);
+		break;
 	default: 
 		OSMO_ASSERT(0);
 	}
@@ -642,6 +661,20 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 			OSMO_ASSERT(0);
 		}
 		break;
+	case ISO7816_E_WTIME_EXP:
+		switch (fi->state) {
+		case ATR_S_WAIT_HIST:
+		case ATR_S_WAIT_TCK:
+			/* Some cards have an ATR with long indication of historical bytes */
+			/* FIXME: should we check the checksum? */
+			osmo_fsm_inst_state_chg(fi, ATR_S_DONE, 0, 0);
+			osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_DONE_IND, atp->atr);
+			break;
+		default:
+			osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, NULL);
+			break;
+		}
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -650,7 +683,8 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 static const struct osmo_fsm_state atr_states[] = {
 	[ATR_S_WAIT_TS] = {
 		.name = "WAIT_TS",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_WAIT_T0),
 		.action = atr_wait_ts_action,
@@ -658,7 +692,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	},
 	[ATR_S_WAIT_T0] = {
 		.name = "WAIT_T0",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_WAIT_TA) |
 					S(ATR_S_WAIT_TB) |
@@ -671,7 +706,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	},
 	[ATR_S_WAIT_TA] = {
 		.name = "WAIT_TA",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_WAIT_TB) |
 					S(ATR_S_WAIT_TC) |
@@ -683,7 +719,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	},
 	[ATR_S_WAIT_TB] = {
 		.name = "WAIT_TB",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_WAIT_TC) |
 					S(ATR_S_WAIT_TD) |
@@ -694,7 +731,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	},
 	[ATR_S_WAIT_TC] = {
 		.name = "WAIT_TC",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_WAIT_TD) |
 					S(ATR_S_WAIT_HIST) |
@@ -704,7 +742,8 @@ static const struct osmo_fsm_state atr_states[] = {
 	},
 	[ATR_S_WAIT_TD] = {
 		.name = "WAIT_TD",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_WAIT_TA) |
 					S(ATR_S_WAIT_TB) |
@@ -717,15 +756,18 @@ static const struct osmo_fsm_state atr_states[] = {
 	},
 	[ATR_S_WAIT_HIST] = {
 		.name = "WAIT_HIST",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_WAIT_TCK) |
-					S(ATR_S_WAIT_T0),
+					S(ATR_S_WAIT_T0) |
+					S(ATR_S_DONE),
 		.action = atr_wait_tX_action,
 	},
 	[ATR_S_WAIT_TCK] = {
 		.name = "WAIT_TCK",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ATR_S_WAIT_TS) |
 					S(ATR_S_DONE),
 		.action = atr_wait_tX_action,
