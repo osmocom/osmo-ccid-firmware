@@ -2,7 +2,7 @@
 # Manually edited. Do not overwrite with Automatically-generated file.
 ################################################################################
 
-SYSTEM_PREFIX:=/usr/local/arm-none-eabi
+SYSTEM_PREFIX?=/usr/local/arm-none-eabi
 EXTRA_LIBS=$(SYSTEM_PREFIX)/lib/libosmocore.a
 EXTRA_CFLAGS=-I$(SYSTEM_PREFIX)/include -I../../ccid_common
 CROSS_COMPILE= arm-none-eabi-
@@ -165,7 +165,7 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	@echo Building target: $@
 	@echo Invoking: ARM/GNU Linker
 	$(CC) -o $(OUTPUT_FILE_NAME).elf $(OBJS) $(EXTRA_LIBS) -Wl,--start-group -lm -Wl,--end-group -mthumb \
--Wl,-Map="$(OUTPUT_FILE_NAME).map" --specs=nano.specs -Wl,--gc-sections -mcpu=cortex-m4 \
+-Wl,-Map="$(OUTPUT_FILE_NAME).map" --specs=nano.specs -Wl,--gc-sections -Wl,--print-memory-usage -mcpu=cortex-m4 \
  \
 -T"../gcc/gcc/same54n19a_dfu.ld" \
 -L"../gcc/gcc"
