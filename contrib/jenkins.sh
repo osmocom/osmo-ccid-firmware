@@ -38,3 +38,10 @@ cd gcc
 make clean
 make SYSTEM_PREFIX="$inst" $PARALLEL_MAKE
 make clean
+
+echo
+echo "=============== CCID usb_gadget build ==========="
+cd $TOPDIR/ccid_host
+make clean
+make $PARALLEL_MAKE
+make clean
