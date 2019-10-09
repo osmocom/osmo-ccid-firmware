@@ -4,7 +4,7 @@
 
 SYSTEM_PREFIX:=/usr/local/arm-none-eabi
 EXTRA_LIBS=$(SYSTEM_PREFIX)/lib/libosmocore.a
-EXTRA_CFLAGS=-I$(SYSTEM_PREFIX)/include -I../../ccid
+EXTRA_CFLAGS=-I$(SYSTEM_PREFIX)/include -I../../ccid_common
 CROSS_COMPILE= arm-none-eabi-
 
 CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
@@ -49,7 +49,7 @@ endif
 INC_DIRS = \
 	-I"../" \
 	-I"../CMSIS/Core/Include" \
-	-I"../ccid" \
+	-I"../ccid_common" \
 	-I"../config" \
 	-I"../dma_m2m" \
 	-I"../hal/include" \
@@ -81,8 +81,8 @@ INC_DIRS = \
 # List the object files
 OBJS +=  \
 	atmel_start.o \
-	ccid/ccid_proto.o \
-	ccid/ccid_device.o \
+	ccid_common/ccid_proto.o \
+	ccid_common/ccid_device.o \
 	command.o \
 	dma_m2m/dma_memory.o \
 	driver_init.o \
