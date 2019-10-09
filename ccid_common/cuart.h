@@ -33,7 +33,7 @@ struct card_uart_ops {
 	int (*async_tx)(struct card_uart *cuart, const uint8_t *data, size_t len);
 	int (*async_rx)(struct card_uart *cuart, uint8_t *data, size_t len);
 
-	int (*ctrl)(struct card_uart *cuart, enum card_uart_ctl ctl, bool enable);
+	int (*ctrl)(struct card_uart *cuart, enum card_uart_ctl ctl, int arg);
 };
 
 /* Card UART driver */
@@ -98,7 +98,7 @@ int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len);
 /*! Schedule (asynchronous) receive data via UART (after CUART_E_RX_COMPLETE) */
 int card_uart_rx(struct card_uart *cuart, uint8_t *data, size_t len);
 
-int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, bool enable);
+int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg);
 
 /*! Set the Rx notification threshold in number of bytes received */
 void card_uart_set_rx_threshold(struct card_uart *cuart, size_t rx_threshold);

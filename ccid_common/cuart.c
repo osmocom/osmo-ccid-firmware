@@ -53,20 +53,20 @@ int card_uart_close(struct card_uart *cuart)
 	return cuart->driver->ops->close(cuart);
 }
 
-int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, bool enable)
+int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 {
 	int rc;
 	OSMO_ASSERT(cuart);
 	OSMO_ASSERT(cuart->driver);
 	OSMO_ASSERT(cuart->driver->ops);
 	OSMO_ASSERT(cuart->driver->ops->ctrl);
-	rc = cuart->driver->ops->ctrl(cuart, ctl, enable);
+	rc = cuart->driver->ops->ctrl(cuart, ctl, arg);
 	if (rc < 0)
 		return rc;
 
 	switch (ctl) {
 	case CUART_CTL_RX:
-		cuart->rx_enabled = enable;
+		cuart->rx_enabled = arg ? true : false;
 		break;
 	default:
 		break;

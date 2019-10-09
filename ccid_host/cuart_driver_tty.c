@@ -249,7 +249,7 @@ static int tty_uart_async_rx(struct card_uart *cuart, uint8_t *data, size_t len)
 	return i;
 }
 
-static int tty_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, bool enable)
+static int tty_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 {
 	struct termios tio;
 	int rc;
@@ -263,7 +263,7 @@ static int tty_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, bool e
 		}
 		/* We do our best here, but lots of [USB] serial drivers seem to ignore
 		 * CREAD, see https://bugzilla.kernel.org/show_bug.cgi?id=205033 */
-		if (enable)
+		if (arg)
 			tio.c_cflag |= CREAD;
 		else
 			tio.c_cflag &= ~CREAD;
@@ -274,8 +274,8 @@ static int tty_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, bool e
 		}
 		break;
 	case CUART_CTL_RST:
-		_set_rts(cuart->u.tty.ofd.fd, enable);
-		if (enable)
+		_set_rts(cuart->u.tty.ofd.fd, arg ? true : false);
+		if (arg)
 			_flush(cuart->u.tty.ofd.fd);
 		break;
 	case CUART_CTL_POWER:
