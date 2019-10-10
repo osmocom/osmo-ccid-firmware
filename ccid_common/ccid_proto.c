@@ -20,6 +20,7 @@ const struct value_string ccid_msg_type_vals[] = {
 	OSMO_VALUE_STRING(PC_to_RDR_SetDataRateAndClockFrequency),
 	OSMO_VALUE_STRING(RDR_to_PC_DataBlock),
 	OSMO_VALUE_STRING(RDR_to_PC_SlotStatus),
+	OSMO_VALUE_STRING(RDR_to_PC_Parameters),
 	OSMO_VALUE_STRING(RDR_to_PC_Escape),
 	OSMO_VALUE_STRING(RDR_to_PC_DataRateAndClockFrequency),
 	{ 0, NULL }
