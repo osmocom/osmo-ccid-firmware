@@ -166,11 +166,13 @@ static int iso_fsm_slot_init(struct ccid_slot *cs)
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct card_uart *cuart = talloc_zero(ctx, struct card_uart);
 	char id_buf[16];
-	char *devname = "/dev/null";
+	char *devname = NULL;
 	int rc;
 
 	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 
+	/* HACK: make this in some way configurable so it works both in the firmware
+	 * and on the host (functionfs) */
 	if (cs->slot_nr == 0) {
 		cs->icc_present = true;
 		devname = "/dev/ttyUSB5";
@@ -180,13 +182,17 @@ static int iso_fsm_slot_init(struct ccid_slot *cs)
 		return -ENOMEM;
 
 	snprintf(id_buf, sizeof(id_buf), "SIM%d", cs->slot_nr);
-	rc = card_uart_open(cuart, "tty", devname);
-	if (rc < 0) {
-		talloc_free(cuart);
-		return rc;
+	if (devname) {
+		rc = card_uart_open(cuart, "tty", devname);
+		if (rc < 0) {
+			LOGPCS(cs, LOGL_ERROR, "Cannot open UART %s: %d\n", devname, rc);
+			talloc_free(cuart);
+			return rc;
+		}
 	}
 	ss->fi = iso7816_fsm_alloc(ctx, LOGL_DEBUG, id_buf, cuart, iso_fsm_clot_user_cb, ss);
 	if (!ss->fi) {
+		LOGPCS(cs, LOGL_ERROR, "Cannot allocate ISO FSM\n");
 		talloc_free(cuart);
 		return -1;
 	}
