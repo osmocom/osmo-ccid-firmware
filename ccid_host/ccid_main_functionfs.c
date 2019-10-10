@@ -75,7 +75,7 @@ static const struct {
 			.dwMaxIFSD = cpu_to_le32(0),
 			.dwSynchProtocols = cpu_to_le32(0),
 			.dwMechanical = cpu_to_le32(0),
-			.dwFeatures = cpu_to_le32(0x10),
+			.dwFeatures = cpu_to_le32(0x00010010),
 			.dwMaxCCIDMessageLength = 272,
 			.bClassGetResponse = 0xff,
 			.bClassEnvelope = 0xff,
