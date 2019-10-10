@@ -87,12 +87,11 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 	struct ccid_slot *cs = ss->cs;
 	struct msgb *tpdu, *resp;
 
-	LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, cause=%d, data=%p)\n", __func__, event, cause, data);
-
 	switch (event) {
 	case ISO7816_E_ATR_DONE_IND:
 		tpdu = data;
-		/* FIXME: copy response data over */
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, cause=%d, data=%s)\n", __func__, event, cause,
+			msgb_hexdump(tpdu));
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0,
 					   msgb_data(tpdu), msgb_length(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
@@ -100,10 +99,15 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		break;
 	case ISO7816_E_TPDU_DONE_IND:
 		tpdu = data;
-		/* FIXME: copy response data over */
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, cause=%d, data=%s)\n", __func__, event, cause,
+			msgb_hexdump(tpdu));
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, msgb_l2(tpdu), msgb_l2len(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
 		msgb_free(tpdu);
+		break;
+	default:
+		LOGPCS(cs, LOGL_NOTICE, "%s(event=%d, cause=%d, data=%p) unhandled\n",
+			__func__, event, cause, data);
 		break;
 	}
 }
