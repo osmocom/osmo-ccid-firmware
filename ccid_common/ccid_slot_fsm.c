@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/timer.h>
@@ -111,10 +112,25 @@ static void iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 				const struct ccid_pc_to_rdr_xfr_block *xfb)
 {
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
+	struct msgb *tpdu;
 
-	LOGPCS(cs, LOGL_DEBUG, "scheduling TPDU transfer\n");
 	ss->seq = xfb->hdr.bSeq;
-	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_TPDU_CMD, msg);
+
+	/* must be '0' for TPDU level exchanges or for short APDU */
+	OSMO_ASSERT(xfb->wLevelParameter == 0x0000);
+	OSMO_ASSERT(msgb_length(msg) > xfb->hdr.dwLength);
+
+	/* 'msg' contains the raw CCID message as received from USB. We could create
+	 * a new message buffer for the ISO7816 side here or we could 'strip the CCID
+	 * header off the start of the message. Let's KISS and do a copy here */
+	tpdu = msgb_alloc(512, "TPDU");
+	OSMO_ASSERT(tpdu);
+	memcpy(msgb_data(tpdu), xfb->abData, xfb->hdr.dwLength);
+	msgb_put(tpdu, xfb->hdr.dwLength);
+	msgb_free(msg);
+
+	LOGPCS(cs, LOGL_DEBUG, "scheduling TPDU transfer: %s\n", msgb_hexdump(tpdu));
+	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_TPDU_CMD, tpdu);
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
 }
 
