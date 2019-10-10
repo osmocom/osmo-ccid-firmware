@@ -22,11 +22,11 @@ enum card_uart_event {
 extern const struct value_string card_uart_event_vals[];
 
 enum card_uart_ctl {
-	CUART_CTL_RX,
-	CUART_CTL_POWER,
-	CUART_CTL_CLOCK,
-	CUART_CTL_RST,
-	CUART_CTL_WTIME,
+	CUART_CTL_RX,		/* enable/disable receiver */
+	CUART_CTL_POWER,	/* enable/disable ICC power */
+	CUART_CTL_CLOCK,	/* enable/disable ICC clock */
+	CUART_CTL_RST,		/* enable/disable ICC reset */
+	CUART_CTL_WTIME,	/* set the waiting time (in etu) */
 };
 
 struct card_uart;
