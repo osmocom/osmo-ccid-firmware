@@ -101,7 +101,7 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0,
 					   msgb_data(tpdu), msgb_length(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
-		msgb_free(tpdu);
+		/* Don't free "TPDU" here, as the ATR should survive */
 		break;
 	case ISO7816_E_TPDU_DONE_IND:
 		tpdu = data;
