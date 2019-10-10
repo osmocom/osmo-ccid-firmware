@@ -68,6 +68,7 @@ static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *m
 
 	/* FIXME: do this via a FSM? */
 	card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
+	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_RESET_ACT_IND, NULL);
 	card_uart_ctrl(ss->cuart, CUART_CTL_POWER, true);
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_POWER_UP_IND, NULL);
 	cs->icc_powered = true;
