@@ -4,51 +4,11 @@
 #include "usb_protocol_cdc.h"
 #include "ccid_proto.h"
 #include "cdcdf_acm_desc.h"
+#include "usb_descriptors.h"
 
-/* aggregate descriptors for the combined CDC-ACM + CCID device that we expose
- * from sysmoQMOD */
 
-enum str_desc_num {
-	STR_DESC_MANUF = 1,
-	STR_DESC_PRODUCT,
-	STR_DESC_CONFIG,
-	STR_DESC_INTF_ACM_COMM,
-	STR_DESC_INTF_ACM_DATA,
-	STR_DESC_INTF_CCID,
-	STR_DESC_SERIAL,
-};
 
-/* a struct of structs representing the concatenated collection of USB descriptors */
-struct usb_desc_collection {
-	struct usb_dev_desc dev;
-	struct usb_config_desc cfg;
-
-	/* CDC-ACM: Two interfaces, one with IRQ EP and one with BULK IN + OUT */
-	struct {
-		struct {
-			struct usb_iface_desc iface;
-			struct usb_cdc_hdr_desc cdc_hdr;
-			struct usb_cdc_call_mgmt_desc cdc_call_mgmt;
-			struct usb_cdc_acm_desc cdc_acm;
-			struct usb_cdc_union_desc cdc_union;
-			struct usb_ep_desc ep[1];
-		} comm;
-		struct {
-			struct usb_iface_desc iface;
-			struct usb_ep_desc ep[2];
-		} data;
-	} cdc;
-
-	/* CCID: One interface with CCID class descriptor and three endpoints */
-	struct {
-		struct usb_iface_desc iface;
-		struct usb_ccid_class_descriptor class;
-		struct usb_ep_desc ep[3];
-	} ccid;
-	uint8_t str[116];
-} __attribute__((packed));
-
-static const struct usb_desc_collection usb_fs_descs = {
+const struct usb_desc_collection usb_fs_descs = {
 	.dev = {
 		.bLength = sizeof(struct usb_dev_desc),
 		.bDescriptorType = USB_DT_DEVICE,
@@ -176,17 +136,19 @@ static const struct usb_desc_collection usb_fs_descs = {
 			.bcdCCID = LE16(0x0110),
 			.bMaxSlotIndex = 7,
 			.bVoltageSupport = 0x07, /* 5/3/1.8V */
-			.dwProtocols = 0x03,
+//			.dwProtocols = 0x03,
+			.dwProtocols = 0x01,
 			.dwDefaultClock = LE32(2500),
 			.dwMaximumClock = LE32(20000),
-			.bNumClockSupported = 4,
+			.bNumClockSupported = CCID_NUM_CLK_SUPPORTED,
 			.dwDataRate = LE32(9600),
 			.dwMaxDataRate = LE32(921600),
 			.bNumDataRatesSupported = 0,
 			.dwMaxIFSD = LE32(0),
 			.dwSynchProtocols = LE32(0),
 			.dwMechanical = LE32(0),
-			.dwFeatures = LE32(0x10 | 0x00010000),
+			.dwFeatures = LE32(0x10 | 0x00010080),
+//			.dwFeatures = LE32(0x2 | 0x40),
 			.dwMaxCCIDMessageLength = 272,
 			.bClassGetResponse = 0xff,
 			.bClassEnvelope = 0xff,

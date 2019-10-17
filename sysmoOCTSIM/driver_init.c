@@ -12,25 +12,25 @@
 #include <hal_init.h>
 
 /*! The buffer size for USART */
-#define SIM0_BUFFER_SIZE 16
+#define SIM0_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
-#define SIM1_BUFFER_SIZE 16
+#define SIM1_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
-#define SIM2_BUFFER_SIZE 16
+#define SIM2_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
-#define SIM3_BUFFER_SIZE 16
+#define SIM3_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
-#define SIM4_BUFFER_SIZE 16
+#define SIM4_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
-#define SIM5_BUFFER_SIZE 16
+#define SIM5_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
-#define SIM6_BUFFER_SIZE 16
+#define SIM6_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
 #define UART_DEBUG_BUFFER_SIZE 256

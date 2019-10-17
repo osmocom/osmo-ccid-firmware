@@ -8,7 +8,7 @@ EXTRA_CFLAGS=-I$(SYSTEM_PREFIX)/include -I../../ccid_common
 CROSS_COMPILE= arm-none-eabi-
 
 CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
-CFLAGS=-x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls \
+CFLAGS=-x c -mthumb -DDEBUG -O0 -ffunction-sections -fdata-sections -mlong-calls \
        -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU)
 
 CC = $(CROSS_COMPILE)gcc
