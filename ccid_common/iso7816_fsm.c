@@ -633,6 +633,10 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 					osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_TCK,
 								   guard_time_ms, T_GUARD);
 					break;
+				} else {
+					/* no TCK present, ATR complete; notify parent */
+					osmo_fsm_inst_state_chg(fi, ATR_S_DONE, 0, 0);
+					osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_DONE_IND, atp->atr);
 				}
 			} else {
 				break;
