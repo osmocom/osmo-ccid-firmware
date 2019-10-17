@@ -24,6 +24,9 @@
 #include "ccid_proto.h"
 #include "usb_includes.h"
 
+#include "cdcdf_acm_desc.h"
+#include "usb_descriptors.h"
+
 #ifndef USB_CLASS_CCID
 #define	USB_CLASS_CCID	11
 #endif
@@ -40,9 +43,11 @@ struct ccid_df_func_data {
 static struct usbdf_driver _ccid_df;
 static struct ccid_df_func_data _ccid_df_funcd;
 
+extern const struct usb_desc_collection usb_fs_descs;
+
 /* FIXME: make those configurable, ensure they're sized according to
  * bNumClockSupported / bNumDataRatesSupported */
-static uint32_t ccid_clock_frequencies[] = { LE32(20000) };
+static uint32_t ccid_clock_frequencies[CCID_NUM_CLK_SUPPORTED] = { LE32(2500),LE32(5000),LE32(10000),LE32(20000) };
 static uint32_t ccid_baud_rates[] = { LE32(9600) };
 
 static int32_t ccid_df_enable(struct usbdf_driver *drv, struct usbd_descriptors *desc)

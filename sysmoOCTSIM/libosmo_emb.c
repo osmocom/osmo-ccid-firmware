@@ -157,8 +157,8 @@ void libosmo_emb_init(void)
 	/* logging */
 	log_init(&log_info, g_tall_ctx);
 	stderr_target = log_target_create_stderr_raw();
-	log_add_target(stderr_target);
-	log_set_all_filter(stderr_target, 1);
+	//log_add_target(stderr_target);
+	//log_set_all_filter(stderr_target, 1);
 
 	/* timer */
 	SysTick_Config(SystemCoreClock / 1000);

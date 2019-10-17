@@ -30,6 +30,10 @@
   inspired by http://swapped.cc/halloc/
 */
 
+#include <parts.h>
+#include <assert.h>
+#include <osmocom/core/utils.h>
+
 #include "replace.h"
 #include "talloc.h"
 
@@ -726,6 +730,9 @@ static inline void *__talloc_with_prefix(const void *context,
 	struct talloc_memlimit *limit = NULL;
 	size_t total_len = TC_HDR_SIZE + size + prefix_len;
 	struct talloc_chunk *parent = NULL;
+
+	// do not allocate while handling interrupts!
+	OSMO_ASSERT( !(SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) )
 
 	if (unlikely(context == NULL)) {
 		context = null_context;
