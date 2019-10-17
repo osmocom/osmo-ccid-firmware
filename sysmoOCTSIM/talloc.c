@@ -30,6 +30,7 @@
   inspired by http://swapped.cc/halloc/
 */
 
+#include <parts.h>
 #include "replace.h"
 #include "talloc.h"
 
@@ -801,6 +802,8 @@ static inline void *__talloc(const void *context,
 			size_t size,
 			struct talloc_chunk **tc)
 {
+	if( SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk)
+		while(1) { asm("nop");};
 	return __talloc_with_prefix(context, size, 0, tc);
 }
 

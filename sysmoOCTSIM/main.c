@@ -75,6 +75,10 @@ static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_2_DIV, 100E6 / 
  */
 static const uint8_t SIM_peripheral_GCLK_ID[] = {SERCOM0_GCLK_ID_CORE, SERCOM1_GCLK_ID_CORE, SERCOM2_GCLK_ID_CORE, SERCOM3_GCLK_ID_CORE, SERCOM4_GCLK_ID_CORE, SERCOM5_GCLK_ID_CORE, SERCOM6_GCLK_ID_CORE, SERCOM7_GCLK_ID_CORE};
 
+static void _SIM_error_cb(const struct usart_async_descriptor *const descr){
+	while(1){ asm("nop");}
+}
+
 static void board_init()
 {
 	int i;
@@ -99,6 +103,7 @@ static void board_init()
 		}
 		usart_async_register_callback(SIM_peripheral_descriptors[i], USART_ASYNC_RXC_CB, SIM_rx_cb); // required for RX to work, even if the callback does nothing
 		usart_async_register_callback(SIM_peripheral_descriptors[i], USART_ASYNC_TXC_CB, SIM_tx_cb); // to count the number of bytes transmitted since we are using it asynchronously
+		usart_async_register_callback(SIM_peripheral_descriptors[i], USART_ASYNC_ERROR_CB, _SIM_error_cb);
 		usart_async_enable(SIM_peripheral_descriptors[i]);
 	}
 }
