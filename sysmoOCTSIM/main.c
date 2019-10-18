@@ -70,20 +70,20 @@ static struct ccid_instance g_ci;
 //	}
 //}
 
-/** possible clock sources for the SERCOM peripheral
- *  warning: the definition must match the GCLK configuration
- */
-static const uint8_t sercom_glck_sources[] = {GCLK_PCHCTRL_GEN_GCLK2_Val, GCLK_PCHCTRL_GEN_GCLK4_Val, GCLK_PCHCTRL_GEN_GCLK6_Val};
-
-/** possible clock frequencies in MHz for the SERCOM peripheral
- *  warning: the definition must match the GCLK configuration
- */
-static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_2_DIV, 100E6 / CONF_GCLK_GEN_4_DIV, 120E6 / CONF_GCLK_GEN_6_DIV};
-
-/** the GCLK ID for the SERCOM SIM peripherals
- *  @note: used as index for PCHCTRL
- */
-static const uint8_t SIM_peripheral_GCLK_ID[] = {SERCOM0_GCLK_ID_CORE, SERCOM1_GCLK_ID_CORE, SERCOM2_GCLK_ID_CORE, SERCOM3_GCLK_ID_CORE, SERCOM4_GCLK_ID_CORE, SERCOM5_GCLK_ID_CORE, SERCOM6_GCLK_ID_CORE, SERCOM7_GCLK_ID_CORE};
+///** possible clock sources for the SERCOM peripheral
+// *  warning: the definition must match the GCLK configuration
+// */
+//static const uint8_t sercom_glck_sources[] = {GCLK_PCHCTRL_GEN_GCLK2_Val, GCLK_PCHCTRL_GEN_GCLK4_Val, GCLK_PCHCTRL_GEN_GCLK6_Val};
+//
+///** possible clock frequencies in MHz for the SERCOM peripheral
+// *  warning: the definition must match the GCLK configuration
+// */
+//static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_2_DIV, 100E6 / CONF_GCLK_GEN_4_DIV, 120E6 / CONF_GCLK_GEN_6_DIV};
+//
+///** the GCLK ID for the SERCOM SIM peripherals
+// *  @note: used as index for PCHCTRL
+// */
+//static const uint8_t SIM_peripheral_GCLK_ID[] = {SERCOM0_GCLK_ID_CORE, SERCOM1_GCLK_ID_CORE, SERCOM2_GCLK_ID_CORE, SERCOM3_GCLK_ID_CORE, SERCOM4_GCLK_ID_CORE, SERCOM5_GCLK_ID_CORE, SERCOM6_GCLK_ID_CORE, SERCOM7_GCLK_ID_CORE};
 
 static void ccid_app_init(void);
 

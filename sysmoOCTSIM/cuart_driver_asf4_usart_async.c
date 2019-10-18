@@ -54,6 +54,7 @@ static void _SIM_tx_cb(const struct usart_async_descriptor *const io_descr, uint
 static void _SIM_error_cb(const struct usart_async_descriptor *const descr){
 	volatile uint32_t status = hri_sercomusart_read_STATUS_reg(descr->device.hw);
 	volatile uint32_t data = hri_sercomusart_read_DATA_reg(descr->device.hw);
+	volatile uint32_t errrs = hri_sercomusart_read_RXERRCNT_reg(descr->device.hw);
 	OSMO_ASSERT(0 == 1)
 }
 
@@ -142,12 +143,12 @@ static usart_cb_t SIM_tx_cb[8] = {
 /** possible clock sources for the SERCOM peripheral
  *  warning: the definition must match the GCLK configuration
  */
-static const uint8_t sercom_glck_sources[] = {GCLK_PCHCTRL_GEN_GCLK2_Val, GCLK_PCHCTRL_GEN_GCLK4_Val, GCLK_PCHCTRL_GEN_GCLK6_Val};
+static const uint8_t sercom_glck_sources[] = {GCLK_PCHCTRL_GEN_GCLK5_Val};
 
 /** possible clock frequencies in MHz for the SERCOM peripheral
  *  warning: the definition must match the GCLK configuration
  */
-static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_2_DIV, 100E6 / CONF_GCLK_GEN_4_DIV, 120E6 / CONF_GCLK_GEN_6_DIV};
+static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_5_DIV};
 
 /** the GCLK ID for the SERCOM SIM peripherals
  *  @note: used as index for PCHCTRL
@@ -245,7 +246,7 @@ static bool slot_set_isorate(uint8_t slotnr, enum ncn8025_sim_clkdiv clkdiv, uin
 	}
 
 	// calculate desired frequency
-	uint32_t freq = 20000000UL; // maximum frequency
+	uint32_t freq = 4000000UL; // maximum frequency
 	switch (clkdiv) {
 	case SIM_CLKDIV_1:
 		freq /= 1;
@@ -295,7 +296,7 @@ static int asf4_usart_open(struct card_uart *cuart, const char *device_name)
 	usart_async_enable(usa_pd);
 
 	// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
-	slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+	slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_1, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 
         return 0;
 }
@@ -363,7 +364,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 
 		// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
 		if(arg)
-			slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+			slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_1, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
 		break;
