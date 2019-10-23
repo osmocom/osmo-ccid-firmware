@@ -877,7 +877,7 @@ void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops,
 	ci->name = name;
 	ci->priv = priv;
 
-	for (i = 0; i < ARRAY_SIZE(ci->slot); i++) {
+	for (i = 0; i < 1; i++) {
 		struct ccid_slot *cs = &ci->slot[i];
 		cs->slot_nr = i;
 		cs->ci = ci;

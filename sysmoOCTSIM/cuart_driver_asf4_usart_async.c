@@ -203,7 +203,7 @@ static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
 	if (NULL == slot) {
 		return false;
 	}
-	printf("(%u) switching SERCOM clock to GCLK%u (freq = %lu kHz) and baud rate to %lu bps (baud = %u)\r\n", slotnr, (best + 1) * 2, (uint32_t)(round(sercom_glck_freqs[best] / 1000)), baudrate, bauds[best]);
+//	printf("(%u) switching SERCOM clock to GCLK%u (freq = %lu kHz) and baud rate to %lu bps (baud = %u)\r\n", slotnr, (best + 1) * 2, (uint32_t)(round(sercom_glck_freqs[best] / 1000)), baudrate, bauds[best]);
 	while (!usart_async_is_tx_empty(slot)); // wait for transmission to complete (WARNING no timeout)
 	usart_async_disable(slot); // disable SERCOM peripheral
 	hri_gclk_clear_PCHCTRL_reg(GCLK, SIM_peripheral_GCLK_ID[slotnr], (1 << GCLK_PCHCTRL_CHEN_Pos)); // disable clock for this peripheral

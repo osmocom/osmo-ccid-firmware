@@ -915,6 +915,8 @@ void system_init(void)
 
 	gpio_set_pin_function(SDA4, GPIO_PIN_FUNCTION_OFF);
 
+	gpio_set_pin_function(GPIO(GPIO_PORTA, 5), GPIO_PIN_FUNCTION_D);
+
 	CALENDAR_0_init();
 	SIM0_init();
 	SIM1_init();

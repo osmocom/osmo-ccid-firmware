@@ -134,7 +134,7 @@ const struct usb_desc_collection usb_fs_descs = {
 			.bLength = sizeof(struct usb_ccid_class_descriptor),
 			.bDescriptorType = 33,
 			.bcdCCID = LE16(0x0110),
-			.bMaxSlotIndex = 7,
+			.bMaxSlotIndex = 0,
 			.bVoltageSupport = 0x07, /* 5/3/1.8V */
 //			.dwProtocols = 0x03,
 			.dwProtocols = 0x01,
@@ -154,7 +154,7 @@ const struct usb_desc_collection usb_fs_descs = {
 			.bClassEnvelope = 0xff,
 			.wLcdLayout = LE16(0),
 			.bPINSupport = 0,
-			.bMaxCCIDBusySlots = 8,
+			.bMaxCCIDBusySlots = 1,
 		},
 		.ep = {
 			{	/* Bulk-OUT descriptor */
