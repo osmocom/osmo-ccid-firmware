@@ -454,7 +454,7 @@
 //<o> Generic clock generator 5 division <0x0000-0xFFFF>
 // <id> gclk_gen_5_div
 #ifndef CONF_GCLK_GEN_5_DIV
-#define CONF_GCLK_GEN_5_DIV 25
+#define CONF_GCLK_GEN_5_DIV 5
 #endif
 // </h>
 // </e>

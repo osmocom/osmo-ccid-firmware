@@ -52,7 +52,7 @@
 // <i> Number of stop bits in USART frame
 // <id> usart_stop_bit
 #ifndef CONF_SERCOM_0_USART_SBMODE
-#define CONF_SERCOM_0_USART_SBMODE 0
+#define CONF_SERCOM_0_USART_SBMODE 1
 #endif
 
 // <o> Baud rate <1-3000000>
@@ -70,7 +70,7 @@
 // <i> Define ISO7816 protocol type as 0.
 // <id> usart_iso7816_type
 #ifndef CONF_SERCOM_0_USART_ISO7816_PROTOCOL_T
-#define CONF_SERCOM_0_USART_ISO7816_PROTOCOL_T 0x1
+#define CONF_SERCOM_0_USART_ISO7816_PROTOCOL_T 0x0
 #endif
 
 // <o> ISO7816 Inhibit Not Acknowledge

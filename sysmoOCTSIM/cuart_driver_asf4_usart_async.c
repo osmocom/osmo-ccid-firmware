@@ -143,12 +143,12 @@ static usart_cb_t SIM_tx_cb[8] = {
 /** possible clock sources for the SERCOM peripheral
  *  warning: the definition must match the GCLK configuration
  */
-static const uint8_t sercom_glck_sources[] = {GCLK_PCHCTRL_GEN_GCLK5_Val};
+static const uint8_t sercom_glck_sources[] = {GCLK_PCHCTRL_GEN_GCLK2_Val, GCLK_PCHCTRL_GEN_GCLK4_Val, GCLK_PCHCTRL_GEN_GCLK6_Val};
 
-/** possible clock frequencies in MHz for the SERCOM peripheral
- *  warning: the definition must match the GCLK configuration
- */
-static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_5_DIV};
+ /** possible clock frequencies in MHz for the SERCOM peripheral
+  *  warning: the definition must match the GCLK configuration
+  */
+static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_2_DIV, 100E6 / CONF_GCLK_GEN_4_DIV, 120E6 / CONF_GCLK_GEN_6_DIV};
 
 /** the GCLK ID for the SERCOM SIM peripherals
  *  @note: used as index for PCHCTRL
@@ -170,14 +170,14 @@ static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
 	double errors[ARRAY_SIZE(sercom_glck_freqs)];
 	for (uint8_t i = 0; i < ARRAY_SIZE(sercom_glck_freqs); i++) {
 		double freq = sercom_glck_freqs[i]; // remember possible SERCOM frequency
-		uint32_t min = freq / (2 * (255 + 1)); // calculate the minimum baud rate for this frequency
-		uint32_t max = freq / (2 * (0 + 1)); // calculate the maximum baud rate for this frequency
+		uint32_t min = freq/16. *  (1. - 65535. / 65536.); // calculate the minimum baud rate for this frequency
+		uint32_t max = freq/16. *  (1. - 1. / 65536.); // calculate the maximum baud rate for this frequency
 		if (baudrate < min || baudrate > max) { // baud rate it out of supported range
 			errors[i] = NAN;
 		} else {
-			uint16_t baud = round(freq / (2 * baudrate) - 1);
+			uint16_t baud = round(65536. * (1. - 16. * (baudrate/freq)));
 			bauds[i] = baud;
-			double actual = freq / (2 * (baud + 1));
+			double actual = freq/16. *  (1. - baud / 65536.);
 			errors[i] = fabs(1.0 - (actual / baudrate));
 		}
 	}
@@ -246,7 +246,7 @@ static bool slot_set_isorate(uint8_t slotnr, enum ncn8025_sim_clkdiv clkdiv, uin
 	}
 
 	// calculate desired frequency
-	uint32_t freq = 4000000UL; // maximum frequency
+	uint32_t freq = 20000000UL; // maximum frequency
 	switch (clkdiv) {
 	case SIM_CLKDIV_1:
 		freq /= 1;
@@ -296,7 +296,7 @@ static int asf4_usart_open(struct card_uart *cuart, const char *device_name)
 	usart_async_enable(usa_pd);
 
 	// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
-	slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_1, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+	slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 
         return 0;
 }
@@ -345,10 +345,14 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 
 	switch (ctl) {
 	case CUART_CTL_RX:
-		if (arg)
+		if (arg){
 			sercom->USART.CTRLB.bit.RXEN = 1;
-		else
+			sercom->USART.CTRLB.bit.TXEN = 0;
+		} else {
+			delay_us(100);
 			sercom->USART.CTRLB.bit.RXEN = 0;
+			sercom->USART.CTRLB.bit.TXEN = 1;
+		}
 		break;
 	case CUART_CTL_RST:
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
@@ -364,7 +368,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 
 		// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
 		if(arg)
-			slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_1, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+			slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
 		break;
