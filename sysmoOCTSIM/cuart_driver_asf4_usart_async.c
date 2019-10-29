@@ -289,6 +289,7 @@ static int asf4_usart_open(struct card_uart *cuart, const char *device_name)
 	cuart->u.asf4.usa_pd = usa_pd;
 	cuart->u.asf4.slot_nr = slot_nr;
 
+	cuart->extrawait_after_rx = 100;
 
 	usart_async_register_callback(usa_pd, USART_ASYNC_RXC_CB, SIM_rx_cb[slot_nr]);
 	usart_async_register_callback(usa_pd, USART_ASYNC_TXC_CB, SIM_tx_cb[slot_nr]);
@@ -338,6 +339,8 @@ static int asf4_usart_async_rx(struct card_uart *cuart, uint8_t *data, size_t le
 	return io_read(&usa_pd->io, data, len);
 }
 
+#include "ccid_device.h"
+#include "iso7816_3.h"
 static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 {
 	struct ncn8025_settings settings;
@@ -349,7 +352,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 			sercom->USART.CTRLB.bit.RXEN = 1;
 			sercom->USART.CTRLB.bit.TXEN = 0;
 		} else {
-			delay_us(100);
+			delay_us(cuart->extrawait_after_rx);
 			sercom->USART.CTRLB.bit.RXEN = 0;
 			sercom->USART.CTRLB.bit.TXEN = 1;
 		}
@@ -361,22 +364,37 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		usart_async_flush_rx_buffer(cuart->u.asf4.usa_pd);
 		break;
 	case CUART_CTL_POWER:
-		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
-		settings.cmdvcc = arg ? true : false;
-		settings.led = arg ? true : false;
-		settings.vsel = SIM_VOLT_5V0;
+		cuart->extrawait_after_rx = 100;
 
 		// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
 		if(arg)
 			slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 
+		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
+		settings.cmdvcc = arg ? true : false;
+		settings.led = arg ? true : false;
+		settings.vsel = SIM_VOLT_5V0;
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
+
 		break;
 	case CUART_CTL_WTIME:
 		/* no driver-specific handling of this */
 		break;
 	case CUART_CTL_CLOCK:
 		/* FIXME */
+		break;
+	case CUART_CTL_FD:
+		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
+
+		settings.clkdiv = SIM_CLKDIV_4;
+		uint8_t divider = ncn8025_div_val[settings.clkdiv];
+		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
+//		uint32_t F = iso7816_3_fi_table[cs->proposed_pars.fi];
+//		uint32_t D = iso7816_3_di_table[cs->proposed_pars.di];
+		uint32_t baudrate = (20e6/divider)/arg;
+		cuart->extrawait_after_rx = 1./baudrate * 1000 * 1000;
+		slot_set_baudrate(cuart->u.asf4.slot_nr, baudrate);
+		break;
 	default:
 		return -EINVAL;
 	}

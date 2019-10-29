@@ -159,7 +159,7 @@ static const char *volt_str[] = {
 	[SIM_VOLT_1V8] = "1.8",
 };
 
-static const unsigned int div_val[] = {
+const unsigned int ncn8025_div_val[] = {
 	[SIM_CLKDIV_1] = 1,
 	[SIM_CLKDIV_2] = 2,
 	[SIM_CLKDIV_4] = 4,
@@ -168,7 +168,7 @@ static const unsigned int div_val[] = {
 
 void ncn8025_dump(const struct ncn8025_settings *set)
 {
-	printf("VOLT=%s, CLKDIV=%u", volt_str[set->vsel], div_val[set->clkdiv]);
+	printf("VOLT=%s, CLKDIV=%u", volt_str[set->vsel], ncn8025_div_val[set->clkdiv]);
 	if (set->rstin)
 		printf(", RST");
 	if (set->cmdvcc)
