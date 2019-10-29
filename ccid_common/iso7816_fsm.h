@@ -21,6 +21,8 @@ enum iso7816_3_event {
 	ISO7816_E_RESET_ACT_IND,	/*!< Reset activated */
 	ISO7816_E_ABORT_REQ,		/*!< Abort request (e.g. from CCID) */
 	/* TODO: PPS request */
+	ISO7816_E_XCEIVE_PPS_CMD,
+	ISO7816_E_PPS_DONE_IND,
 	/* TODO: Clock stop request */
 	/* TODO: Rx FIFO overrun */
 	/* TODO: Rx buffer overrun */

@@ -13,6 +13,7 @@
 #include "ccid_device.h"
 #include "cuart.h"
 #include "iso7816_fsm.h"
+#include "iso7816_3.h"
 
 struct iso_fsm_slot {
 	/* CCID slot above us */
@@ -112,6 +113,20 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		ccid_slot_send_unbusy(cs, resp);
 		msgb_free(tpdu);
 		break;
+	case ISO7816_E_PPS_DONE_IND:
+		tpdu = data;
+		uint16_t F = iso7816_3_fi_table[cs->proposed_pars.fi];
+		uint8_t D = iso7816_3_di_table[cs->proposed_pars.di];
+
+		card_uart_ctrl(ss->cuart, CUART_CTL_FD, F/D);
+		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer);
+
+		cs->pars = cs->proposed_pars;
+		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_OK, 0);
+
+		ccid_slot_send_unbusy(cs, resp);
+//		msgb_free(tpdu);
+		break;
 	default:
 		LOGPCS(cs, LOGL_NOTICE, "%s(event=%d, cause=%d, data=%p) unhandled\n",
 			__func__, event, cause, data);
@@ -175,10 +190,35 @@ static void iso_fsm_slot_set_clock(struct ccid_slot *cs, enum ccid_clock_command
 	}
 }
 
-static int iso_fsm_slot_set_params(struct ccid_slot *cs, enum ccid_protocol_num proto,
+static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_protocol_num proto,
 				const struct ccid_pars_decoded *pars_dec)
 {
-	/* we always acknowledge all parameters */
+	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
+	struct msgb *tpdu;
+
+	if(proto != CCID_PROTOCOL_NUM_T0)
+		return -1;
+
+	if(pars_dec->t0.guard_time_etu != 0)
+		return -1;
+
+	if(pars_dec->clock_stop != CCID_CLOCK_STOP_NOTALLOWED)
+		return -1;
+
+	ss->seq = seq;
+
+	/* Hardware does not support SPU, so no PPS2, and PPS3 is reserved anyway */
+	tpdu = msgb_alloc(6, "PPSRQ");
+	OSMO_ASSERT(tpdu);
+	msgb_put_u8(tpdu, 0xff);
+	msgb_put_u8(tpdu, (1 << 4)); /* only PPS1, T=0 */
+	msgb_put_u8(tpdu, (pars_dec->fi << 4 | pars_dec->di));
+	msgb_put_u8(tpdu, 0xff ^ (1 << 4) ^ (pars_dec->fi << 4 | pars_dec->di));
+
+
+	LOGPCS(cs, LOGL_DEBUG, "scheduling PPS transfer: %s\n", msgb_hexdump(tpdu));
+	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_PPS_CMD, tpdu);
+	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
 	return 0;
 }
 

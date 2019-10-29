@@ -69,6 +69,7 @@ enum atr_state {
  *  @note defined in ISO/IEC 7816-3:2006(E) section 9
  */
 enum pps_state {
+	PPS_S_TX_PPS_REQ,  /*!< tx pps request */
 	PPS_S_WAIT_PPSS, /*!< initial byte */
 	PPS_S_WAIT_PPS0, /*!< format byte */
 	PPS_S_WAIT_PPS1, /*!< first parameter byte */
@@ -221,7 +222,7 @@ static void iso7816_3_reset_onenter(struct osmo_fsm_inst *fi, uint32_t prev_stat
 
 	/* go back to initial state in child FSMs */
 	osmo_fsm_inst_state_chg(ip->atr_fi, ATR_S_WAIT_TS, 0, 0);
-	//osmo_fsm_inst_state_chg(ip->pps_fi, PPS_S_WAIT_PPSS, 0, 0);
+	osmo_fsm_inst_state_chg(ip->pps_fi, PPS_S_TX_PPS_REQ, 0, 0);
 	osmo_fsm_inst_state_chg(ip->tpdu_fi, TPDU_S_INIT, 0, 0);
 }
 
@@ -311,6 +312,11 @@ static void iso7816_3_wait_tpdu_action(struct osmo_fsm_inst *fi, uint32_t event,
 		/* pass on to sub-fsm */
 		osmo_fsm_inst_dispatch(ip->tpdu_fi, event, data);
 		break;
+	case ISO7816_E_XCEIVE_PPS_CMD:
+//		osmo_fsm_inst_state_chg(fi, ISO7816_S_IN_PPS_REQ, 0, 0);
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_PPS_RSP, 0, 0);
+		osmo_fsm_inst_dispatch(ip->pps_fi, event, data);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -369,6 +375,65 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 	}
 }
 
+static void iso7816_3_in_pps_req_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	struct iso7816_3_priv *tfp = get_iso7816_3_priv(fi);
+//	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
+//	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
+
+	switch (event) {
+	case ISO7816_E_XCEIVE_PPS_CMD:
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_PPS_RSP, 0, 0);
+//		card_uart_tx(tfp->uart, msgb_data(data), msgb_length(data), true);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
+
+static void iso7816_3_s_wait_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
+	switch (event) {
+	case ISO7816_E_TX_COMPL:
+		/* Rx of single byte is already enabled by previous card_uart_tx() call */
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_IN_PPS_RSP, 0, 0);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
+static void iso7816_3_s_ins_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
+	struct msgb *ppsrsp;
+	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
+
+	switch (event) {
+	case ISO7816_E_RX_SINGLE:
+	case ISO7816_E_WTIME_EXP:
+		/* simply pass this through to the child FSM for the ATR */
+		osmo_fsm_inst_dispatch(ip->pps_fi, event, data);
+		break;
+	case ISO7816_E_PPS_DONE_IND:
+		ppsrsp = data;
+		/* FIXME: verify ATR result: success / failure */
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_TPDU, 0, 0);
+		/* notify user about ATR */
+		ip->user_cb(fi, event, 0, ppsrsp);
+		break;
+	case ISO7816_E_RX_ERR_IND:
+		ppsrsp = data;
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
+		ip->user_cb(fi, event, 0, ppsrsp);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
 static const struct osmo_fsm_state iso7816_3_states[] = {
 	[ISO7816_S_RESET] = {
 		.name = "RESET",
@@ -400,11 +465,13 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 	},
 	[ISO7816_S_WAIT_TPDU] = {
 		.name = "WAIT_TPDU",
-		.in_event_mask =	S(ISO7816_E_XCEIVE_TPDU_CMD),
+		.in_event_mask =	S(ISO7816_E_XCEIVE_TPDU_CMD) |
+							S(ISO7816_E_XCEIVE_PPS_CMD),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_TPDU) |
-					S(ISO7816_S_IN_PPS_REQ),
+					S(ISO7816_S_IN_PPS_REQ) |
+					S(ISO7816_S_WAIT_PPS_RSP),
 		.action = iso7816_3_wait_tpdu_action,
 		.onenter = iso7816_3_wait_tpdu_onenter,
 	},
@@ -424,26 +491,35 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 	},
 	[ISO7816_S_IN_PPS_REQ] = {
 		.name = "IN_PPS_REQ",
-		.in_event_mask =	0, /* FIXME */
+		.in_event_mask =	S(ISO7816_E_XCEIVE_TPDU_CMD),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_PPS_REQ) |
 					S(ISO7816_S_WAIT_PPS_RSP),
+		.action = iso7816_3_in_pps_req_action,
 	},
 	[ISO7816_S_WAIT_PPS_RSP] = {
 		.name = "WAIT_PPS_RESP",
-		.in_event_mask =	0, /* FIXME */
+		.in_event_mask =	S(ISO7816_E_TX_COMPL) |
+					S(ISO7816_E_TX_ERR_IND) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_WAIT_PPS_RSP) |
 					S(ISO7816_S_IN_PPS_RSP),
+		.action = iso7816_3_s_wait_pps_rsp_action,
 	},
 	[ISO7816_S_IN_PPS_RSP] = {
 		.name = "IN_PPS_RESP",
-		.in_event_mask =	0, /* FIXME */
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+					S(ISO7816_E_RX_COMPL) |
+					S(ISO7816_E_RX_ERR_IND) |
+					S(ISO7816_E_PPS_DONE_IND) |
+					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_PPS_RSP),
+		.action = iso7816_3_s_ins_pps_rsp_action,
 	},
 };
 static struct osmo_fsm iso7816_3_fsm = {
@@ -796,28 +872,184 @@ static struct osmo_fsm atr_fsm = {
 /***********************************************************************
  * PPS FSM
  ***********************************************************************/
+struct pps_fsm_priv {
+	struct msgb* tx_cmd;
+	struct msgb* rx_cmd;
+	uint8_t pps0_recv;
+};
+
+static void pps_s_wait_ppss_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
+{
+	struct pps_fsm_priv *atp = fi->priv;
+
+	if (!atp->rx_cmd)
+		atp->rx_cmd = msgb_alloc_c(fi, 6, "ATR"); /* TS + 32 chars */
+	else
+		msgb_reset(atp->rx_cmd);
+}
+
+static void pps_s_tx_pps_req_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	struct pps_fsm_priv *atp = fi->priv;
+	atp->tx_cmd = data;
+	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
+	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
+
+	switch (event) {
+	case ISO7816_E_XCEIVE_PPS_CMD:
+		osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPSS, 0, 0);
+		card_uart_tx(ip->uart, msgb_data(data), msgb_length(data), true);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
+static void pps_wait_pX_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	struct pps_fsm_priv *atp = fi->priv;
+//	uint32_t guard_time_ms = atr_fi_gt_ms(fi);
+	uint8_t byte;
+
+	switch (event) {
+	case ISO7816_E_RX_SINGLE:
+		byte = get_rx_byte_evt(fi->proc.parent, data);
+		LOGPFSML(fi, LOGL_DEBUG, "RX byte '%02x'\n", byte);
+		msgb_put_u8(atp->rx_cmd, byte);
+		switch (fi->state) {
+		case PPS_S_WAIT_PPSS:
+			if (byte == 0xff)
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS0, 0, 0);
+			break;
+		case PPS_S_WAIT_PPS0:
+			atp->pps0_recv = byte;
+			if(atp->pps0_recv & (1 << 4)) {
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS1, 0, 0);
+				break;
+			} else if (atp->pps0_recv & (1 << 5)) {
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS2, 0, 0);
+				break;
+			} else if (atp->pps0_recv & (1 << 6)) {
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS3, 0, 0);
+				break;
+			}
+			osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PCK, 0, 0);
+			break;
+		case PPS_S_WAIT_PPS1:
+			if (atp->pps0_recv & (1 << 5)) {
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS2, 0, 0);
+				break;
+			} else if (atp->pps0_recv & (1 << 6)) {
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS3, 0, 0);
+				break;
+			}
+			osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PCK, 0, 0);
+			break;
+		case PPS_S_WAIT_PPS2:
+			if (atp->pps0_recv & (1 << 6)) {
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS3, 0, 0);
+				break;
+			}
+			osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PCK, 0, 0);
+			break;
+		case PPS_S_WAIT_PPS3:
+			osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PCK, 0, 0);
+			break;
+		case PPS_S_WAIT_PCK:
+			/* verify checksum if present */
+			if (fi->state == PPS_S_WAIT_PCK) {
+				uint8_t ui;
+				uint8_t checksum;
+				uint8_t *atr = msgb_data(atp->rx_cmd);
+
+				for (ui = 0; ui < msgb_length(atp->rx_cmd)-1; ui++) {
+					checksum ^= atr[ui];
+				}
+				if (checksum != byte) {
+					/* checkum error. report to user? */
+				}
+				/* PPS complete; notify parent */
+				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_END, 0, 0);
+				osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_PPS_DONE_IND, atp->rx_cmd);
+			}
+			break;
+		default:
+			OSMO_ASSERT(0);
+		}
+		break;
+	case ISO7816_E_WTIME_EXP:
+		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_RX_ERR_IND, NULL);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
 
 static const struct osmo_fsm_state pps_states[] = {
+	[PPS_S_TX_PPS_REQ] = {
+		.name = "TX_PPS_REQ",
+		.in_event_mask =	S(ISO7816_E_XCEIVE_PPS_CMD) |
+							S(ISO7816_E_WTIME_EXP),
+		.out_state_mask =	S(PPS_S_TX_PPS_REQ) |
+							S(PPS_S_WAIT_PPSS),
+		.action = pps_s_tx_pps_req_action,
+		.onenter = pps_s_wait_ppss_onenter,
+	},
 	[PPS_S_WAIT_PPSS] = {
 		.name = "WAIT_PPSS",
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+							S(ISO7816_E_WTIME_EXP),
+		.out_state_mask =	S(PPS_S_WAIT_PPS0) |
+							S(PPS_S_WAIT_PPSS),
+		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS0] = {
 		.name = "WAIT_PPS0",
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+							S(ISO7816_E_WTIME_EXP),
+		.out_state_mask =	S(PPS_S_WAIT_PPS1) |
+							S(PPS_S_WAIT_PPS2) |
+							S(PPS_S_WAIT_PPS3) |
+							S(PPS_S_WAIT_PCK),
+		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS1] = {
 		.name = "WAIT_PPS1",
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+							S(ISO7816_E_WTIME_EXP),
+		.out_state_mask =	S(PPS_S_WAIT_PPS2) |
+							S(PPS_S_WAIT_PPS3) |
+							S(PPS_S_WAIT_PCK),
+		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS2] = {
 		.name = "WAIT_PPS2",
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+							S(ISO7816_E_WTIME_EXP),
+		.out_state_mask =	S(PPS_S_WAIT_PPS3) |
+							S(PPS_S_WAIT_PCK),
+		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS3] = {
 		.name = "WAIT_PPS3",
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+							S(ISO7816_E_WTIME_EXP),
+		.out_state_mask =	S(PPS_S_WAIT_PCK),
+		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PCK] = {
 		.name = "WAIT_PCK",
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
+							S(ISO7816_E_WTIME_EXP),
+		.out_state_mask =	S(PPS_S_WAIT_END),
+		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_END] = {
 		.name = "WAIT_END",
+		.in_event_mask =	0,
+		.out_state_mask =	S(PPS_S_TX_PPS_REQ) |
+							S(PPS_S_WAIT_PPSS),
 	},
 };
 
@@ -1223,7 +1455,7 @@ struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id
 	if (!ip->tpdu_fi->priv)
 		goto out_tpdu;
 
-#if 0
+#if 1
 	ip->pps_fi = osmo_fsm_inst_alloc_child(&pps_fsm, fi, ISO7816_E_SW_ERR_IND);
 	if (!ip->pps_fi)
 		goto out_tpdu;
@@ -1237,7 +1469,7 @@ struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id
 
 	return fi;
 
-#if 0
+#if 1
 out_pps:
 	osmo_fsm_inst_free(ip->pps_fi);
 #endif

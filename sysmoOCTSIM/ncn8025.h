@@ -14,6 +14,8 @@ enum ncn8025_sim_clkdiv {
 	SIM_CLKDIV_8 = 0,
 };
 
+extern const unsigned int ncn8025_div_val[];
+
 struct ncn8025_settings {
 	bool rstin;	/* Reset signal (true: asserted low) */
 	bool cmdvcc;	/* Command VCC pin. Activation sequence Enable (true: active low) */
