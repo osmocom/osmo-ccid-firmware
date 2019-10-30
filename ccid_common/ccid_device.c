@@ -24,8 +24,10 @@ struct _usb_ctrl_req {
 static int decode_ccid_pars_t0(struct ccid_pars_decoded *out, const struct ccid_proto_data_t0 *in)
 {
 	/* input validation: only 0x00 and 0x02 permitted for bmTCCKST0 */
-	if (in->bmTCCKST0 & 0xFD)
-		return -11;
+//	if (in->bmTCCKST0 & 0xFD)
+//		return -11;
+// 6.1.7 says: "Note: the CCID ignores this bit", placeholder for GETparameters
+
 	/* input validation: only 0x00 to 0x03 permitted for bClockSTop */
 	if (in->bClockStop & 0xFC)
 		return -14;

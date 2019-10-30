@@ -315,6 +315,7 @@ static void iso7816_3_wait_tpdu_action(struct osmo_fsm_inst *fi, uint32_t event,
 	case ISO7816_E_XCEIVE_PPS_CMD:
 //		osmo_fsm_inst_state_chg(fi, ISO7816_S_IN_PPS_REQ, 0, 0);
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_PPS_RSP, 0, 0);
+		osmo_fsm_inst_state_chg(ip->pps_fi, PPS_S_TX_PPS_REQ, 0, 0);
 		osmo_fsm_inst_dispatch(ip->pps_fi, event, data);
 		break;
 	default:
@@ -418,10 +419,10 @@ static void iso7816_3_s_ins_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t ev
 		osmo_fsm_inst_dispatch(ip->pps_fi, event, data);
 		break;
 	case ISO7816_E_PPS_DONE_IND:
+	case ISO7816_E_PPS_FAILED_IND:
 		ppsrsp = data;
-		/* FIXME: verify ATR result: success / failure */
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_TPDU, 0, 0);
-		/* notify user about ATR */
+		/* notify user about PPS result */
 		ip->user_cb(fi, event, 0, ppsrsp);
 		break;
 	case ISO7816_E_RX_ERR_IND:
@@ -515,6 +516,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 					S(ISO7816_E_RX_COMPL) |
 					S(ISO7816_E_RX_ERR_IND) |
 					S(ISO7816_E_PPS_DONE_IND) |
+					S(ISO7816_E_PPS_FAILED_IND) |
 					S(ISO7816_E_WTIME_EXP),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
@@ -958,19 +960,22 @@ static void pps_wait_pX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		case PPS_S_WAIT_PCK:
 			/* verify checksum if present */
 			if (fi->state == PPS_S_WAIT_PCK) {
-				uint8_t ui;
-				uint8_t checksum;
-				uint8_t *atr = msgb_data(atp->rx_cmd);
+				uint8_t *pps_received = msgb_data(atp->rx_cmd);
+				uint8_t *pps_sent = msgb_data(atp->tx_cmd);
 
-				for (ui = 0; ui < msgb_length(atp->rx_cmd)-1; ui++) {
-					checksum ^= atr[ui];
-				}
-				if (checksum != byte) {
-					/* checkum error. report to user? */
-				}
-				/* PPS complete; notify parent */
 				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_END, 0, 0);
-				osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_PPS_DONE_IND, atp->rx_cmd);
+
+				/* pps was successful if response equals request
+				 * rx buffer stays with the fsm, tx buffer gets handed back and freed
+				 * by the cb */
+				if (msgb_length(atp->rx_cmd) == msgb_length(atp->tx_cmd) &&
+					!memcmp(pps_received, pps_sent, msgb_length(atp->rx_cmd))) {
+					osmo_fsm_inst_dispatch(fi->proc.parent,
+							ISO7816_E_PPS_DONE_IND, atp->tx_cmd);
+				} else {
+					osmo_fsm_inst_dispatch(fi->proc.parent,
+							ISO7816_E_PPS_FAILED_IND, atp->tx_cmd);
+				}
 			}
 			break;
 		default:
@@ -978,6 +983,7 @@ static void pps_wait_pX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		}
 		break;
 	case ISO7816_E_WTIME_EXP:
+		/* FIXME: timeout handling if no pps supported ? */
 		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_RX_ERR_IND, NULL);
 		break;
 	default:

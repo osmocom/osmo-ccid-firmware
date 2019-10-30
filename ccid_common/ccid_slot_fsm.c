@@ -132,6 +132,14 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		/* this frees the pps req from the host, pps resp buffer stays with the pps fsm */
 		msgb_free(tpdu);
 		break;
+	case ISO7816_E_PPS_FAILED_IND:
+		tpdu = data;
+		/* failed fi/di */
+		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_FAILED, 10);
+		ccid_slot_send_unbusy(cs, resp);
+		/* this frees the pps req from the host, pps resp buffer stays with the pps fsm */
+		msgb_free(tpdu);
+		break;
 	default:
 		LOGPCS(cs, LOGL_NOTICE, "%s(event=%d, cause=%d, data=%p) unhandled\n",
 			__func__, event, cause, data);
@@ -201,14 +209,15 @@ static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct msgb *tpdu;
 
+	/* see 6.1.7 for error offsets */
 	if(proto != CCID_PROTOCOL_NUM_T0)
-		return -1;
+		return -7;
 
 	if(pars_dec->t0.guard_time_etu != 0)
-		return -1;
+		return -12;
 
 	if(pars_dec->clock_stop != CCID_CLOCK_STOP_NOTALLOWED)
-		return -1;
+		return -14;
 
 	ss->seq = seq;
 
