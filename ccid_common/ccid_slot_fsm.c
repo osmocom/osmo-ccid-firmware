@@ -115,9 +115,12 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		break;
 	case ISO7816_E_PPS_DONE_IND:
 		tpdu = data;
+		/* pps was successful, so we know these values are fine */
 		uint16_t F = iso7816_3_fi_table[cs->proposed_pars.fi];
 		uint8_t D = iso7816_3_di_table[cs->proposed_pars.di];
+		uint32_t fmax = iso7816_3_fmax_table[cs->proposed_pars.fi];
 
+		card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK, fmax);
 		card_uart_ctrl(ss->cuart, CUART_CTL_FD, F/D);
 		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer);
 
@@ -125,7 +128,9 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_OK, 0);
 
 		ccid_slot_send_unbusy(cs, resp);
-//		msgb_free(tpdu);
+
+		/* this frees the pps req from the host, pps resp buffer stays with the pps fsm */
+		msgb_free(tpdu);
 		break;
 	default:
 		LOGPCS(cs, LOGL_NOTICE, "%s(event=%d, cause=%d, data=%p) unhandled\n",

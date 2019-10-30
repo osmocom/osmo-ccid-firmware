@@ -381,16 +381,22 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		/* no driver-specific handling of this */
 		break;
 	case CUART_CTL_CLOCK:
-		/* FIXME */
+		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
+
+		/* 2,5/5/10/20 supported by dividers */
+		enum ncn8025_sim_clkdiv clkdiv = SIM_CLKDIV_1;
+		if(arg < 20)
+			clkdiv = SIM_CLKDIV_2;
+		if(arg < 10)
+			clkdiv = SIM_CLKDIV_4;
+		if(arg < 5)
+			clkdiv = SIM_CLKDIV_8;
+		settings.clkdiv = clkdiv;
+		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
 		break;
 	case CUART_CTL_FD:
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
-
-		settings.clkdiv = SIM_CLKDIV_4;
 		uint8_t divider = ncn8025_div_val[settings.clkdiv];
-		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
-//		uint32_t F = iso7816_3_fi_table[cs->proposed_pars.fi];
-//		uint32_t D = iso7816_3_di_table[cs->proposed_pars.di];
 		uint32_t baudrate = (20e6/divider)/arg;
 		cuart->extrawait_after_rx = 1./baudrate * 1000 * 1000;
 		slot_set_baudrate(cuart->u.asf4.slot_nr, baudrate);
