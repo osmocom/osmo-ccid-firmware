@@ -75,8 +75,6 @@ struct card_uart {
 	uint32_t wtime_etu;
 	struct osmo_timer_list wtime_tmr;
 
-	/* in us, required, no delay breaks _rx_ */
-	uint32_t extrawait_after_rx;
 
 	/* driver-specific private data */
 	union {
@@ -99,6 +97,8 @@ struct card_uart {
 		struct {
 			struct usart_async_descriptor *usa_pd;
 			uint8_t slot_nr;
+			/* in us, required, no delay breaks _rx_ */
+			uint32_t extrawait_after_rx;
 		} asf4;
 	} u;
 };
