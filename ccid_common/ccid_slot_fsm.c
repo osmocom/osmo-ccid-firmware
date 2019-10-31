@@ -120,7 +120,7 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		uint8_t D = iso7816_3_di_table[cs->proposed_pars.di];
 		uint32_t fmax = iso7816_3_fmax_table[cs->proposed_pars.fi];
 
-		card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK, fmax);
+		card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK_FREQ, fmax);
 		card_uart_ctrl(ss->cuart, CUART_CTL_FD, F/D);
 		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer);
 
