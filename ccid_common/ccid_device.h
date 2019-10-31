@@ -78,13 +78,14 @@ struct ccid_slot_ops {
 
 	void (*icc_power_on_async)(struct ccid_slot *cs, struct msgb *msg,
 				   const struct ccid_pc_to_rdr_icc_power_on *ipo);
-	void (*xfr_block_async)(struct ccid_slot *cs, struct msgb *msg,
+	int (*xfr_block_async)(struct ccid_slot *cs, struct msgb *msg,
 				const struct ccid_pc_to_rdr_xfr_block *xfb);
 	void (*set_power)(struct ccid_slot *cs, bool enable);
 	void (*set_clock)(struct ccid_slot *cs, enum ccid_clock_command cmd);
 	int (*set_params)(struct ccid_slot *cs, uint8_t seq, enum ccid_protocol_num proto,
 			  const struct ccid_pars_decoded *pars_dec);
 	int (*set_rate_and_clock)(struct ccid_slot *cs, uint32_t freq_hz, uint32_t rate_bps);
+	void (*icc_set_insertion_status)(struct ccid_slot *cs, bool present);
 };
 
 /* An instance of CCID (i.e. a card reader device) */
