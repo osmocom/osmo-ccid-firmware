@@ -290,7 +290,7 @@ static int asf4_usart_open(struct card_uart *cuart, const char *device_name)
 	cuart->u.asf4.slot_nr = slot_nr;
 
 	/* in us, 20Mhz with default ncn8025 divider 8, F=372, D=1*/
-	cuart->u.asf4.extrawait_after_rx = 1./(2./8/372);
+	cuart->u.asf4.extrawait_after_rx = 1./(20./8/372);
 
 	usart_async_register_callback(usa_pd, USART_ASYNC_RXC_CB, SIM_rx_cb[slot_nr]);
 	usart_async_register_callback(usa_pd, USART_ASYNC_TXC_CB, SIM_tx_cb[slot_nr]);
@@ -366,7 +366,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		break;
 	case CUART_CTL_POWER:
 		/* in us, 20Mhz with default ncn8025 divider 8, F=372, D=1*/
-		cuart->u.asf4.extrawait_after_rx = 1./(2./8/372);
+		cuart->u.asf4.extrawait_after_rx = 1./(20./8/372);
 
 		// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
 		if(arg)
@@ -383,15 +383,18 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		/* no driver-specific handling of this */
 		break;
 	case CUART_CTL_CLOCK:
+		/* no clock stop support */
+		break;
+	case CUART_CTL_CLOCK_FREQ:
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
 
 		/* 2,5/5/10/20 supported by dividers */
 		enum ncn8025_sim_clkdiv clkdiv = SIM_CLKDIV_1;
-		if(arg < 20)
+		if(arg < 20000000)
 			clkdiv = SIM_CLKDIV_2;
-		if(arg < 10)
+		if(arg < 10000000)
 			clkdiv = SIM_CLKDIV_4;
-		if(arg < 5)
+		if(arg < 5000000)
 			clkdiv = SIM_CLKDIV_8;
 		settings.clkdiv = clkdiv;
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
