@@ -1085,7 +1085,7 @@ static uint32_t clock_freqs[] = {
 };
 
 static uint32_t data_rates[] = {
-	9600
+	6720
 };
 extern struct usb_desc_collection usb_fs_descs;
 
