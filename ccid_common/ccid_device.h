@@ -125,6 +125,8 @@ struct msgb *ccid_gen_parameters_t0(struct ccid_slot *cs, uint8_t seq, uint8_t c
 					   enum ccid_error_code err);
 struct msgb *ccid_gen_parameters_t1(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
 					   enum ccid_error_code err);
+struct msgb * ccid_msgb_alloc(void);
+void ccid_msgb_free(struct msgb *msg);
 
 /* Invalid request received: Please return STALL */
 #define CCID_CTRL_RET_INVALID	-1

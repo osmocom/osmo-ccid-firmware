@@ -159,11 +159,17 @@ static uint8_t ccid_pc_to_rdr_get_seq(const struct ccid_pc_to_rdr *u)
  * Message generation / sending
  ***********************************************************************/
 
-static struct msgb *ccid_msgb_alloc(void)
+struct msgb * __attribute__((weak)) ccid_msgb_alloc(void)
 {
-	struct msgb *msg = msgb_alloc(512, "ccid");
+	struct msgb *msg = msgb_alloc(300, "ccid");
 	OSMO_ASSERT(msg);
 	return msg;
+}
+
+void __attribute__((weak)) ccid_msgb_free(struct msgb *msg)
+{
+	OSMO_ASSERT(msg);
+	msgb_free(msg);
 }
 
 /* Send given CCID message */
@@ -768,18 +774,18 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		LOGP(DCCID, LOGL_NOTICE, "Unknown CCID Message received: 0x%02x\n", ch->bMessageType);
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, CCID_ICC_STATUS_NO_ICC, ch->bSeq,
 				    CCID_ERR_CMD_NOT_SUPPORTED);
-		msgb_free(msg);
+		ccid_msgb_free(msg);
 		return ccid_slot_send_unbusy(cs, resp);
 	}
 	/* the various ccid_handle_* functions can return '1' to tell us that they took ownership
 	 * of the msgb */
 	if (rc != 1)
-		msgb_free(msg);
+		ccid_msgb_free(msg);
 	return 0;
 
 short_msg:
 	LOGP(DCCID, LOGL_ERROR, "Short CCID message received: %s; ignoring\n", msgb_hexdump(msg));
-	msgb_free(msg);
+	ccid_msgb_free(msg);
 	return -1;
 }
 

@@ -196,6 +196,23 @@ void msgb_enqueue_irqsafe(struct llist_head *q, struct msgb *msg)
 	CRITICAL_SECTION_LEAVE()
 }
 
+struct msgb *ccid_msgb_alloc(void)
+{
+	struct msgb *msg;
+	msg = msgb_dequeue_irqsafe(&g_ccid_s.free_q);
+	OSMO_ASSERT(msg);
+	msgb_reset(msg);
+
+	msg->data[msg->data_len - 4] = __builtin_return_address(0);
+	return msg;
+}
+
+void ccid_msgb_free(struct msgb *msg)
+{
+	OSMO_ASSERT(msg);
+	msgb_enqueue_irqsafe(&g_ccid_s.free_q, msg);
+}
+
 /* submit the next pending (if any) message for the IN EP */
 static int submit_next_in(void)
 {
@@ -316,7 +333,7 @@ static struct msgb *ccid_gen_notify_slot_status(uint8_t old_bm, uint8_t new_bm)
 {
 	uint8_t statusbytes[2] = {0};
 	//struct msgb *msg = ccid_msgb_alloc();
-	struct msgb *msg = msgb_alloc(64, "IRQ");
+	struct msgb *msg = ccid_msgb_alloc();//msgb_alloc(64, "IRQ");
 	struct ccid_rdr_to_pc_notify_slot_change *nsc = msgb_put(msg, sizeof(*nsc) + sizeof(statusbytes));
 	nsc->bMessageType = RDR_to_PC_NotifySlotChange;
 
@@ -1123,7 +1140,7 @@ static const struct ccid_ops c_ops = {
 
 //#######################
 
-#define NUM_OUT_BUF 7
+#define NUM_OUT_BUF 16
 
 int main(void)
 {
@@ -1193,20 +1210,20 @@ int main(void)
 		submit_next_irq();
 		feed_ccid();
 		osmo_timers_update();
-		int qs = llist_count_at(&g_ccid_s.free_q);
-		if(qs > NUM_OUT_BUF)
-			for (int i= 0; i < qs-NUM_OUT_BUF; i++){
-				struct msgb *msg = msgb_dequeue_irqsafe(&g_ccid_s.free_q);
-				if (msg)
-				msgb_free(msg);
-			}
-		if(qs < NUM_OUT_BUF)
-			for (int i= 0; i < qs-NUM_OUT_BUF; i++){
-				struct msgb *msg = msgb_alloc(300,"ccid");
-				OSMO_ASSERT(msg);
-				/* return the message back to the queue of free message buffers */
-				llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
-			}
+//		int qs = llist_count_at(&g_ccid_s.free_q);
+//		if(qs > NUM_OUT_BUF)
+//			for (int i= 0; i < qs-NUM_OUT_BUF; i++){
+//				struct msgb *msg = msgb_dequeue_irqsafe(&g_ccid_s.free_q);
+//				if (msg)
+//				msgb_free(msg);
+//			}
+//		if(qs < NUM_OUT_BUF)
+//			for (int i= 0; i < NUM_OUT_BUF-qs; i++){
+//				struct msgb *msg = msgb_alloc(300,"ccid");
+//				OSMO_ASSERT(msg);
+//				/* return the message back to the queue of free message buffers */
+//				llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+//			}
 
 
 	}
