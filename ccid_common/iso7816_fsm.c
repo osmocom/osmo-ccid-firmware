@@ -45,7 +45,6 @@ enum iso7816_3_state {
 	ISO7816_S_IN_ATR, /*!< while we are receiving the ATR */
 	ISO7816_S_WAIT_TPDU, /*!< waiting for start of new TPDU */
 	ISO7816_S_IN_TPDU, /*!< inside a single TPDU */
-	ISO7816_S_IN_PPS_REQ, /*!< while we are inside the PPS request */
 	ISO7816_S_WAIT_PPS_RSP, /*!< waiting for start of the PPS response */
 	ISO7816_S_IN_PPS_RSP, /*!< while we are inside the PPS request */
 };
@@ -387,22 +386,6 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 	}
 }
 
-static void iso7816_3_in_pps_req_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
-{
-	struct iso7816_3_priv *tfp = get_iso7816_3_priv(fi);
-//	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
-//	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
-
-	switch (event) {
-	case ISO7816_E_XCEIVE_PPS_CMD:
-		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_PPS_RSP, 0, 0);
-//		card_uart_tx(tfp->uart, msgb_data(data), msgb_length(data), true);
-		break;
-	default:
-		OSMO_ASSERT(0);
-	}
-}
-
 
 static void iso7816_3_s_wait_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
@@ -484,7 +467,6 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_TPDU) |
-					S(ISO7816_S_IN_PPS_REQ) |
 					S(ISO7816_S_WAIT_PPS_RSP),
 		.action = iso7816_3_wait_tpdu_action,
 		.onenter = iso7816_3_wait_tpdu_onenter,
@@ -502,15 +484,6 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_TPDU),
 		.action = iso7816_3_in_tpdu_action,
-	},
-	[ISO7816_S_IN_PPS_REQ] = {
-		.name = "IN_PPS_REQ",
-		.in_event_mask =	S(ISO7816_E_XCEIVE_TPDU_CMD),
-		.out_state_mask =	S(ISO7816_S_RESET) |
-					S(ISO7816_S_WAIT_TPDU) |
-					S(ISO7816_S_IN_PPS_REQ) |
-					S(ISO7816_S_WAIT_PPS_RSP),
-		.action = iso7816_3_in_pps_req_action,
 	},
 	[ISO7816_S_WAIT_PPS_RSP] = {
 		.name = "WAIT_PPS_RESP",
@@ -898,7 +871,7 @@ static void pps_s_wait_ppss_onenter(struct osmo_fsm_inst *fi, uint32_t old_state
 	struct pps_fsm_priv *atp = fi->priv;
 
 	if (!atp->rx_cmd)
-		atp->rx_cmd = msgb_alloc_c(fi, 6, "PPSRSP"); /* TS + 32 chars */
+		atp->rx_cmd = msgb_alloc_c(fi, 6, "PPSRSP"); /* at most 6 */
 	else
 		msgb_reset(atp->rx_cmd);
 
