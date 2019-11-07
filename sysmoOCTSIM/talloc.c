@@ -1747,6 +1747,9 @@ _PUBLIC_ int _talloc_free(void *ptr, const char *location)
 {
 	struct talloc_chunk *tc;
 
+	// do not deallocate while handling interrupts!
+	OSMO_ASSERT( !(SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) )
+
 	if (unlikely(ptr == NULL)) {
 		return -1;
 	}
