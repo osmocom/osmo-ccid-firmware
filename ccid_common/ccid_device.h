@@ -57,6 +57,8 @@ struct ccid_slot {
 	struct ccid_pars_decoded proposed_pars;
 	/* default parameters; applied on ResetParameters */
 	const struct ccid_pars_decoded *default_pars;
+	uint32_t event;
+	void* event_data;
 };
 
 /* CCID operations provided by USB transport layer */
@@ -86,6 +88,7 @@ struct ccid_slot_ops {
 			  const struct ccid_pars_decoded *pars_dec);
 	int (*set_rate_and_clock)(struct ccid_slot *cs, uint32_t freq_hz, uint32_t rate_bps);
 	void (*icc_set_insertion_status)(struct ccid_slot *cs, bool present);
+	int (*handle_fsm_events)(struct ccid_slot *cs, bool enable);
 };
 
 /* An instance of CCID (i.e. a card reader device) */
