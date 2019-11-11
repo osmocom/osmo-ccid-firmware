@@ -267,7 +267,7 @@ static struct msgb *ccid_gen_notify_slot_status(uint8_t old_bm, uint8_t new_bm)
 {
 	uint8_t statusbytes[2] = {0};
 	//struct msgb *msg = ccid_msgb_alloc();
-	struct msgb *msg = msgb_alloc(64, "IRQ");
+	struct msgb *msg = msgb_alloc(300,"IRQ");
 	struct ccid_rdr_to_pc_notify_slot_change *nsc = msgb_put(msg, sizeof(*nsc) + sizeof(statusbytes));
 	nsc->bMessageType = RDR_to_PC_NotifySlotChange;
 
@@ -523,6 +523,9 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 		command_try_recv();
 		poll_card_detect();
 		submit_next_irq();
+		for (int i = 0; i < usb_fs_descs.ccid.class.bMaxSlotIndex; i++){
+			g_ci.slot_ops->handle_fsm_events(&g_ci.slot[i], true);
+		}
 		feed_ccid();
 		osmo_timers_update();
 		int qs = llist_count_at(&g_ccid_s.free_q);
@@ -533,13 +536,12 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 				msgb_free(msg);
 			}
 		if(qs < NUM_OUT_BUF)
-			for (int i= 0; i < qs-NUM_OUT_BUF; i++){
+			for (int i= 0; i < NUM_OUT_BUF-qs; i++){
 				struct msgb *msg = msgb_alloc(300,"ccid");
 				OSMO_ASSERT(msg);
 				/* return the message back to the queue of free message buffers */
 				llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 			}
-
 
 	}
 }

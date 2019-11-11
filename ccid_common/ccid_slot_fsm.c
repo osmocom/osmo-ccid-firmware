@@ -110,34 +110,76 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 {
 	struct iso_fsm_slot *ss = iso7816_fsm_get_user_priv(fi);
 	struct ccid_slot *cs = ss->cs;
+
+	switch (event) {
+	case ISO7816_E_ATR_DONE_IND:
+	case ISO7816_E_ATR_ERR_IND:
+	case ISO7816_E_TPDU_DONE_IND:
+	case ISO7816_E_TPDU_FAILED_IND:
+	case ISO7816_E_PPS_DONE_IND:
+	case ISO7816_E_PPS_FAILED_IND:
+		cs->event_data = data;
+		asm volatile("dmb st": : :"memory");
+		cs->event = event;
+		break;
+	default:
+		LOGPCS(cs, LOGL_NOTICE, "%s(event=%d, cause=%d, data=%p) unhandled\n",
+			__func__, event, cause, data);
+		break;
+	}
+}
+
+static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
+	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct msgb *tpdu, *resp;
+	volatile uint32_t event = cs->event;
+	volatile void * volatile data = cs->event_data;
+
+	if(!event)
+		return 0;
+	if(event && !data)
+		return 0;
 
 	switch (event) {
 	case ISO7816_E_ATR_DONE_IND:
 		tpdu = data;
-		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, cause=%d, data=%s)\n", __func__, event, cause,
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
 			msgb_hexdump(tpdu));
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0,
 					   msgb_data(tpdu), msgb_length(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
 		/* Don't free "TPDU" here, as the ATR should survive */
+		cs->event = 0;
+		break;
+	case ISO7816_E_ATR_ERR_IND:
+		tpdu = data;
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
+			msgb_hexdump(tpdu));
+		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE,
+					   msgb_data(tpdu), msgb_length(tpdu));
+		ccid_slot_send_unbusy(cs, resp);
+		/* Don't free "TPDU" here, as the ATR should survive */
+		cs->event = 0;
+		break;
 		break;
 	case ISO7816_E_TPDU_DONE_IND:
 		tpdu = data;
-		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, cause=%d, data=%s)\n", __func__, event, cause,
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
 			msgb_hexdump(tpdu));
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, msgb_l2(tpdu), msgb_l2len(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
 		msgb_free(tpdu);
+		cs->event = 0;
 		break;
 	case ISO7816_E_TPDU_FAILED_IND:
 		tpdu = data;
-		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, cause=%d, data=%s)\n", __func__, event, cause,
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
 			msgb_hexdump(tpdu));
 		/* FIXME: other error causes than card removal?*/
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE, msgb_l2(tpdu), 0);
 		ccid_slot_send_unbusy(cs, resp);
 		msgb_free(tpdu);
+		cs->event = 0;
 		break;
 	case ISO7816_E_PPS_DONE_IND:
 		tpdu = data;
@@ -157,6 +199,7 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 
 		/* this frees the pps req from the host, pps resp buffer stays with the pps fsm */
 		msgb_free(tpdu);
+		cs->event = 0;
 		break;
 	case ISO7816_E_PPS_FAILED_IND:
 		tpdu = data;
@@ -165,10 +208,13 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		ccid_slot_send_unbusy(cs, resp);
 		/* this frees the pps req from the host, pps resp buffer stays with the pps fsm */
 		msgb_free(tpdu);
+		cs->event = 0;
+		break;
+	case 0:
 		break;
 	default:
-		LOGPCS(cs, LOGL_NOTICE, "%s(event=%d, cause=%d, data=%p) unhandled\n",
-			__func__, event, cause, data);
+		LOGPCS(cs, LOGL_NOTICE, "%s(event=%d, data=%p) unhandled\n",
+			__func__, event, data);
 		break;
 	}
 }
@@ -177,7 +223,7 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 				const struct ccid_pc_to_rdr_xfr_block *xfb)
 {
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
-	struct msgb *tpdu;
+
 
 	ss->seq = xfb->hdr.bSeq;
 
@@ -185,17 +231,10 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	OSMO_ASSERT(xfb->wLevelParameter == 0x0000);
 	OSMO_ASSERT(msgb_length(msg) > xfb->hdr.dwLength);
 
-	/* 'msg' contains the raw CCID message as received from USB. We could create
-	 * a new message buffer for the ISO7816 side here or we could 'strip the CCID
-	 * header off the start of the message. Let's KISS and do a copy here */
-	tpdu = msgb_alloc(512, "TPDU");
-	OSMO_ASSERT(tpdu);
-	memcpy(msgb_data(tpdu), xfb->abData, xfb->hdr.dwLength);
-	msgb_put(tpdu, xfb->hdr.dwLength);
-	msgb_free(msg);
+	msgb_pull(msg, 10);
 
-	LOGPCS(cs, LOGL_DEBUG, "scheduling TPDU transfer: %s\n", msgb_hexdump(tpdu));
-	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_TPDU_CMD, tpdu);
+	LOGPCS(cs, LOGL_DEBUG, "scheduling TPDU transfer: %s\n", msgb_hexdump(msg));
+	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_TPDU_CMD, msg);
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
 	return 0;
 }
@@ -329,4 +368,5 @@ const struct ccid_slot_ops iso_fsm_slot_ops = {
 	.set_clock = iso_fsm_slot_set_clock,
 	.set_params = iso_fsm_slot_set_params,
 	.set_rate_and_clock = iso_fsm_slot_set_rate_and_clock,
+	.handle_fsm_events = iso_handle_fsm_events,
 };

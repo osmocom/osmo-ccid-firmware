@@ -238,6 +238,8 @@ static void iso7816_3_reset_action(struct osmo_fsm_inst *fi, uint32_t event, voi
 		osmo_fsm_inst_state_chg_ms(fi, ISO7816_S_WAIT_ATR,
 					   fi_cycles2ms(fi, 40000), T_WAIT_ATR);
 		break;
+	case ISO7816_E_POWER_UP_IND:
+		break;
 	case ISO7816_E_PPS_FAILED_IND:
 		msg = data;
 		/* notify user about PPS result */
@@ -876,7 +878,7 @@ static void pps_s_wait_ppss_onenter(struct osmo_fsm_inst *fi, uint32_t old_state
 		msgb_reset(atp->rx_cmd);
 
 	/* notify in case card got pulled out */
-	if (atp->tx_cmd){
+	if (atp->tx_cmd && old_state != PPS_S_DONE){
 		osmo_fsm_inst_dispatch(fi->proc.parent,
 				ISO7816_E_PPS_FAILED_IND, atp->tx_cmd);
 		atp->tx_cmd = 0;
@@ -1099,7 +1101,7 @@ static void tpdu_s_init_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
 	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);
 
 	/* notify in case card got pulled out */
-	if (tfp->tpdu){
+	if (tfp->tpdu && old_state != TPDU_S_DONE){
 		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_TPDU_FAILED_IND, tfp->tpdu);
 		tfp->tpdu = 0;
 	}
