@@ -113,7 +113,7 @@ static const struct usb_desc_collection usb_fs_descs = {
 				.bDescriptorType = CDC_CS_INTERFACE,
 				.bDescriptorSubtype = CDC_SCS_UNION,
 				.bMasterInterface = CONF_USB_CDCD_ACM_COMM_BIFCNUM,
-				.bSlaveInterface0 = 0x01,
+				.bSlaveInterface0 = CONF_USB_CDCD_ACM_DATA_BIFCNUM,
 			},
 			.ep = {
 				{
