@@ -644,6 +644,7 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 
 	if (len < sizeof(*ch)) {
 		/* FIXME */
+		msgb_free(msg);
 		return -1;
 	}
 
@@ -652,6 +653,7 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 	if (!cs) {
 		LOGPCI(ci, LOGL_ERROR, "Invalid bSlot %u\n", ch->bSlot);
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, CCID_ICC_STATUS_NO_ICC, ch->bSeq, 5);
+		msgb_free(msg);
 		return ccid_send(ci, resp);
 	}
 
@@ -661,6 +663,7 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		/* FIXME: ABORT logic as per section 5.3.1 of CCID Spec v1.1 */
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, get_icc_status(cs), ch->bSeq,
 					CCID_ERR_CMD_SLOT_BUSY);
+		msgb_free(msg);
 		return ccid_send(ci, resp);
 	}
 
