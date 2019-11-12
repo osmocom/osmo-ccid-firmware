@@ -120,6 +120,8 @@ static unsigned int talloc_magic = TALLOC_MAGIC_NON_RANDOM;
 #endif
 #endif
 
+#define TALLOC_NULLDBG(ctx, fmt, x ...) printf("--> TALLOC(%p): " fmt, ctx, ## x)
+
 /* this null_context is only used if talloc_enable_leak_report() or
    talloc_enable_leak_report_full() is called, otherwise it remains
    NULL
@@ -572,6 +574,7 @@ static inline struct talloc_chunk *talloc_parent_chunk(const void *ptr)
 	struct talloc_chunk *tc;
 
 	if (unlikely(ptr == NULL)) {
+		TALLOC_NULLDBG(ptr, "parent NULL\r\n");
 		return NULL;
 	}
 
@@ -677,6 +680,7 @@ static inline struct talloc_chunk *tc_alloc_pool(struct talloc_chunk *parent,
 	size_t chunk_size;
 
 	if (parent == NULL) {
+		TALLOC_NULLDBG(parent, "parent NULL\r\n");
 		return NULL;
 	}
 
@@ -688,6 +692,7 @@ static inline struct talloc_chunk *tc_alloc_pool(struct talloc_chunk *parent,
 	}
 
 	if (pool_hdr == NULL) {
+		TALLOC_NULLDBG(parent, "no pool header\r\n");
 		return NULL;
 	}
 
@@ -699,6 +704,7 @@ static inline struct talloc_chunk *tc_alloc_pool(struct talloc_chunk *parent,
 	chunk_size = TC_ALIGN16(size + prefix_len);
 
 	if (space_left < chunk_size) {
+		TALLOC_NULLDBG(parent, "space_left(%d) < chunk_size(%d)\r\n", space_left, chunk_size);
 		return NULL;
 	}
 
@@ -739,10 +745,12 @@ static inline void *__talloc_with_prefix(const void *context,
 	}
 
 	if (unlikely(size >= MAX_TALLOC_SIZE)) {
+		TALLOC_NULLDBG(context, "MAX_TALLOC_SIZE\r\n");
 		return NULL;
 	}
 
 	if (unlikely(total_len < TC_HDR_SIZE)) {
+		TALLOC_NULLDBG(context, "TC_HDR_SIZE\r\n");
 		return NULL;
 	}
 
@@ -764,11 +772,13 @@ static inline void *__talloc_with_prefix(const void *context,
 		 */
 		if (!talloc_memlimit_check(limit, total_len)) {
 			errno = ENOMEM;
+			TALLOC_NULLDBG(context, "memlimit_check max_size=%u cur_size=%u total_len=%u\r\n", limit->max_size, limit->cur_size, total_len);
 			return NULL;
 		}
 
 		ptr = malloc(total_len);
 		if (unlikely(ptr == NULL)) {
+			TALLOC_NULLDBG(context, "malloc NULL\r\n");
 			return NULL;
 		}
 		tc = (struct talloc_chunk *)(ptr + prefix_len);
