@@ -153,7 +153,7 @@ vpath %.s ../
 vpath %.S ../
 
 # All Target
-all: $(SUB_DIRS) $(OUTPUT_FILE_PATH)
+all: $(SUB_DIRS) $(OUTPUT_FILE_PATH) sysmoOCTSIM.elf sysmoOCTSIM.bin
 
 # Linker target
 
@@ -176,6 +176,11 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 	$(OBJDUMP) -h -S "$(OUTPUT_FILE_NAME).elf" > "$(OUTPUT_FILE_NAME).lss"
 	$(SIZE) "$(OUTPUT_FILE_NAME).elf"
 
+sysmoOCTSIM.elf: $(OUTPUT_FILE_PATH)
+	ln -sf $(OUTPUT_FILE_NAME).elf $@
+
+sysmoOCTSIM.bin: $(OUTPUT_FILE_PATH)
+	ln -sf $(OUTPUT_FILE_NAME).bin $@
 
 # Compiler targets
 
