@@ -153,7 +153,13 @@ vpath %.s ../
 vpath %.S ../
 
 # All Target
-all: $(SUB_DIRS) $(OUTPUT_FILE_PATH) sysmoOCTSIM.elf sysmoOCTSIM.bin
+all: $(SUB_DIRS) elf bin ihex eep lss
+
+elf: $(OUTPUT_FILE_NAME).elf sysmoOCTSIM.elf
+bin: $(OUTPUT_FILE_NAME).bin sysmoOCTSIM.bin
+ihex: $(OUTPUT_FILE_NAME).ihex
+eep: $(OUTPUT_FILE_NAME).eep
+lss: $(OUTPUT_FILE_NAME).lss
 
 # Linker target
 
@@ -167,13 +173,18 @@ $(OUTPUT_FILE_PATH): $(OBJS)
 -L"../gcc/gcc"
 	@echo Finished building target: $@
 
-	$(OBJCOPY) -O binary "$(OUTPUT_FILE_NAME).elf" "$(OUTPUT_FILE_NAME).bin"
-	$(OBJCOPY) -O ihex -R .eeprom -R .fuse -R .lock -R .signature  \
-		"$(OUTPUT_FILE_NAME).elf" "$(OUTPUT_FILE_NAME).hex"
+%.bin: %.elf
+	$(OBJCOPY) -O binary $< $@
+
+%.ihex: %.elf
+	$(OBJCOPY) -O ihex -R .eeprom -R .fuse -R .lock -R .signature $< $@
+
+%.eep: %.elf
 	$(OBJCOPY) -j .eeprom --set-section-flags=.eeprom=alloc,load --change-section-lma \
-		.eeprom=0 --no-change-warnings -O binary "$(OUTPUT_FILE_NAME).elf" \
-		"$(OUTPUT_FILE_NAME).eep" || exit 0
-	$(OBJDUMP) -h -S "$(OUTPUT_FILE_NAME).elf" > "$(OUTPUT_FILE_NAME).lss"
+		.eeprom=0 --no-change-warnings -O binary $< $@ || exit 0
+
+%.lss: %.elf
+	$(OBJDUMP) -h -S $< > $@
 	$(SIZE) "$(OUTPUT_FILE_NAME).elf"
 
 sysmoOCTSIM.elf: $(OUTPUT_FILE_PATH)
