@@ -321,7 +321,11 @@ static int32_t usart_async_rings_write(struct io_descriptor *const io_descr, con
 	ASSERT(descr && buf && length);
 
 	for (uint16_t i = 0; i < length; i++) {
-		while (ringbuffer_num(&descr->tx) > descr->tx.size); // WARNING blocking until there is space in the buffer
+		/* HACK: disabling this to avoid getting stuck indefinitely.  In theory, this while loop below
+		 * would exit at some point as the UART is supposedly transmitting data.  However, in some
+		 * situations it is not transmitting, and hence the condition becomes never true, waiting here
+		 * indefinitely.  We will now simply ovewrite old log data if it isn't sent fast enough */
+		//while (ringbuffer_num(&descr->tx) > descr->tx.size); // WARNING blocking until there is space in the buffer
 		ringbuffer_put(&descr->tx, buf[i]);
 	}
 	descr->stat             = USART_ASYNC_RINGS_STATUS_BUSY;
