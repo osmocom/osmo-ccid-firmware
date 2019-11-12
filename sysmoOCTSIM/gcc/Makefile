@@ -223,3 +223,6 @@ clean:
 	rm -f $(OUTPUT_FILE_NAME).a $(OUTPUT_FILE_NAME).hex $(OUTPUT_FILE_NAME).bin \
         $(OUTPUT_FILE_NAME).lss $(OUTPUT_FILE_NAME).eep $(OUTPUT_FILE_NAME).map \
         $(OUTPUT_FILE_NAME).srec
+
+mrproper: clean
+	rm -f *.o *.d *.a *.elf *.bin *.ihex *.eep *.lss *.map *.srec
