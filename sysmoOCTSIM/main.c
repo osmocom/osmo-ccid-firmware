@@ -24,6 +24,7 @@
 #include <errno.h>
 
 #include <osmocom/core/utils.h>
+#include <osmocom/core/timer.h>
 
 #include <hal_cache.h>
 #include <hri_port_e54.h>
