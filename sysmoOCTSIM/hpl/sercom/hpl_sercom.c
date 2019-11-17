@@ -45,6 +45,8 @@
 #include <utils.h>
 #include <utils_assert.h>
 
+#include <hal_gpio.h>
+
 #ifndef CONF_SERCOM_0_USART_ENABLE
 #define CONF_SERCOM_0_USART_ENABLE 0
 #endif
@@ -2617,6 +2619,9 @@ void SERCOM6_0_Handler(void)
  */
 void SERCOM6_1_Handler(void)
 {
+               gpio_set_pin_level(PIN_PB13, true);
+               delay_us(1);
+               gpio_set_pin_level(PIN_PB13, false);
 	_sercom_usart_interrupt_handler(_sercom6_dev);
 }
 /**

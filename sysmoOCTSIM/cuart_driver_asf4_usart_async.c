@@ -44,6 +44,14 @@ static void _SIM_tx_cb(const struct usart_async_descriptor *const io_descr, uint
 {
 	struct card_uart *cuart = cuart4slot_nr(slot_nr);
 	OSMO_ASSERT(cuart);
+	if (slot_nr == 6) {
+		hri_sercomusart_clear_INTFLAG_TXC_bit(SERCOM6);
+#if 0
+		gpio_set_pin_level(PIN_PB13, true);
+		delay_us(1);
+		gpio_set_pin_level(PIN_PB13, false);
+#endif
+	}
 	card_uart_notification(cuart, CUART_E_TX_COMPLETE, io_descr->tx_buffer);
 }
 
@@ -161,7 +169,7 @@ static const uint8_t SIM_peripheral_GCLK_ID[] = {SERCOM0_GCLK_ID_CORE, SERCOM1_G
  *  @param[in] baudrate baud rate in bps to set
  *  @return if the baud rate has been set, else a parameter is out of range
  */
-static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
+bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
 {
 	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
 

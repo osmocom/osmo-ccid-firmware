@@ -1124,7 +1124,22 @@ static const struct ccid_ops c_ops = {
 
 //#######################
 
+static void dbgio_init()
+{
+	/* CAN_TX */
+	gpio_set_pin_function(PIN_PB12, GPIO_PIN_FUNCTION_OFF);
+	gpio_set_pin_direction(PIN_PB12, GPIO_DIRECTION_OUT);
+	gpio_set_pin_level(PIN_PB12, false);
+
+	/* CAN_RX */
+	gpio_set_pin_function(PIN_PB13, GPIO_PIN_FUNCTION_OFF);
+	gpio_set_pin_direction(PIN_PB13, GPIO_DIRECTION_OUT);
+	gpio_set_pin_level(PIN_PB13, false);
+}
+
 #define NUM_OUT_BUF 7
+
+extern bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate);
 
 int main(void)
 {
@@ -1187,8 +1202,41 @@ int main(void)
 	submit_next_out();
 	CRITICAL_SECTION_LEAVE()
 
+	dbgio_init();
+
+#if 1
+	struct ncn8025_settings settings;
+	settings.rstin = false;
+	settings.cmdvcc = true;
+	settings.led = true;
+	settings.clkdiv = SIM_CLKDIV_1;
+	settings.vsel = SIM_VOLT_3V0;
+	ncn8025_set(6, &settings);
+	slot_set_baudrate(6, 6720);
+	//slot_set_isorate(6, settings.clkdiv, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+	//slot_set_baudrate(6, 300000);
+	hri_sercomusart_write_CTRLB_TXEN_bit(SERCOM6, true);
+	hri_sercomusart_write_CTRLB_RXEN_bit(SERCOM6, false);
+	hri_sercomusart_set_INTEN_TXC_bit(SERCOM6);
+
+	for (uint32_t i = 0; i < 4; i++) {
+		uint32_t irq = 70+i;
+		NVIC_DisableIRQ((IRQn_Type)irq);
+		NVIC_ClearPendingIRQ((IRQn_Type)irq);
+		NVIC_EnableIRQ((IRQn_Type)irq);
+	}
+
+	while (true) {
+		delay_us(100000);
+		while (!hri_sercomusart_get_interrupt_DRE_bit(SERCOM6)) {}
+		hri_sercomusart_set_INTEN_TXC_bit(SERCOM6);
+		hri_sercomusart_write_DATA_reg(SERCOM6, 0x55);
+	}
+
+#else
 //	command_print_prompt();
 	while (true) { // main loop
+
 		command_try_recv();
 		poll_card_detect();
 		submit_next_irq();
@@ -1213,4 +1261,5 @@ int main(void)
 			}
 
 	}
+#endif
 }
