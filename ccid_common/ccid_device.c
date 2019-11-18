@@ -475,14 +475,25 @@ static int ccid_handle_reset_parameters(struct ccid_slot *cs, struct msgb *msg)
 	const struct ccid_header *ch = (const struct ccid_header *) u;
 	uint8_t seq = u->reset_parameters.hdr.bSeq;
 	struct msgb *resp;
+	int rc;
 
 	/* copy default parameters from somewhere */
 	/* FIXME: T=1 */
-	cs->ci->slot_ops->set_params(cs, seq, CCID_PROTOCOL_NUM_T0, cs->default_pars);
-	cs->pars = *cs->default_pars;
 
-	resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
-	return ccid_slot_send_unbusy(cs, resp);
+	/* validate parameters; abort if they are not supported */
+	rc = cs->ci->slot_ops->set_params(cs, seq, CCID_PROTOCOL_NUM_T0, cs->default_pars);
+	if (rc < 0) {
+		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
+		goto out;
+	}
+
+	msgb_free(msg);
+	/* busy, tdpu like callback */
+	return 1;
+out:
+	msgb_free(msg);
+	ccid_slot_send_unbusy(cs, resp);
+	return 1;
 }
 
 /* Section 6.1.7 */
@@ -523,10 +534,14 @@ static int ccid_handle_set_parameters(struct ccid_slot *cs, struct msgb *msg)
 		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
 		goto out;
 	}
+
+	msgb_free(msg);
 	/* busy, tdpu like callback */
 	return 1;
 out:
-	return ccid_slot_send_unbusy(cs, resp);
+	msgb_free(msg);
+	ccid_slot_send_unbusy(cs, resp);
+	return 1;
 }
 
 /* Section 6.1.8 */
@@ -678,6 +693,15 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		/* FIXME: ABORT logic as per section 5.3.1 of CCID Spec v1.1 */
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, get_icc_status(cs), ch->bSeq,
 					CCID_ERR_CMD_SLOT_BUSY);
+		msgb_free(msg);
+		return ccid_send(ci, resp);
+	}
+
+	if(!cs->icc_present) {
+		LOGPCS(cs, LOGL_ERROR, "No icc present, but another cmd received\n");
+		/* FIXME: ABORT logic as per section 5.3.1 of CCID Spec v1.1 */
+		resp = gen_err_resp(ch->bMessageType, ch->bSlot, get_icc_status(cs), ch->bSeq,
+				CCID_ERR_ICC_MUTE);
 		msgb_free(msg);
 		return ccid_send(ci, resp);
 	}

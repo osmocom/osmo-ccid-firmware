@@ -293,6 +293,7 @@ static void iso7816_3_in_atr_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 		ip->user_cb(fi, event, 0, atr);
 		break;
 	case ISO7816_E_ATR_ERR_IND:
+		atr = data;
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
 		ip->user_cb(fi, event, 0, atr);
 		break;

@@ -179,9 +179,6 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct msgb *tpdu;
 
-	if(!cs->icc_present)
-		return -CCID_ERR_ICC_MUTE;
-
 	ss->seq = xfb->hdr.bSeq;
 
 	/* must be '0' for TPDU level exchanges or for short APDU */
