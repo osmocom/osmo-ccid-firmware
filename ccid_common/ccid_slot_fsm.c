@@ -287,6 +287,14 @@ static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_
 
 	ss->seq = seq;
 
+	/* FIXME:
+	When  using  D=64,  the  interface  device  shall  ensure  a  delay
+	  of  at  least  16  etu  between  the  leading  edge  of  the last
+	   received character and the leading edge of the character transmitted
+	    for initiating a command.
+	    -> we can't really do 4 stop bits?!
+	*/
+
 	/* Hardware does not support SPU, so no PPS2, and PPS3 is reserved anyway */
 	tpdu = msgb_alloc(6, "PPSRQ");
 	OSMO_ASSERT(tpdu);
