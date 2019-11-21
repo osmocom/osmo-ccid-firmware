@@ -188,6 +188,13 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		uint8_t D = iso7816_3_di_table[cs->proposed_pars.di];
 		uint32_t fmax = iso7816_3_fmax_table[cs->proposed_pars.fi];
 
+		/* 7816-3 5.2.3
+		 * No  information  shall  be  exchanged  when  switching  the
+		 * frequency  value.  Two  different  times  are  recommended
+		 * for switching the frequency value, either
+		 * - after ATR while card is idle
+		 * - after PPS while card is idle
+		 */
 		card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK_FREQ, fmax);
 		card_uart_ctrl(ss->cuart, CUART_CTL_FD, F/D);
 		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer);
