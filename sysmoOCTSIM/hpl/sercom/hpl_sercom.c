@@ -589,6 +589,8 @@ static void _sercom_usart_interrupt_handler(struct _usart_async_device *device)
 
 	if (hri_sercomusart_get_interrupt_DRE_bit(hw) && hri_sercomusart_get_INTEN_DRE_bit(hw)) {
 		hri_sercomusart_clear_INTEN_DRE_bit(hw);
+		hri_sercomusart_read_DATA_reg(hw);
+		hri_sercomusart_clear_INTFLAG_RXC_bit(hw);
 		device->usart_cb.tx_byte_sent(device);
 	} else if (hri_sercomusart_get_interrupt_TXC_bit(hw) && hri_sercomusart_get_INTEN_TXC_bit(hw)) {
 #if 0
@@ -598,6 +600,8 @@ static void _sercom_usart_interrupt_handler(struct _usart_async_device *device)
 				gpio_set_pin_level(PIN_PB12, false);
 #endif
 		hri_sercomusart_clear_INTEN_TXC_bit(hw);
+		hri_sercomusart_read_DATA_reg(hw);
+		hri_sercomusart_clear_INTFLAG_RXC_bit(hw);
 		device->usart_cb.tx_done_cb(device);
 	} else if (hri_sercomusart_get_interrupt_RXC_bit(hw)) {
 		if (hri_sercomusart_read_STATUS_reg(hw)
