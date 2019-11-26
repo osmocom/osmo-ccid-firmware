@@ -273,8 +273,8 @@ static struct msgb *ccid_gen_notify_slot_status(uint8_t old_bm, uint8_t new_bm)
 
 	for(int i = 0; i <8; i++) {
 		uint8_t byteidx = i >> 2;
-		uint8_t old_bit = old_bm & (1 << i);
-		uint8_t new_bit = new_bm & (1 << i);
+		uint8_t old_bit = (old_bm >> i) & 1;
+		uint8_t new_bit = (new_bm >> i) & 1;
 		uint8_t bv;
 		if (old_bit == new_bit && new_bit == 0)
 			bv = 0x00;
