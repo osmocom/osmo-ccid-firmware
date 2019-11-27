@@ -474,6 +474,12 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	board_init();
 	command_init("sysmoOCTSIM> ");
 
+	/* boost uart priority by setting all other irqs to uartprio+1 */
+	for(int i = 0; i < PERIPH_COUNT_IRQn; i++)
+		NVIC_SetPriority(i, 2);
+	for(int i = SERCOM0_0_IRQn; i <= SERCOM7_3_IRQn; i++)
+		NVIC_SetPriority(i, 1);
+
 	printf("\r\n\r\n"
 		"=============================================================================\n\r"
 		"sysmoOCTSIM firmware " GIT_VERSION "\n\r"
