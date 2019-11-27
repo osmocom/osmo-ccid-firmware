@@ -43,6 +43,8 @@
 // TODO put declaration in more global file
 // TODO for now SIM7 is not present because used for debug
 static struct usart_async_descriptor* SIM_peripheral_descriptors[] = {&SIM0, &SIM1, &SIM2, &SIM3, &SIM4, &SIM5, &SIM6, NULL};
+#include "ccid_device.h"
+#include "usb_descriptors.h"
 
 /** number of bytes transmitted on the SIM peripheral */
 static volatile bool SIM_tx_count[8];
