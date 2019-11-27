@@ -303,7 +303,7 @@ static void poll_card_detect(void)
 	for (i = 0; i < 8; i++){
 		bool level = ncn8025_interrupt_level(i);
 		new_mask |= level << i;
-		g_ci.slot[i].icc_present = level;
+		g_ci.slot_ops->icc_set_insertion_status(&g_ci.slot[i], level);
 	}
 
 	/* notify the user/host about any changes */

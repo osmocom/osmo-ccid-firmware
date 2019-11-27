@@ -66,6 +66,23 @@ static void iso_fsm_slot_pre_proc_cb(struct ccid_slot *cs, struct msgb *msg)
 	/* do nothing; real hardware would update the slot related state here */
 }
 
+static void iso_fsm_slot_icc_set_insertion_status(struct ccid_slot *cs, bool present) {
+	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
+
+	if(present == cs->icc_present)
+		return;
+
+	cs->icc_present = present;
+
+	if (!present) {
+		osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_CARD_REMOVAL, NULL);
+		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, false);
+		cs->icc_powered = false;
+		cs->cmd_busy = false;
+	}
+}
+
 static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *msg,
 					const struct ccid_pc_to_rdr_icc_power_on *ipo)
 {
@@ -113,6 +130,15 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 		ccid_slot_send_unbusy(cs, resp);
 		msgb_free(tpdu);
 		break;
+	case ISO7816_E_TPDU_FAILED_IND:
+		tpdu = data;
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, cause=%d, data=%s)\n", __func__, event, cause,
+			msgb_hexdump(tpdu));
+		/* FIXME: other error causes than card removal?*/
+		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE, msgb_l2(tpdu), 0);
+		ccid_slot_send_unbusy(cs, resp);
+		msgb_free(tpdu);
+		break;
 	case ISO7816_E_PPS_DONE_IND:
 		tpdu = data;
 		/* pps was successful, so we know these values are fine */
@@ -147,11 +173,14 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 	}
 }
 
-static void iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
+static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 				const struct ccid_pc_to_rdr_xfr_block *xfb)
 {
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct msgb *tpdu;
+
+	if(!cs->icc_present)
+		return -CCID_ERR_ICC_MUTE;
 
 	ss->seq = xfb->hdr.bSeq;
 
@@ -171,6 +200,7 @@ static void iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	LOGPCS(cs, LOGL_DEBUG, "scheduling TPDU transfer: %s\n", msgb_hexdump(tpdu));
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_TPDU_CMD, tpdu);
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
+	return 0;
 }
 
 
@@ -296,6 +326,7 @@ const struct ccid_slot_ops iso_fsm_slot_ops = {
 	.init = iso_fsm_slot_init,
 	.pre_proc_cb = iso_fsm_slot_pre_proc_cb,
 	.icc_power_on_async = iso_fsm_slot_icc_power_on_async,
+	.icc_set_insertion_status = iso_fsm_slot_icc_set_insertion_status,
 	.xfr_block_async = iso_fsm_slot_xfr_block_async,
 	.set_power = iso_fsm_slot_set_power,
 	.set_clock = iso_fsm_slot_set_clock,

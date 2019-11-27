@@ -438,9 +438,20 @@ static int ccid_handle_xfr_block(struct ccid_slot *cs, struct msgb *msg)
 {
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
 	const struct ccid_header *ch = (const struct ccid_header *) u;
+	struct msgb *resp;
+	int rc;
 
 	/* handle this asynchronously */
-	cs->ci->slot_ops->xfr_block_async(cs, msg, &u->xfr_block);
+	rc = cs->ci->slot_ops->xfr_block_async(cs, msg, &u->xfr_block);
+	if (rc < 0) {
+		msgb_trim(msg, sizeof(struct ccid_rdr_to_pc_data_block));
+		resp = ccid_gen_data_block(cs, u->xfr_block.hdr.bSeq, CCID_CMD_STATUS_FAILED, -rc, 0, 0);
+		goto out;
+	}
+	/* busy */
+	return 1;
+out:
+	ccid_slot_send_unbusy(cs, resp);
 	return 1;
 }
 
