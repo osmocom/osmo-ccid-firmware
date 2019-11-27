@@ -352,12 +352,9 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		break;
 	case CUART_CTL_RX:
 		if (arg){
-			sercom->USART.CTRLB.bit.RXEN = 1;
-			sercom->USART.CTRLB.bit.TXEN = 0;
+			/* no op */
 		} else {
 			delay_us(cuart->u.asf4.extrawait_after_rx);
-			sercom->USART.CTRLB.bit.RXEN = 0;
-			sercom->USART.CTRLB.bit.TXEN = 1;
 		}
 		break;
 	case CUART_CTL_RST:
