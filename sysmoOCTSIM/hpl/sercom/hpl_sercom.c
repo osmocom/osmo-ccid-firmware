@@ -577,7 +577,7 @@ void _usart_async_set_irq_state(struct _usart_async_device *const device, const 
 		hri_sercomusart_write_INTEN_ERROR_bit(device->hw, state);
 	}
 }
-
+#include <hal_gpio.h>
 /**
  * \internal Sercom interrupt handler
  *
@@ -591,6 +591,12 @@ static void _sercom_usart_interrupt_handler(struct _usart_async_device *device)
 		hri_sercomusart_clear_INTEN_DRE_bit(hw);
 		device->usart_cb.tx_byte_sent(device);
 	} else if (hri_sercomusart_get_interrupt_TXC_bit(hw) && hri_sercomusart_get_INTEN_TXC_bit(hw)) {
+#if 0
+// tx byte last edge <-> txc irq delay
+				gpio_set_pin_level(PIN_PB12, true);
+				delay_us(1);
+				gpio_set_pin_level(PIN_PB12, false);
+#endif
 		hri_sercomusart_clear_INTEN_TXC_bit(hw);
 		device->usart_cb.tx_done_cb(device);
 	} else if (hri_sercomusart_get_interrupt_RXC_bit(hw)) {
@@ -600,8 +606,20 @@ static void _sercom_usart_interrupt_handler(struct _usart_async_device *device)
 			hri_sercomusart_clear_STATUS_reg(hw, SERCOM_USART_STATUS_MASK);
 			return;
 		}
+#if 0
+// rx byte last edge <-> rxc irq delay
+				gpio_set_pin_level(PIN_PB12, true);
+				delay_us(1);
+				gpio_set_pin_level(PIN_PB12, false);
+#endif
 
 		device->usart_cb.rx_done_cb(device, hri_sercomusart_read_DATA_reg(hw));
+#if 0
+// rx byte last edge <-> rxc irq end delay
+				gpio_set_pin_level(PIN_PB12, true);
+				delay_us(1);
+				gpio_set_pin_level(PIN_PB12, false);
+#endif
 	} else if (hri_sercomusart_get_interrupt_ERROR_bit(hw)) {
 		uint32_t status;
 

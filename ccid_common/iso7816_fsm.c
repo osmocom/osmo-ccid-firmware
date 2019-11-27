@@ -1134,6 +1134,7 @@ static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 	}
 }
 
+#include <hal_gpio.h>
 static void tpdu_s_tx_hdr_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	OSMO_ASSERT(fi->fsm == &tpdu_fsm);
@@ -1173,6 +1174,12 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 		} else if (byte == tpduh->ins) {
 			if (tfp->is_command) {
 				/* transmit all remaining bytes */
+#if 0
+// rx -> tx delay
+				gpio_set_pin_level(PIN_PB12, true);
+				delay_us(1);
+				gpio_set_pin_level(PIN_PB12, false);
+#endif
 				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu), true);
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_REMAINING, 0, 0);
 			} else {

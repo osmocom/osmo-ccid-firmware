@@ -506,6 +506,17 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	}
 	submit_next_out();
 	CRITICAL_SECTION_LEAVE()
+#if 0
+	/* CAN_RX */
+	gpio_set_pin_function(PIN_PB12, GPIO_PIN_FUNCTION_OFF);
+	gpio_set_pin_direction(PIN_PB12, GPIO_DIRECTION_OUT);
+	gpio_set_pin_level(PIN_PB12, false);
+
+	/* CAN_TX */
+	gpio_set_pin_function(PIN_PB13, GPIO_PIN_FUNCTION_OFF);
+	gpio_set_pin_direction(PIN_PB13, GPIO_DIRECTION_OUT);
+	gpio_set_pin_level(PIN_PB13, false);
+#endif
 
 //	command_print_prompt();
 	while (true) { // main loop
