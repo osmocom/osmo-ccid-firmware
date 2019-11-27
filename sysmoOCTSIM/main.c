@@ -463,6 +463,9 @@ int main(void)
 	g_tall_ctx = talloc_named_const(NULL, 0, "global");
 	printf("g_tall_ctx=%p\r\n", g_tall_ctx);
 
+	//FIXME osmo_emb has a pool?
+	msgb_talloc_ctx_init(g_tall_ctx, 0);
+
 	libosmo_emb_init();
 
 	LOGP(DUSB, LOGL_ERROR, "foobar usb\n");

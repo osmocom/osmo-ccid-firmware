@@ -41,43 +41,43 @@ static const struct log_info_cat log_info_cat[] = {
 	[DUSB] = {
 		.name = "USB",
 		.description = "USB Transport",
-		.enabled = 1,
+		.enabled = 0,
 		.loglevel = LOGL_NOTICE,
 	},
 	[DCCID] = {
 		.name = "CCID",
 		.description = "USB-CCID Protocol",
-		.enabled = 1,
+		.enabled = 0,
 		.loglevel = LOGL_DEBUG,
 	},
 	[DISO7816] = {
 		.name = "ISO7816",
 		.description = "ISO7816-3 State machines",
-		.enabled = 1,
+		.enabled = 0,
 		.loglevel = LOGL_DEBUG,
 	},
 	[DATR] = {
 		.name = "ATR",
 		.description = "ATR (Answer To Reset) FSM",
-		.enabled = 1,
+		.enabled = 0,
 		.loglevel = LOGL_DEBUG,
 	},
 	[DTPDU] = {
 		.name = "TPDU",
 		.description = "TPDU FSM",
-		.enabled = 1,
+		.enabled = 0,
 		.loglevel = LOGL_DEBUG,
 	},
 	[DPPS] = {
 		.name = "PPS",
 		.description = "PPS (Protocol and Parameter Selection) FSM",
-		.enabled = 1,
+		.enabled = 0,
 		.loglevel = LOGL_DEBUG,
 	},
 	[DCARD] = {
 		.name = "CARD",
 		.description = "Card FSM",
-		.enabled = 1,
+		.enabled = 0,
 		.loglevel = LOGL_DEBUG,
 	},
 };
@@ -150,16 +150,18 @@ void libosmo_emb_init(void)
 	struct log_target *stderr_target;
 
 	/* msgb */
+#if 0
 	g_msgb_ctx = talloc_pool(g_tall_ctx, 20480);
 	talloc_set_memlimit(g_msgb_ctx, 20480);
 	msgb_talloc_ctx_init(g_msgb_ctx, 0);
-
+#endif
 	/* logging */
 	log_init(&log_info, g_tall_ctx);
+#if 0
 	stderr_target = log_target_create_stderr_raw();
 	log_add_target(stderr_target);
 	log_set_all_filter(stderr_target, 1);
-
+#endif
 	/* timer */
 	SysTick_Config(SystemCoreClock / 1000);
 }
