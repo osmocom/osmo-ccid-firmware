@@ -30,6 +30,8 @@ enum card_uart_ctl {
 	CUART_CTL_RST,		/* enable/disable ICC reset */
 	CUART_CTL_WTIME,	/* set the waiting time (in etu) */
 	CUART_CTL_SET_FD,
+	CUART_CTL_GET_BAUDRATE,
+	CUART_CTL_GET_CLOCK_FREQ,
 };
 
 struct card_uart;
@@ -100,6 +102,7 @@ struct card_uart {
 			uint8_t slot_nr;
 			/* in us, required, no delay breaks _rx_ */
 			uint32_t extrawait_after_rx;
+			uint32_t current_baudrate;
 		} asf4;
 	} u;
 };

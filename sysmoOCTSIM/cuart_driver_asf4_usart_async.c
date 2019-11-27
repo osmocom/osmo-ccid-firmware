@@ -203,6 +203,9 @@ static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
 	if (NULL == slot) {
 		return false;
 	}
+
+	// update cached values
+	cuart->u.asf4.current_baudrate = baudrate;
 	printf("(%u) switching SERCOM clock to GCLK%u (freq = %lu kHz) and baud rate to %lu bps (baud = %u)\r\n", slotnr, (best + 1) * 2, (uint32_t)(round(sercom_glck_freqs[best] / 1000)), baudrate, bauds[best]);
 	while (!usart_async_is_tx_empty(slot)); // wait for transmission to complete (WARNING no timeout)
 	usart_async_disable(slot); // disable SERCOM peripheral
@@ -404,6 +407,12 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		uint32_t baudrate = (20e6/divider)/arg;
 		cuart->u.asf4.extrawait_after_rx = 1./baudrate * 1000 * 1000;
 		slot_set_baudrate(cuart->u.asf4.slot_nr, baudrate);
+	case CUART_CTL_GET_BAUDRATE:
+		return cuart->u.asf4.current_baudrate;
+		break;
+	case CUART_CTL_GET_CLOCK_FREQ:
+		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
+		return 20e6 / ncn8025_div_val[settings.clkdiv];
 		break;
 	default:
 		return -EINVAL;
