@@ -53,6 +53,8 @@ struct ccid_slot {
 	bool cmd_busy;
 	/* decided CCID parameters */
 	struct ccid_pars_decoded pars;
+	/* proposed CCID parameters */
+	struct ccid_pars_decoded proposed_pars;
 	/* default parameters; applied on ResetParameters */
 	const struct ccid_pars_decoded *default_pars;
 };
@@ -80,7 +82,7 @@ struct ccid_slot_ops {
 				const struct ccid_pc_to_rdr_xfr_block *xfb);
 	void (*set_power)(struct ccid_slot *cs, bool enable);
 	void (*set_clock)(struct ccid_slot *cs, enum ccid_clock_command cmd);
-	int (*set_params)(struct ccid_slot *cs, enum ccid_protocol_num proto,
+	int (*set_params)(struct ccid_slot *cs, uint8_t seq, enum ccid_protocol_num proto,
 			  const struct ccid_pars_decoded *pars_dec);
 	int (*set_rate_and_clock)(struct ccid_slot *cs, uint32_t freq_hz, uint32_t rate_bps);
 };
@@ -118,6 +120,10 @@ void ccid_instance_init(struct ccid_instance *ci, const struct ccid_ops *ops,
 			const uint32_t *data_rates, const uint32_t *clock_freqs,
 			const char *name, void *priv);
 int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg);
+struct msgb *ccid_gen_parameters_t0(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+					   enum ccid_error_code err);
+struct msgb *ccid_gen_parameters_t1(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+					   enum ccid_error_code err);
 
 /* Invalid request received: Please return STALL */
 #define CCID_CTRL_RET_INVALID	-1

@@ -23,9 +23,11 @@ struct _usb_ctrl_req {
 /* decode on-the-wire T0 parameters into their parsed form */
 static int decode_ccid_pars_t0(struct ccid_pars_decoded *out, const struct ccid_proto_data_t0 *in)
 {
-	/* input validation: only 0x00 and 0x02 permitted for bmTCCKST0 */
-	if (in->bmTCCKST0 & 0xFD)
-		return -11;
+	/* input validation: only 0x00 and 0x02 permitted for bmTCCKST0
+	 * if (in->bmTCCKST0 & 0xFD)
+	 *	return -11;
+	 * 7816-3 6.1.7 says: "Note: the CCID ignores this bit", placeholder for GETparameters */
+
 	/* input validation: only 0x00 to 0x03 permitted for bClockSTop */
 	if (in->bClockStop & 0xFC)
 		return -14;
@@ -254,7 +256,7 @@ static struct msgb *ccid_gen_parameters_t0_nr(uint8_t slot_nr, uint8_t icc_statu
 	}
 	return msg;
 }
-static struct msgb *ccid_gen_parameters_t0(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+struct msgb *ccid_gen_parameters_t0(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
 					   enum ccid_error_code err)
 {
 	return ccid_gen_parameters_t0_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, &cs->pars);
@@ -276,7 +278,7 @@ static struct msgb *ccid_gen_parameters_t1_nr(uint8_t slot_nr, uint8_t icc_statu
 	}
 	return msg;
 }
-static struct msgb *ccid_gen_parameters_t1(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
+struct msgb *ccid_gen_parameters_t1(struct ccid_slot *cs, uint8_t seq, uint8_t cmd_sts,
 					   enum ccid_error_code err)
 {
 	return ccid_gen_parameters_t1_nr(cs->slot_nr, get_icc_status(cs), seq, cmd_sts, err, &cs->pars);
@@ -465,7 +467,7 @@ static int ccid_handle_reset_parameters(struct ccid_slot *cs, struct msgb *msg)
 
 	/* copy default parameters from somewhere */
 	/* FIXME: T=1 */
-	cs->ci->slot_ops->set_params(cs, CCID_PROTOCOL_NUM_T0, cs->default_pars);
+	cs->ci->slot_ops->set_params(cs, seq, CCID_PROTOCOL_NUM_T0, cs->default_pars);
 	cs->pars = *cs->default_pars;
 
 	resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
@@ -502,14 +504,16 @@ static int ccid_handle_set_parameters(struct ccid_slot *cs, struct msgb *msg)
 		goto out;
 	}
 
+	cs->proposed_pars = pars_dec;
+
 	/* validate parameters; abort if they are not supported */
-	rc = cs->ci->slot_ops->set_params(cs, spar->bProtocolNum, &pars_dec);
+	rc = cs->ci->slot_ops->set_params(cs, seq, spar->bProtocolNum, &pars_dec);
 	if (rc < 0) {
 		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, -rc);
-	} else {
-		cs->pars = pars_dec;
-		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_OK, 0);
+		goto out;
 	}
+	/* busy, tdpu like callback */
+	return 1;
 out:
 	return ccid_slot_send_unbusy(cs, resp);
 }
