@@ -384,7 +384,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 	case CUART_CTL_CLOCK:
 		/* no clock stop support */
 		break;
-	case CUART_CTL_CLOCK_FREQ:
+	case CUART_CTL_SET_CLOCK_FREQ:
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
 
 		/* 2,5/5/10/20 supported by dividers */
@@ -398,7 +398,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		settings.clkdiv = clkdiv;
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
 		break;
-	case CUART_CTL_FD:
+	case CUART_CTL_SET_FD:
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
 		uint8_t divider = ncn8025_div_val[settings.clkdiv];
 		uint32_t baudrate = (20e6/divider)/arg;

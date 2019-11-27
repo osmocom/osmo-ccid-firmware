@@ -195,8 +195,8 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		 * - after ATR while card is idle
 		 * - after PPS while card is idle
 		 */
-		card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK_FREQ, fmax);
-		card_uart_ctrl(ss->cuart, CUART_CTL_FD, F/D);
+		card_uart_ctrl(ss->cuart, CUART_CTL_SET_CLOCK_FREQ, fmax);
+		card_uart_ctrl(ss->cuart, CUART_CTL_SET_FD, F/D);
 		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer);
 
 		cs->pars = cs->proposed_pars;
