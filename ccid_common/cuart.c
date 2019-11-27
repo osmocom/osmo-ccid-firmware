@@ -29,8 +29,12 @@ static struct card_uart_driver *cuart_drv_by_name(const char *driver_name)
 /* obtain the current ETU in us */
 static int get_etu_in_us(struct card_uart *cuart)
 {
-	/* FIXME: actually implement this based on the real baud rate */
-	return (1000000/9600);
+	OSMO_ASSERT(cuart);
+	OSMO_ASSERT(cuart->driver);
+	OSMO_ASSERT(cuart->driver->ops);
+	OSMO_ASSERT(cuart->driver->ops->ctrl);
+
+	return 1e6 / cuart->driver->ops->ctrl(cuart, CUART_CTL_GET_BAUDRATE, 0);
 }
 
 /* software waiting-time timer has expired */
