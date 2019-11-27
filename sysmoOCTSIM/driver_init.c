@@ -33,7 +33,11 @@
 #define SIM6_BUFFER_SIZE 512
 
 /*! The buffer size for USART */
+#ifdef ENABLE_DBG_UART7
 #define UART_DEBUG_BUFFER_SIZE 4096
+#else
+#define SIM7_BUFFER_SIZE 512
+#endif
 
 struct usart_async_descriptor SIM0;
 struct usart_async_descriptor SIM1;
@@ -42,6 +46,9 @@ struct usart_async_descriptor SIM3;
 struct usart_async_descriptor SIM4;
 struct usart_async_descriptor SIM5;
 struct usart_async_descriptor SIM6;
+#ifndef ENABLE_DBG_UART7
+struct usart_async_descriptor SIM7;
+#endif
 
 static uint8_t SIM0_buffer[SIM0_BUFFER_SIZE];
 static uint8_t SIM1_buffer[SIM1_BUFFER_SIZE];
@@ -50,12 +57,14 @@ static uint8_t SIM3_buffer[SIM3_BUFFER_SIZE];
 static uint8_t SIM4_buffer[SIM4_BUFFER_SIZE];
 static uint8_t SIM5_buffer[SIM5_BUFFER_SIZE];
 static uint8_t SIM6_buffer[SIM6_BUFFER_SIZE];
-
+#ifndef ENABLE_DBG_UART7
+static uint8_t SIM7_buffer[SIM7_BUFFER_SIZE];
+#else
 struct usart_async_rings_descriptor UART_debug;
-struct calendar_descriptor CALENDAR_0;
-
 static uint8_t UART_DEBUG_buffer_rx[UART_DEBUG_BUFFER_SIZE];
 static uint8_t UART_DEBUG_buffer_tx[UART_DEBUG_BUFFER_SIZE];
+#endif
+struct calendar_descriptor CALENDAR_0;
 
 void CALENDAR_0_CLOCK_init(void)
 {
@@ -327,6 +336,7 @@ void SIM6_init(void)
 	SIM6_PORT_init();
 }
 
+#ifdef ENABLE_DBG_UART7
 /**
  * \brief USART Clock initialization function
  *
@@ -365,7 +375,44 @@ void UART_debug_init(void)
 	usart_async_rings_init(&UART_debug, SERCOM7, UART_DEBUG_buffer_rx, UART_DEBUG_BUFFER_SIZE, UART_DEBUG_buffer_tx, UART_DEBUG_BUFFER_SIZE, (void *)NULL);
 	UART_debug_PORT_init();
 }
+#else
+/**
+ * \brief USART Clock initialization function
+ *
+ * Enables register interface and peripheral clock
+ */
+void SIM7_CLOCK_init()
+{
 
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_CORE, CONF_GCLK_SERCOM7_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM7_GCLK_ID_SLOW, CONF_GCLK_SERCOM7_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+	hri_mclk_set_APBDMASK_SERCOM7_bit(MCLK);
+}
+
+/**
+ * \brief USART pinmux initialization function
+ *
+ * Set each required pin to USART functionality
+ */
+void SIM7_PORT_init()
+{
+
+	gpio_set_pin_function(SIM7_IO, PINMUX_PB21D_SERCOM7_PAD0);
+}
+
+/**
+ * \brief USART initialization function
+ *
+ * Enables USART peripheral, clocks and initializes USART driver
+ */
+void SIM7_init(void)
+{
+	SIM7_CLOCK_init();
+	usart_async_init(&SIM7, SERCOM7, SIM7_buffer, SIM7_BUFFER_SIZE, (void *)NULL);
+	SIM7_PORT_init();
+}
+#endif
 void USB_DEVICE_INSTANCE_PORT_init(void)
 {
 
@@ -923,8 +970,11 @@ void system_init(void)
 	SIM4_init();
 	SIM5_init();
 	SIM6_init();
-
+#ifndef ENABLE_DBG_UART7
+	SIM7_init();
+#else
 	UART_debug_init();
+#endif
 
 	USB_DEVICE_INSTANCE_init();
 }

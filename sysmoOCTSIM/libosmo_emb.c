@@ -157,7 +157,7 @@ void libosmo_emb_init(void)
 #endif
 	/* logging */
 	log_init(&log_info, g_tall_ctx);
-#if 0
+#ifdef ENABLE_DBG_UART7
 	stderr_target = log_target_create_stderr_raw();
 	log_add_target(stderr_target);
 	log_set_all_filter(stderr_target, 1);

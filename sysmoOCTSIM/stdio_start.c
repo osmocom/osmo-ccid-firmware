@@ -9,6 +9,7 @@
 #include "atmel_start.h"
 #include "stdio_start.h"
 
+#ifdef ENABLE_DBG_UART7
 static void UART_debug_rx_cb(const struct usart_async_rings_descriptor *const io_descr)
 {
 }
@@ -19,3 +20,4 @@ void stdio_redirect_init(void)
 	usart_async_rings_enable(&UART_debug);
 	stdio_io_init(&UART_debug.io);
 }
+#endif

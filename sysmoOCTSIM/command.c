@@ -78,6 +78,7 @@ void command_print_prompt(void)
 
 void command_try_recv(void)
 {
+#ifdef ENABLE_DBG_UART7
 	unsigned int i = 0;
 
 	/* yield CPU after maximum of 10 received characters */
@@ -101,6 +102,7 @@ void command_try_recv(void)
 
 		i++;
 	}
+#endif
 }
 
 void command_init(const char *prompt)

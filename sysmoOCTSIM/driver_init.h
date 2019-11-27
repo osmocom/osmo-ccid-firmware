@@ -36,7 +36,11 @@ extern struct usart_async_descriptor SIM3;
 extern struct usart_async_descriptor SIM4;
 extern struct usart_async_descriptor SIM5;
 extern struct usart_async_descriptor SIM6;
+#ifdef ENABLE_DBG_UART7
 extern struct usart_async_rings_descriptor UART_debug;
+#else
+extern struct usart_async_descriptor SIM7;
+#endif
 
 void CALENDAR_0_CLOCK_init(void);
 void CALENDAR_0_init(void);
@@ -68,6 +72,10 @@ void SIM5_init(void);
 void SIM6_PORT_init(void);
 void SIM6_CLOCK_init(void);
 void SIM6_init(void);
+
+void SIM7_PORT_init(void);
+void SIM7_CLOCK_init(void);
+void SIM7_init(void);
 
 void UART_debug_PORT_init(void);
 void UART_debug_CLOCK_init(void);

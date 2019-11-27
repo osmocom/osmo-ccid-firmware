@@ -435,7 +435,7 @@ static const struct ccid_ops c_ops = {
 
 //#######################
 
-#define NUM_OUT_BUF 7
+#define NUM_OUT_BUF 16
 
 int main(void)
 {
@@ -529,7 +529,7 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 		command_try_recv();
 		poll_card_detect();
 		submit_next_irq();
-		for (int i = 0; i < usb_fs_descs.ccid.class.bMaxSlotIndex; i++){
+		for (int i = 0; i <= usb_fs_descs.ccid.class.bMaxSlotIndex; i++){
 			g_ci.slot_ops->handle_fsm_events(&g_ci.slot[i], true);
 		}
 		feed_ccid();

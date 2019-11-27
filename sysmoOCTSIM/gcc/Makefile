@@ -126,7 +126,6 @@ OBJS +=  \
 	i2c_bitbang.o \
 	libosmo_emb.o \
 	main.o \
-	manual_test.o \
 	ncn8025.o \
 	octsim_i2c.o \
 	stdio_redirect/gcc/read.o \

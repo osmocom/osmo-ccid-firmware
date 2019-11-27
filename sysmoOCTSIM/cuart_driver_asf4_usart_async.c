@@ -13,7 +13,11 @@
 
 #include "cuart.h"
 
+#ifndef ENABLE_DBG_UART7
+static struct usart_async_descriptor* SIM_peripheral_descriptors[] = {&SIM0, &SIM1, &SIM2, &SIM3, &SIM4, &SIM5, &SIM6, &SIM7};
+#else
 static struct usart_async_descriptor* SIM_peripheral_descriptors[] = {&SIM0, &SIM1, &SIM2, &SIM3, &SIM4, &SIM5, &SIM6, NULL};
+#endif
 
 extern struct card_uart *cuart4slot_nr(uint8_t slot_nr);
 
