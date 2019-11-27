@@ -470,6 +470,8 @@ int main(void)
 
 	LOGP(DUSB, LOGL_ERROR, "foobar usb\n");
 
+	//prevent spurious interrupts before our driver structs are ready
+	CRITICAL_SECTION_ENTER()
 	ccid_instance_init(&g_ci, &c_ops, &iso_fsm_slot_ops, &usb_fs_descs.ccid.class,
 			   data_rates, clock_freqs, "", 0);
 
@@ -480,6 +482,7 @@ int main(void)
 		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 	}
 	submit_next_out();
+	CRITICAL_SECTION_LEAVE()
 
 //	command_print_prompt();
 	while (true) { // main loop
