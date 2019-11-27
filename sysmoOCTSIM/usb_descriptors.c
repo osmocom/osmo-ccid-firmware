@@ -52,7 +52,8 @@ const struct usb_desc_collection usb_fs_descs = {
 		.bConfigurationValue = CONF_USB_CDCD_ACM_BCONFIGVAL,
 		.iConfiguration = STR_DESC_CONFIG,
 		.bmAttributes = CONF_USB_CDCD_ACM_BMATTRI,
-		.bMaxPower = CONF_USB_CDCD_ACM_BMAXPOWER,
+		/* FIXME: The device should offer at least one 100mA configuration. */
+		.bMaxPower = 250, /* request 500mA */
 	},
 	.cdc = {
 		.comm = {
