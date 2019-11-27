@@ -49,7 +49,12 @@ void card_uart_wtime_restart(struct card_uart *cuart)
 {
 	int secs, usecs;
 
-	usecs = get_etu_in_us(cuart) * cuart->wtime_etu;
+	if(!cuart->current_wtime_byte)
+		return;
+
+	/* timemout is wtime * ETU + expected number of bytes * (12ETU+1 slack)ETU */
+	usecs = get_etu_in_us(cuart) * cuart->wtime_etu +
+			get_etu_in_us(cuart) * cuart->current_wtime_byte * (12+1);
 	if (usecs > 1000000) {
 		secs = usecs / 1000000;
 		usecs = usecs % 1000000;
@@ -108,6 +113,15 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 		cuart->rx_enabled = arg ? true : false;
 		if (!cuart->rx_enabled)
 			osmo_timer_del(&cuart->wtime_tmr);
+//		else
+//			card_uart_wtime_restart(cuart);
+		break;
+	case CUART_CTL_RX_TIMER_HINT:
+		cuart->current_wtime_byte = arg;
+		if(arg)
+			card_uart_wtime_restart(cuart);
+		else
+			osmo_timer_del(&cuart->wtime_tmr);
 		break;
 	default:
 		break;
@@ -158,6 +172,12 @@ void card_uart_notification(struct card_uart *cuart, enum card_uart_event evt, v
 		if (cuart->rx_after_tx_compl)
 			card_uart_ctrl(cuart, CUART_CTL_RX, true);
 		break;
+//	case CUART_E_RX_COMPLETE:
+//		osmo_timer_del(&cuart->wtime_tmr);
+//		break;
+//	case CUART_E_RX_SINGLE:
+//		card_uart_wtime_restart(cuart);
+//		break;
 	default:
 		break;
 	}

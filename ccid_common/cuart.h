@@ -23,6 +23,7 @@ extern const struct value_string card_uart_event_vals[];
 
 enum card_uart_ctl {
 	CUART_CTL_RX,		/* enable/disable receiver */
+	CUART_CTL_RX_TIMER_HINT, /* tell cuart approximate number of rx bytes */
 	CUART_CTL_NO_RXTX,		/* enable/disable receiver */
 	CUART_CTL_POWER,	/* enable/disable ICC power */
 	CUART_CTL_CLOCK,	/* enable/disable ICC clock */
@@ -78,6 +79,8 @@ struct card_uart {
 
 	uint32_t wtime_etu;
 	struct osmo_timer_list wtime_tmr;
+	/* expected number of bytes, for timeout */
+	uint32_t current_wtime_byte;
 
 	/* driver-specific private data */
 	union {
