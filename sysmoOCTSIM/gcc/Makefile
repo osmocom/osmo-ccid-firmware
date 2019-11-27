@@ -84,6 +84,7 @@ OBJS +=  \
 	ccid_common/ccid_proto.o \
 	ccid_common/ccid_device.o \
 	ccid_common/iso7816_fsm.o \
+	ccid_common/iso7816_3.o \
 	ccid_common/cuart.o \
 	ccid_common/ccid_slot_fsm.o \
 	cuart_driver_asf4_usart_async.o \
@@ -123,7 +124,6 @@ OBJS +=  \
 	hpl/sercom/hpl_sercom.o \
 	hpl/usb/hpl_usb.o \
 	i2c_bitbang.o \
-	iso7816_3.o \
 	libosmo_emb.o \
 	main.o \
 	manual_test.o \
