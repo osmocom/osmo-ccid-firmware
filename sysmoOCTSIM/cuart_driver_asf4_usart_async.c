@@ -161,8 +161,10 @@ static const uint8_t SIM_peripheral_GCLK_ID[] = {SERCOM0_GCLK_ID_CORE, SERCOM1_G
  *  @param[in] baudrate baud rate in bps to set
  *  @return if the baud rate has been set, else a parameter is out of range
  */
-static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
+static bool slot_set_baudrate(struct card_uart *cuart, uint32_t baudrate)
 {
+	uint8_t slotnr = cuart->u.asf4.slot_nr;
+
 	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
 
 	// calculate the error corresponding to the clock sources
@@ -206,6 +208,8 @@ static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
 
 	// update cached values
 	cuart->u.asf4.current_baudrate = baudrate;
+	cuart->u.asf4.extrawait_after_rx = 1./baudrate * 1000 * 1000;
+
 	printf("(%u) switching SERCOM clock to GCLK%u (freq = %lu kHz) and baud rate to %lu bps (baud = %u)\r\n", slotnr, (best + 1) * 2, (uint32_t)(round(sercom_glck_freqs[best] / 1000)), baudrate, bauds[best]);
 	while (!usart_async_is_tx_empty(slot)); // wait for transmission to complete (WARNING no timeout)
 	usart_async_disable(slot); // disable SERCOM peripheral
@@ -226,8 +230,10 @@ static bool slot_set_baudrate(uint8_t slotnr, uint32_t baudrate)
  *  @param[in] d baud rate adjustment factor D
  *  @return if the baud rate has been set, else a parameter is out of range
  */
-static bool slot_set_isorate(uint8_t slotnr, enum ncn8025_sim_clkdiv clkdiv, uint16_t f, uint8_t d)
+static bool slot_set_isorate(struct card_uart *cuart, enum ncn8025_sim_clkdiv clkdiv, uint16_t f, uint8_t d)
 {
+	uint8_t slotnr = cuart->u.asf4.slot_nr;
+
 	// input checks
 	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
 	if (clkdiv != SIM_CLKDIV_1 && clkdiv != SIM_CLKDIV_2 && clkdiv != SIM_CLKDIV_4 && clkdiv != SIM_CLKDIV_8) {
@@ -267,7 +273,7 @@ static bool slot_set_isorate(uint8_t slotnr, enum ncn8025_sim_clkdiv clkdiv, uin
 
 	// set baud rate
 	uint32_t baudrate = (freq * d) / f; // calculate actual baud rate
-	return slot_set_baudrate(slotnr, baudrate); // set baud rate
+	return slot_set_baudrate(cuart, baudrate); // set baud rate
 }
 
 /***********************************************************************
@@ -292,16 +298,13 @@ static int asf4_usart_open(struct card_uart *cuart, const char *device_name)
 	cuart->u.asf4.usa_pd = usa_pd;
 	cuart->u.asf4.slot_nr = slot_nr;
 
-	/* in us, 20Mhz with default ncn8025 divider 8, F=372, D=1*/
-	cuart->u.asf4.extrawait_after_rx = 1./(20./8/372);
-
 	usart_async_register_callback(usa_pd, USART_ASYNC_RXC_CB, SIM_rx_cb[slot_nr]);
 	usart_async_register_callback(usa_pd, USART_ASYNC_TXC_CB, SIM_tx_cb[slot_nr]);
 	usart_async_register_callback(usa_pd, USART_ASYNC_ERROR_CB, _SIM_error_cb);
 	usart_async_enable(usa_pd);
 
 	// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
-	slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+	slot_set_isorate(cuart, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 
         return 0;
 }
@@ -352,6 +355,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 
 	switch (ctl) {
 	case CUART_CTL_NO_RXTX:
+		/* no op */
 		break;
 	case CUART_CTL_RX:
 		if (arg){
@@ -367,12 +371,8 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		usart_async_flush_rx_buffer(cuart->u.asf4.usa_pd);
 		break;
 	case CUART_CTL_POWER:
-		/* in us, 20Mhz with default ncn8025 divider 8, F=372, D=1*/
-		cuart->u.asf4.extrawait_after_rx = 1./(20./8/372);
-
-		// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
-		if(arg)
-			slot_set_isorate(cuart->u.asf4.slot_nr, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+		/* reset everything */
+		slot_set_isorate(cuart, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
 
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
 		settings.cmdvcc = arg ? true : false;
@@ -405,8 +405,8 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
 		uint8_t divider = ncn8025_div_val[settings.clkdiv];
 		uint32_t baudrate = (20e6/divider)/arg;
-		cuart->u.asf4.extrawait_after_rx = 1./baudrate * 1000 * 1000;
-		slot_set_baudrate(cuart->u.asf4.slot_nr, baudrate);
+		slot_set_baudrate(cuart, baudrate);
+		break;
 	case CUART_CTL_GET_BAUDRATE:
 		return cuart->u.asf4.current_baudrate;
 		break;
