@@ -23,6 +23,7 @@ extern const struct value_string card_uart_event_vals[];
 
 enum card_uart_ctl {
 	CUART_CTL_RX,		/* enable/disable receiver */
+	CUART_CTL_NO_RXTX,		/* enable/disable receiver */
 	CUART_CTL_POWER,	/* enable/disable ICC power */
 	CUART_CTL_CLOCK,	/* enable/disable ICC clock */
 	CUART_CTL_CLOCK_FREQ, /* set ICC clock frequency (hz)*/

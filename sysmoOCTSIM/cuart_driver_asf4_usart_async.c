@@ -348,6 +348,8 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 	Sercom *sercom = cuart->u.asf4.usa_pd->device.hw;
 
 	switch (ctl) {
+	case CUART_CTL_NO_RXTX:
+		break;
 	case CUART_CTL_RX:
 		if (arg){
 			sercom->USART.CTRLB.bit.RXEN = 1;
