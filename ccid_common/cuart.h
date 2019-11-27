@@ -25,8 +25,10 @@ enum card_uart_ctl {
 	CUART_CTL_RX,		/* enable/disable receiver */
 	CUART_CTL_POWER,	/* enable/disable ICC power */
 	CUART_CTL_CLOCK,	/* enable/disable ICC clock */
+	CUART_CTL_CLOCK_FREQ, /* set ICC clock frequency (hz)*/
 	CUART_CTL_RST,		/* enable/disable ICC reset */
 	CUART_CTL_WTIME,	/* set the waiting time (in etu) */
+	CUART_CTL_FD,
 };
 
 struct card_uart;
@@ -95,6 +97,8 @@ struct card_uart {
 		struct {
 			struct usart_async_descriptor *usa_pd;
 			uint8_t slot_nr;
+			/* in us, required, no delay breaks _rx_ */
+			uint32_t extrawait_after_rx;
 		} asf4;
 	} u;
 };
