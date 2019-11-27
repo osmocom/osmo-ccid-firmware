@@ -101,7 +101,7 @@ struct ccid_state {
 	/* bit-mask of card-insert status, as determined from NCN8025 IRQ output */
 	uint8_t card_insert_mask;
 };
-static struct ccid_state g_ccid_s;
+static volatile struct ccid_state g_ccid_s;
 
 static void ccid_out_read_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred);
 static void ccid_in_write_compl(const uint8_t ep, enum usb_xfer_code code, uint32_t transferred);
