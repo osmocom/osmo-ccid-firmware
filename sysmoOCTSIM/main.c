@@ -442,6 +442,29 @@ int main(void)
 	char sernr_buf[16*2+1];
 	char rstcause_buf[RSTCAUSE_STR_SIZE];
 
+#if 0
+CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk ; //| /* tracing*/
+////CoreDebug_DEMCR_MON_EN_Msk; /* mon interupt catcher */
+
+
+DWT->COMP0 = 0x40003028; /* sercom 0 data */
+//DWT->COMP0 = 0x40003428; /* sercom 1 data */
+DWT->MASK0 = 0; /* 0 */
+DWT->FUNCTION0 = 0; /* has to be 0 for linked address */
+
+DWT->COMP1 = 0xa5;     /* value */
+DWT->MASK1 = 0;     /* match all bits */
+DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dword */
+#if 1
+(0 << DWT_FUNCTION_DATAVADDR0_Pos) | /* Data Match linked addr pointer in COMP0 */
+#else
+(1 << DWT_FUNCTION_DATAVADDR0_Pos) | /* Data Match on any addr -> own number */
+#endif
+(1 << DWT_FUNCTION_DATAVMATCH_Pos) | /* DATAVMATCH Enable data comparation */
+(0b0111 << DWT_FUNCTION_FUNCTION_Pos);  /* generate a watchpoint event on rw */
+
+#endif
+
 	atmel_start_init();
 	get_chip_unique_serial_str(sernr_buf, sizeof(sernr_buf));
 	get_rstcause_str(rstcause_buf);
