@@ -11,6 +11,7 @@ ccid_functionfs: ccid_main_functionfs.o \
 		 ../ccid_common/ccid_proto.o \
 		 ../ccid_common/ccid_device.o \
 		 ../ccid_common/ccid_slot_fsm.o \
+		 ../ccid_common/iso7816_3.o \
 		 ../ccid_common/iso7816_fsm.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -laio
 
@@ -28,6 +29,7 @@ cuart_fsm_test: cuart_fsm_test.o \
 		cuart_driver_tty.o \
 		utils_ringbuffer.o \
 		../ccid_common/iso7816_fsm.o \
+		../ccid_common/iso7816_3.o \
 		../ccid_common/cuart.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(shell pkg-config --libs libosmosim)
 

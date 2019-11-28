@@ -98,7 +98,11 @@ static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *m
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_POWER_UP_IND, NULL);
 	cs->icc_powered = true;
 	card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK, true);
+#ifdef OCTSIMFWBUILD
 	delay_us(10000);
+#else
+	usleep(10000);
+#endif
 
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_RESET_REL_IND, NULL);
 	card_uart_ctrl(ss->cuart, CUART_CTL_RST, false);
@@ -119,7 +123,9 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 	case ISO7816_E_PPS_DONE_IND:
 	case ISO7816_E_PPS_FAILED_IND:
 		cs->event_data = data;
+#ifdef OCTSIMFWBUILD
 		asm volatile("dmb st": : :"memory");
+#endif
 		cs->event = event;
 		break;
 	default:
@@ -329,35 +335,38 @@ static int iso_fsm_slot_init(struct ccid_slot *cs)
 	void *ctx = g_tall_ctx; /* FIXME */
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct card_uart *cuart = talloc_zero(ctx, struct card_uart);
-	char id_buf[16] = "SIM0";
-	char devname[] = "foobar";
+	char id_buf[3+3+1];
+	char devname[2+1];
+	char *devnamep = 0;
+	char *drivername = "asf4";
 	int rc;
 
 	LOGPCS(cs, LOGL_DEBUG, "%s\n", __func__);
 
-	/* HACK: make this in some way configurable so it works both in the firmware
-	 * and on the host (functionfs) */
-//	if (cs->slot_nr == 0) {
-//		cs->icc_present = true;
-//		devname = "/dev/ttyUSB5";
-//	}
-	devname[0] = cs->slot_nr +0x30;
-	devname[1] = 0;
-	//sprintf(devname, "%d", cs->slot_nr);
+	snprintf(id_buf, sizeof(id_buf), "SIM%d", cs->slot_nr);
+#ifdef OCTSIMFWBUILD
+	snprintf(devname, sizeof(devname), "%d", cs->slot_nr);
+	devnamep = devname;
+#else
+	if (cs->slot_nr == 0) {
+		cs->icc_present = true;
+		devnamep = "/dev/ttyUSB5";
+	}
+	drivername = "tty";
+#endif
 
 	if (!cuart)
 		return -ENOMEM;
 
-	//snprintf(id_buf, sizeof(id_buf), "SIM%d", cs->slot_nr);
-	id_buf[3] = cs->slot_nr +0x30;
-	if (devname) {
-		rc = card_uart_open(cuart, "asf4", devname);
+	if (devnamep) {
+		rc = card_uart_open(cuart, drivername, devnamep);
 		if (rc < 0) {
 			LOGPCS(cs, LOGL_ERROR, "Cannot open UART %s: %d\n", devname, rc);
 			talloc_free(cuart);
 			return rc;
 		}
 	}
+
 	ss->fi = iso7816_fsm_alloc(ctx, LOGL_DEBUG, id_buf, cuart, iso_fsm_clot_user_cb, ss);
 	if (!ss->fi) {
 		LOGPCS(cs, LOGL_ERROR, "Cannot allocate ISO FSM\n");

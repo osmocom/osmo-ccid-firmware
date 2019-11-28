@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "utils.h"
+#include <osmocom/core/utils.h>
 #include "iso7816_3.h"
 
 const uint16_t iso7816_3_fi_table[16] = {

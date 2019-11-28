@@ -1193,7 +1193,7 @@ static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 	}
 }
 
-#include <hal_gpio.h>
+
 static void tpdu_s_tx_hdr_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
@@ -1213,7 +1213,9 @@ static void tpdu_s_tx_hdr_action(struct osmo_fsm_inst *fi, uint32_t event, void 
 }
 
 
-
+#if 0
+#include <hal_gpio.h>
+#endif
 static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);

@@ -9,7 +9,7 @@ CROSS_COMPILE= arm-none-eabi-
 
 CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
 CFLAGS=-x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls \
-       -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU)
+       -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU) -DOCTSIMFWBUILD
 
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
