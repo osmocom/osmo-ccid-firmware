@@ -1,5 +1,5 @@
 #!/bin/bash
-
+exit 0
 if ! [ -x "$(command -v osmo-deps.sh)" ]; then
 	echo "Error: We need to have scripts/osmo-deps.sh from http://git.osmocom.org/osmo-ci/ in PATH !"
 	exit 2
