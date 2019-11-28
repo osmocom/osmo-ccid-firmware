@@ -14,7 +14,7 @@ deps="$TOPDIR/deps"
 inst="$TOPDIR/install"
 export deps inst
 
-: '
+
 echo
 echo "=============== libosmocore hostt build ==========="
 osmo-build-dep.sh libosmocore "" --disable-doxygen
@@ -28,7 +28,7 @@ cd $TOPDIR/ccid_host
 make clean
 make $PARALLEL_MAKE
 make clean
-'
+
 # adapted from
 echo
 echo "=============== libosmocore cross-build ==========="
