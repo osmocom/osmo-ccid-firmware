@@ -1609,8 +1609,8 @@ void *iso7816_fsm_get_user_priv(struct osmo_fsm_inst *fi)
 
 static __attribute__((constructor)) void on_dso_load_iso7816(void)
 {
-	osmo_fsm_register(&iso7816_3_fsm);
-	osmo_fsm_register(&atr_fsm);
-	osmo_fsm_register(&tpdu_fsm);
-	osmo_fsm_register(&pps_fsm);
+	OSMO_ASSERT(osmo_fsm_register(&iso7816_3_fsm) == 0);
+	OSMO_ASSERT(osmo_fsm_register(&atr_fsm) == 0);
+	OSMO_ASSERT(osmo_fsm_register(&tpdu_fsm) == 0);
+	OSMO_ASSERT(osmo_fsm_register(&pps_fsm) == 0);
 }
