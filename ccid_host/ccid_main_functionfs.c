@@ -506,13 +506,13 @@ static const struct ccid_ops c_ops = {
 	.send_int = ccid_ops_send_int,
 };
 
-static void *tall_main_ctx;
+void *g_tall_ctx;
 
 static void signal_handler(int signal)
 {
 	switch (signal) {
 	case SIGUSR1:
-		talloc_report_full(tall_main_ctx, stderr);
+		talloc_report_full(g_tall_ctx, stderr);
 		break;
 	}
 }
@@ -523,9 +523,9 @@ int main(int argc, char **argv)
 	struct ufunc_handle ufh = (struct ufunc_handle) { 0, };
 	int rc;
 
-	tall_main_ctx = talloc_named_const(NULL, 0, "ccid_main_functionfs");
-	msgb_talloc_ctx_init(tall_main_ctx, 0);
-	osmo_init_logging2(tall_main_ctx, &log_info);
+	g_tall_ctx = talloc_named_const(NULL, 0, "ccid_main_functionfs");
+	msgb_talloc_ctx_init(g_tall_ctx, 0);
+	osmo_init_logging2(g_tall_ctx, &log_info);
 
 	signal(SIGUSR1, &signal_handler);
 
