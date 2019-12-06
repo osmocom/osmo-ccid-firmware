@@ -69,7 +69,7 @@ middlewares:
       usb_cdcd_acm_idproduct: 24897
       usb_cdcd_acm_idvender: 7504
       usb_cdcd_acm_imanufact_en: true
-      usb_cdcd_acm_imanufact_str: sysmocom
+      usb_cdcd_acm_imanufact_str: sysmocom - s.f.m.c. GmbH
       usb_cdcd_acm_iproduct_en: true
       usb_cdcd_acm_iproduct_str: sysmoOCTSIM
       usb_cdcd_acm_iserialnum_en: false

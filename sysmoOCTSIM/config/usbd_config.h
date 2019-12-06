@@ -84,12 +84,12 @@
 // <s> Unicode string of iManufact
 // <id> usb_cdcd_acm_imanufact_str
 #ifndef CONF_USB_CDCD_ACM_IMANUFACT_STR
-#define CONF_USB_CDCD_ACM_IMANUFACT_STR "sysmocom"
+#define CONF_USB_CDCD_ACM_IMANUFACT_STR "sysmocom - s.f.m.c. GmbH"
 #endif
 
 #ifndef CONF_USB_CDCD_ACM_IMANUFACT_STR_DESC
-#define CONF_USB_CDCD_ACM_IMANUFACT_STR_DESC                                                                           \
-	18, 0x03, 's', 0x00, 'y', 0x00, 's', 0x00, 'm', 0x00, 'o', 0x00, 'c', 0x00, 'o', 0x00, 'm', 0x00,
+#define CONF_USB_DFUD_IMANUFACT_STR_DESC 50, 0x03, 's',0, 'y',0, 's',0, 'm',0, 'o',0, 'c',0, 'o',0, 'm',0, ' ',0, '-',0, ' ',0, \
+						   's',0, '.',0, 'f',0, '.',0, 'm',0, '.',0, 'c',0, '.',0, ' ',0, 'G',0, 'm',0, 'b',0, 'H',0,
 #endif
 
 // </e>
