@@ -20,6 +20,7 @@
 #define USB_DESCRIPTORS_H_
 
 #include "ccid_device.h"
+#include "dfu_descriptors.h"
 
 #define CCID_NUM_CLK_SUPPORTED 4
 
@@ -34,6 +35,7 @@ enum str_desc_num {
 	STR_DESC_INTF_ACM_DATA,
 	STR_DESC_INTF_CCID,
 	STR_DESC_SERIAL,
+	STR_DESC_INTF_DFURT,
 };
 
 /* a struct of structs representing the concatenated collection of USB descriptors */
@@ -63,7 +65,8 @@ struct usb_desc_collection {
 		struct usb_ccid_class_descriptor class;
 		struct usb_ep_desc ep[3];
 	} ccid;
-	uint8_t str[148];
+	DFURT_IF_DESCRIPTOR_STRUCT
+	uint8_t str[176];
 } __attribute__((packed));
 
 #endif /* USB_DESCRIPTORS_H_ */
