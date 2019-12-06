@@ -47,8 +47,10 @@ const struct usb_desc_collection usb_fs_descs = {
 		.bDescriptorType = USB_DT_CONFIG,
 		.wTotalLength = sizeof(usb_fs_descs.cfg) +
 				sizeof(usb_fs_descs.cdc) +
-				sizeof(usb_fs_descs.ccid),
-		.bNumInterfaces = 3,
+				sizeof(usb_fs_descs.ccid) +
+				sizeof(usb_fs_descs.dfu_rt) +
+				sizeof(usb_fs_descs.func_dfu),
+		.bNumInterfaces = 4,
 		.bConfigurationValue = CONF_USB_CDCD_ACM_BCONFIGVAL,
 		.iConfiguration = STR_DESC_CONFIG,
 		.bmAttributes = CONF_USB_CDCD_ACM_BMATTRI,
@@ -206,7 +208,7 @@ const struct usb_desc_collection usb_fs_descs = {
 			},
 		},
 	},
-	//DFURT_IF_DESCRIPTOR,
+	DFURT_IF_DESCRIPTOR(3, STR_DESC_INTF_DFURT),
 	.str = {
 #if 0
 		CDCD_ACM_STR_DESCES
@@ -219,6 +221,7 @@ const struct usb_desc_collection usb_fs_descs = {
 		22,  3, 'd',0, 'e',0, 'b',0, 'u',0, 'g',0, ' ',0, 'U',0, 'A',0, 'R',0, 'T',0,
 		10,  3, 'C',0, 'C',0, 'I',0, 'D',0,
 		12,  3, 'F',0, 'I',0, 'X',0, 'M',0, 'E',0,
+		28,  3, 'D',0, 'F',0, 'U',0, ' ',0, '(',0, 'R',0, 'u',0, 'n',0, 't',0, 'i',0, 'm',0, 'e',0 ,')',0,
 #endif
 	}
 };
