@@ -41,7 +41,7 @@ mkdir -p "$inst/stow"
 autoreconf --install --force
 ./configure	--enable-static --prefix="$inst/stow/libosmocore" --host=arm-none-eabi \
 		--enable-embedded --disable-doxygen --disable-shared --disable-pseudotalloc \
-		--disable-libsctp --enable-external-tests \
+		--disable-libsctp --disable-libusb --enable-external-tests \
 		CFLAGS="-Os -ffunction-sections -fdata-sections -nostartfiles -nodefaultlibs -Werror -Wno-error=deprecated -Wno-error=deprecated-declarations -Wno-error=cpp -mthumb -Os -mlong-calls -g3 -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -I /home/laforge/projects/git/osmo-ccid-firmware/sysmoOCTSIM -Wno-error=format"
 make $PARALLEL_MAKE install
 make clean
