@@ -26,6 +26,7 @@ echo
 echo "=============== CCID usb_gadget build ==========="
 cd $TOPDIR/ccid_host
 make clean
+verify_value_string_arrays_are_terminated.py $(find . -name "*.[hc]")
 make $PARALLEL_MAKE
 make clean
 
@@ -55,6 +56,7 @@ echo "=============== sysmoOCTSIM firmware build ==========="
 cd $TOPDIR/sysmoOCTSIM
 cd gcc
 make mrproper
+verify_value_string_arrays_are_terminated.py $(find . -name "*.[hc]")
 make SYSTEM_PREFIX="$inst" $PARALLEL_MAKE
 
 if [ "x$publish" = "x--publish" ]; then
