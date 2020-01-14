@@ -36,7 +36,8 @@ SEARCH_DIR(.)
 MEMORY
 {
   rom      (rx)  : ORIGIN = 0x00000000 + 16K, LENGTH = 0x00080000 - 16K
-  ram      (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00030000
+  /* The first word of the RAM is used for the DFU magic */
+  ram      (rwx) : ORIGIN = 0x20000000 + 4, LENGTH = 0x00030000 - 4
   bkupram  (rwx) : ORIGIN = 0x47000000, LENGTH = 0x00002000
   qspi     (rwx) : ORIGIN = 0x04000000, LENGTH = 0x01000000
 }
