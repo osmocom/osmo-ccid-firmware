@@ -138,6 +138,8 @@ void cdc_device_acm_init(void)
 	/* usbdc_register_funcion inside */
 	cdcdf_acm_init();
 
+	dfudf_init();
+
 	printf("usb_descs_size=%u\r\n", usb_descs[0].eod - usb_descs[0].sod);
 	usbdc_start((struct usbd_descriptors *) usb_descs);
 	usbdc_attach();

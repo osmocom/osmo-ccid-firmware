@@ -7,9 +7,11 @@ EXTRA_LIBS=$(SYSTEM_PREFIX)/lib/libosmocore.a
 EXTRA_CFLAGS=-I$(SYSTEM_PREFIX)/include -I../../ccid_common
 CROSS_COMPILE= arm-none-eabi-
 
+DISABLE_DFU_DETACH ?= 0
+
 CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
 CFLAGS=-x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls \
-       -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU) -DOCTSIMFWBUILD
+       -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU) -DOCTSIMFWBUILD -DDISABLE_DFU_DETACH=$(DISABLE_DFU_DETACH)
 
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
@@ -75,6 +77,8 @@ INC_DIRS = \
 	-I"../usb/class/ccid/device" \
 	-I"../usb/class/cdc" \
 	-I"../usb/class/cdc/device" \
+	-I"../usb/class/dfu" \
+	-I"../usb/class/dfu/device" \
 	-I"../usb/device" \
 	$(NULL)
 
@@ -135,6 +139,7 @@ OBJS +=  \
 	talloc.o \
 	usb/class/ccid/device/ccid_df.o \
 	usb/class/cdc/device/cdcdf_acm.o \
+	usb/class/dfu/device/dfudf.o \
 	usb/device/usbdc.o \
 	usb/usb_protocol.o \
 	usb_descriptors.o \

@@ -10,8 +10,8 @@
 #define DFU_FUNC_DESC  {						\
 	.bLength		= USB_DT_DFU_SIZE,			\
 	.bDescriptorType	= USB_DT_DFU,				\
-	.bmAttributes		= USB_DFU_CAN_UPLOAD | USB_DFU_CAN_DOWNLOAD, \
-	.wDetachTimeOut		= 5000,					\
+	.bmAttributes		= USB_DFU_WILL_DETACH, \
+	.wDetachTimeOut		= 0,					\
 	.wTransferSize		= FLASH_PAGE_SIZE,			\
 	.bcdDFUVersion		= 0x0100,				\
 }
