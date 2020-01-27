@@ -5,13 +5,18 @@
 
 #include "usb_protocol.h"
 #include "usb_dfu.h"
+#if (DISABLE_DFU_DETACH != 0)
+#define BMATT 0
+#else
+#define BMATT USB_DFU_WILL_DETACH
+#endif
 
 /* USB DFU functional descriptor */
 #define DFU_FUNC_DESC  {						\
 	.bLength		= USB_DT_DFU_SIZE,			\
 	.bDescriptorType	= USB_DT_DFU,				\
-	.bmAttributes		= USB_DFU_CAN_UPLOAD | USB_DFU_CAN_DOWNLOAD, \
-	.wDetachTimeOut		= 5000,					\
+	.bmAttributes		= BMATT, \
+	.wDetachTimeOut		= 0,					\
 	.wTransferSize		= FLASH_PAGE_SIZE,			\
 	.bcdDFUVersion		= 0x0100,				\
 }
