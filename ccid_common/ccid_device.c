@@ -649,7 +649,7 @@ static int ccid_handle_set_rate_and_clock(struct ccid_slot *cs, struct msgb *msg
 	int rc;
 
 	/* FIXME: which rate to return in failure case? */
-	rc = cs->ci->slot_ops->set_rate_and_clock(cs, freq_hz, rate_bps);
+	rc = cs->ci->slot_ops->set_rate_and_clock(cs, &freq_hz, &rate_bps);
 	if (rc < 0)
 		resp = ccid_gen_clock_and_rate(cs, seq, CCID_CMD_STATUS_FAILED, -rc, 9600, 2500000);
 	else

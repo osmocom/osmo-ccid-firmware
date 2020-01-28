@@ -86,7 +86,7 @@ struct ccid_slot_ops {
 	void (*set_clock)(struct ccid_slot *cs, enum ccid_clock_command cmd);
 	int (*set_params)(struct ccid_slot *cs, uint8_t seq, enum ccid_protocol_num proto,
 			  const struct ccid_pars_decoded *pars_dec);
-	int (*set_rate_and_clock)(struct ccid_slot *cs, uint32_t freq_hz, uint32_t rate_bps);
+	int (*set_rate_and_clock)(struct ccid_slot *cs, uint32_t* freq_hz, uint32_t* rate_bps);
 	void (*icc_set_insertion_status)(struct ccid_slot *cs, bool present);
 	int (*handle_fsm_events)(struct ccid_slot *cs, bool enable);
 };

@@ -323,9 +323,14 @@ static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_
 	return 0;
 }
 
-static int iso_fsm_slot_set_rate_and_clock(struct ccid_slot *cs, uint32_t freq_hz, uint32_t rate_bps)
+static int iso_fsm_slot_set_rate_and_clock(struct ccid_slot *cs, uint32_t* freq_hz, uint32_t* rate_bps)
 {
-	/* we always acknowledge all rates/clocks */
+	/* we return the currently used values, since we support automatic features */
+	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
+
+	*rate_bps = card_uart_ctrl(ss->cuart, CUART_CTL_GET_BAUDRATE, false);
+	*freq_hz = card_uart_ctrl(ss->cuart, CUART_CTL_GET_CLOCK_FREQ, false)/1000;
+
 	return 0;
 }
 
