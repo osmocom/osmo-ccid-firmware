@@ -21,8 +21,8 @@
  */
 
 #include "dfudf.h"
-#include "usb_protocol_dfu.h"
-#include "dfudf_desc.h"
+#include "usb_dfu.h"
+
 
 /** USB Device DFU Function Specific Data */
 struct dfudf_func_data {
@@ -35,12 +35,8 @@ struct dfudf_func_data {
 static struct usbdf_driver _dfudf;
 static struct dfudf_func_data _dfudf_funcd;
 
-/** USB DFU functional descriptor (with DFU attributes) */
-static const uint8_t usb_dfu_func_desc_bytes[] = {DFUD_IFACE_DESCB};
-static const usb_dfu_func_desc_t* usb_dfu_func_desc = (usb_dfu_func_desc_t*)&usb_dfu_func_desc_bytes;
-
-enum usb_dfu_state dfu_state = USB_DFU_STATE_APP_IDLE;
-enum usb_dfu_status dfu_status = USB_DFU_STATUS_OK;
+enum dfu_state dfu_state = DFU_STATE_appIDLE;
+enum usb_dfu_status dfu_status = DFU_STATUS_OK;
 
 uint8_t dfu_download_data[512];
 uint16_t dfu_download_length = 0;
@@ -156,7 +152,7 @@ static int32_t dfudf_in_req(uint8_t ep, struct usb_req *req, enum usb_ctrl_stage
 	uint8_t response[6]; // buffer for the response to this request
 	switch (req->bRequest) {
 	case USB_DFU_UPLOAD: // upload firmware from flash not supported
-		dfu_state = USB_DFU_STATE_DFU_ERROR; // unsupported class request
+		dfu_state = DFU_STATE_dfuERROR; // unsupported class request
 		to_return = ERR_UNSUPPORTED_OP; // stall control pipe (don't reply to the request)
 		break;
 	case USB_DFU_GETSTATUS: // get status
@@ -167,24 +163,13 @@ static int32_t dfudf_in_req(uint8_t ep, struct usb_req *req, enum usb_ctrl_stage
 		response[4] = dfu_state; // set state
 		response[5] = 0; // string not used
 		to_return = usbdc_xfer(ep, response, 6, false); // send back status
-		if (USB_DFU_STATE_DFU_DNLOAD_SYNC == dfu_state) { // download has not completed
-			dfu_state = USB_DFU_STATE_DFU_DNBUSY; // switch to busy state
-		} else if (USB_DFU_STATE_DFU_MANIFEST_SYNC == dfu_state) {
-			if (!dfu_manifestation_complete) {
-				dfu_state = USB_DFU_STATE_DFU_MANIFEST; // go to manifest mode
-			} else if (usb_dfu_func_desc->bmAttributes & USB_DFU_ATTRIBUTES_MANIFEST_TOLERANT) {
-				dfu_state = USB_DFU_STATE_DFU_IDLE; // go back to idle mode
-			} else { // this should not happen (after manifestation the state should be dfuMANIFEST-WAIT-RESET if we are not manifest tolerant)
-				dfu_state = USB_DFU_STATE_DFU_MANIFEST_WAIT_RESET; // wait for reset
-			}
-		}
 		break;
 	case USB_DFU_GETSTATE: // get state
 		response[0] = dfu_state; // return state
 		to_return = usbdc_xfer(ep, response, 1, false); // send back state
 		break;
 	default: // all other DFU class IN request
-		dfu_state = USB_DFU_STATE_DFU_ERROR; // unknown or unsupported class request
+		dfu_state = DFU_STATE_dfuERROR; // unknown or unsupported class request
 		to_return = ERR_INVALID_ARG; // stall control pipe (don't reply to the request)
 		break;
 	}
@@ -205,7 +190,7 @@ static int32_t dfudf_out_req(uint8_t ep, struct usb_req *req, enum usb_ctrl_stag
 	switch (req->bRequest) {
 	case USB_DFU_DETACH: // detach makes only sense in DFU run-time/application mode
 #if (DISABLE_DFU_DETACH != 0)
-		dfu_state = USB_DFU_STATE_DFU_ERROR; // unsupported class request
+		dfu_state = DFU_STATE_dfuERROR; // unsupported class request
 		to_return = ERR_UNSUPPORTED_OP; // stall control pipe (don't reply to the request)
 #else
 		to_return = usbdc_xfer(ep, NULL, 0, false);
@@ -218,19 +203,19 @@ static int32_t dfudf_out_req(uint8_t ep, struct usb_req *req, enum usb_ctrl_stag
 #endif
 		break;
 	case USB_DFU_CLRSTATUS: // clear status
-		if (USB_DFU_STATE_DFU_ERROR == dfu_state || USB_DFU_STATUS_OK != dfu_status) { // only clear in case there is an error
-			dfu_status = USB_DFU_STATUS_OK; // clear error status
-			dfu_state = USB_DFU_STATE_DFU_IDLE; // put back in idle state
+		if (DFU_STATE_dfuERROR == dfu_state || DFU_STATUS_OK != dfu_status) { // only clear in case there is an error
+			dfu_status = DFU_STATUS_OK; // clear error status
+			dfu_state = DFU_STATE_dfuIDLE; // put back in idle state
 		}
 		to_return = usbdc_xfer(ep, NULL, 0, false); // send ACK
 		break;
 	case USB_DFU_ABORT: // abort current operation
 		dfu_download_offset = 0; // reset download progress
-		dfu_state = USB_DFU_STATE_DFU_IDLE; // put back in idle state (nothing else to do)
+		dfu_state = DFU_STATE_dfuIDLE; // put back in idle state (nothing else to do)
 		to_return = usbdc_xfer(ep, NULL, 0, false); // send ACK
 		break;
 	default: // all other DFU class OUT request
-		dfu_state = USB_DFU_STATE_DFU_ERROR; // unknown class request
+		dfu_state = DFU_STATE_dfuERROR; // unknown class request
 		to_return = ERR_INVALID_ARG; // stall control pipe (don't reply to the request)
 		break;
 	}

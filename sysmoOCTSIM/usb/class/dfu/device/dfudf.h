@@ -35,10 +35,10 @@
 #define USBDF_DFU_H_
 
 #include "usbdc.h"
-#include "usb_protocol_dfu.h"
+
 
 /** Current DFU state */
-extern enum usb_dfu_state dfu_state;
+extern enum dfu_state dfu_state;
 /**< Current DFU status */
 extern enum usb_dfu_status dfu_status;
 

@@ -11,6 +11,7 @@
  */
 
 #include <stdint.h>
+#define USB_DFU_CLASS 0xfe
 
 #define USB_DT_DFU			0x21
 
@@ -30,13 +31,16 @@ struct usb_dfu_func_descriptor {
 #define USB_DT_DFU_SIZE			9
 
 /* DFU class-specific requests (Section 3, DFU Rev 1.1) */
-#define USB_REQ_DFU_DETACH	0x00
-#define USB_REQ_DFU_DNLOAD	0x01
-#define USB_REQ_DFU_UPLOAD	0x02
-#define USB_REQ_DFU_GETSTATUS	0x03
-#define USB_REQ_DFU_CLRSTATUS	0x04
-#define USB_REQ_DFU_GETSTATE	0x05
-#define USB_REQ_DFU_ABORT	0x06
+enum usb_dfu_req {
+	USB_DFU_DETACH,
+	USB_DFU_DNLOAD,
+	USB_DFU_UPLOAD,
+	USB_DFU_GETSTATUS,
+	USB_DFU_CLRSTATUS,
+	USB_DFU_GETSTATE,
+	USB_DFU_ABORT,
+};
+
 
 struct dfu_status {
 	uint8_t bStatus;
@@ -45,22 +49,24 @@ struct dfu_status {
 	uint8_t iString;
 } __attribute__((packed));
 
-#define DFU_STATUS_OK			0x00
-#define DFU_STATUS_errTARGET		0x01
-#define DFU_STATUS_errFILE		0x02
-#define DFU_STATUS_errWRITE		0x03
-#define DFU_STATUS_errERASE		0x04
-#define DFU_STATUS_errCHECK_ERASED	0x05
-#define DFU_STATUS_errPROG		0x06
-#define DFU_STATUS_errVERIFY		0x07
-#define DFU_STATUS_errADDRESS		0x08
-#define DFU_STATUS_errNOTDONE		0x09
-#define DFU_STATUS_errFIRMWARE		0x0a
-#define DFU_STATUS_errVENDOR		0x0b
-#define DFU_STATUS_errUSBR		0x0c
-#define DFU_STATUS_errPOR		0x0d
-#define DFU_STATUS_errUNKNOWN		0x0e
-#define DFU_STATUS_errSTALLEDPKT	0x0f
+enum usb_dfu_status {
+	DFU_STATUS_OK			=0x00,
+	DFU_STATUS_errTARGET	=0x01,
+	DFU_STATUS_errFILE		=0x02,
+	DFU_STATUS_errWRITE		=0x03,
+	DFU_STATUS_errERASE		=0x04,
+	DFU_STATUS_errCHECK_ERASED	=0x05,
+	DFU_STATUS_errPROG		=0x06,
+	DFU_STATUS_errVERIFY		=0x07,
+	DFU_STATUS_errADDRESS		=0x08,
+	DFU_STATUS_errNOTDONE		=0x09,
+	DFU_STATUS_errFIRMWARE		=0x0a,
+	DFU_STATUS_errVENDOR		=0x0b,
+	DFU_STATUS_errUSBR		=0x0c,
+	DFU_STATUS_errPOR		=0x0d,
+	DFU_STATUS_errUNKNOWN		=0x0e,
+	DFU_STATUS_errSTALLEDPKT	=0x0f,
+};
 
 enum dfu_state {
 	DFU_STATE_appIDLE		= 0,
