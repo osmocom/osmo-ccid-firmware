@@ -480,6 +480,8 @@ static int ccid_handle_reset_parameters(struct ccid_slot *cs, struct msgb *msg)
 	/* copy default parameters from somewhere */
 	/* FIXME: T=1 */
 
+	cs->proposed_pars = *cs->default_pars;
+
 	/* validate parameters; abort if they are not supported */
 	rc = cs->ci->slot_ops->set_params(cs, seq, CCID_PROTOCOL_NUM_T0, cs->default_pars);
 	if (rc < 0) {
