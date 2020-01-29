@@ -66,7 +66,7 @@ struct usb_desc_collection {
 		struct usb_ep_desc ep[3];
 	} ccid;
 	DFURT_IF_DESCRIPTOR_STRUCT
-	uint8_t str[176];
+	uint8_t str[200];
 } __attribute__((packed));
 
 #endif /* USB_DESCRIPTORS_H_ */
