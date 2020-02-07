@@ -1,0 +1,54 @@
+resetting target to dfu
+done
+
+ID 1d50:6141 OpenMoko, Inc. 
+Device Descriptor:
+  bLength                18
+  bDescriptorType         1
+  bcdUSB               2.00
+  bDeviceClass            0 
+  bDeviceSubClass         0 
+  bDeviceProtocol         0 
+  bMaxPacketSize0        64
+  idVendor           0x1d50 OpenMoko, Inc.
+  idProduct          0x6141 
+  bcdDevice            0.00
+  iManufacturer           1 sysmocom
+  iProduct                2 sysmoOCTSIM (osmo-ASF4-DFU)
+  iSerial                 0 
+  bNumConfigurations      1
+  Configuration Descriptor:
+    bLength                 9
+    bDescriptorType         2
+    wTotalLength       0x001b
+    bNumInterfaces          1
+    bConfigurationValue     1
+    iConfiguration          0 
+    bmAttributes         0x80
+      (Bus Powered)
+    MaxPower              100mA
+    Interface Descriptor:
+      bLength                 9
+      bDescriptorType         4
+      bInterfaceNumber        0
+      bAlternateSetting       0
+      bNumEndpoints           0
+      bInterfaceClass       254 Application Specific Interface
+      bInterfaceSubClass      1 Device Firmware Update
+      bInterfaceProtocol      2 
+      iInterface              3 SAM D5x/E5x DFU bootloader (DFU mode)
+      Device Firmware Upgrade Interface Descriptor:
+        bLength                             9
+        bDescriptorType                    33
+        bmAttributes                        9
+          Will Detach
+          Manifestation Intolerant
+          Upload Unsupported
+          Download Supported
+        wDetachTimeout                      0 milliseconds
+        wTransferSize                     512 bytes
+        bcdDFUVersion                   1.10
+Device Status:     0x0000
+  (Bus Powered)
+resetting target
+done

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+echo "Regenerating test output..."
+./prepare
+./01_check_rig.sh > ./01_check_rig.out
+./02_flash_dfu.sh > ./02_flash_dfu.out
+./03_check_lsusb.sh > ./03_check_lsusb.out
+./04_check_dfu_lsusb.sh > ./04_check_dfu_lsusb.out
+echo "Reference output regenerated!"
+echo ""
+

@@ -1,0 +1,14 @@
+#!/bin/sh
+echo "=========================================================="
+echo "            EXECUTING TESTS FOR SYSMO-OCTSIM"
+echo "=========================================================="
+echo ""
+cd ./sysmo-octsim
+echo "Location $PWD"
+echo ""
+sh ./run-tests
+cd ..
+echo ""
+echo ""
+echo ""
+echo ""

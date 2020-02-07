@@ -1,0 +1,8 @@
+#!/bin/sh
+
+. ./test-data
+
+echo "================ PREPARING TEST RIG ================"
+./ctl_reset_target.sh
+echo "================ TEST RIG PREPARED ================="
+echo ""
