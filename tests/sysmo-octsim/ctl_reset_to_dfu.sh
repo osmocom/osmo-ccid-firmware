@@ -1,7 +1,5 @@
-#!/bin/sh
-
-#usb_rly08 serial
-USB_RELAY="/dev/serial/by-id/usb-Devantech_Ltd._USB-RLY08_00021197-if00"
+#!/bin/sh -e
+. ./test-data
 
 #usb_rly08
 # relay1 = usbpower

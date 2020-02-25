@@ -1,0 +1,117 @@
+resetting target
+done
+card slot 0
+Using PC/SC reader (dev=0) interface
+Reading ...
+ICCID: 8988211000000090160
+IMSI: 001640000069444
+SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+SPN: Not available
+Display HPLMN: False
+Display OPLMN: False
+PLMNsel: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNwAcT:
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+
+OPLMNwAcT:
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+
+HPLMNAcT:
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+
+ACC: 0040
+MSISDN: Can't read file -- Length of MSISDN (136 bytes) is out of range
+AD: 00000002
+Done !
+
+
+card slot 4
+Using PC/SC reader (dev=4) interface
+Reading ...
+ICCID: 8988211000000271083
+IMSI: 001640000069555
+SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+SPN: Not available
+Display HPLMN: False
+Display OPLMN: False
+PLMNsel: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNwAcT:
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+
+OPLMNwAcT:
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+
+HPLMNAcT:
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+
+ACC: 0100
+MSISDN: Not available
+AD: 00000002
+Done !
+

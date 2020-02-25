@@ -1,3 +1,5 @@
-#!/bin/sh
+#!/bin/sh -e
+. ./test-data
 
-dfu-util --device 1d50:6141 --alt 0 --reset --download dl/sysmoOCTSIM-latest.bin 2>/dev/null |grep -v "Download\t"|grep -v "\["
+dfu-util --device $USBD_TARGET --alt 0 --reset --download $DFU_IMAGE 2>/dev/null |grep -v "Download\t"|grep -v "\["
+sleep 1

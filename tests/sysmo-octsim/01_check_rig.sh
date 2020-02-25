@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 . ./test-data
 
-lsusb -d 04d8:ffee -v 2>/dev/null | sed -e "s/$Bus.*Device.*:\ ID/ID/g"
+lsusb -d $USBD_RELAY -v 2>/dev/null | sed -e "s/$Bus.*Device.*:\ ID/ID/g"

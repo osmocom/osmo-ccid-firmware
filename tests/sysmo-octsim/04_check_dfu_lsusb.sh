@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh -e
 . ./test-data
 
 ./ctl_reset_to_dfu.sh
-lsusb -d 1d50:6141 -v 2>/dev/null | sed -e "s/$Bus.*Device.*:\ ID/ID/g"
+lsusb -d $USBD_TARGET -v 2>/dev/null | sed -e "s/$Bus.*Device.*:\ ID/ID/g"
 ./ctl_reset_target.sh

@@ -1,0 +1,26 @@
+resetting target
+done
+dfu-util 0.9
+
+Copyright 2005-2009 Weston Schmidt, Harald Welte and OpenMoko Inc.
+Copyright 2010-2016 Tormod Volden and Stefan Schmidt
+This program is Free Software and has ABSOLUTELY NO WARRANTY
+Please report bugs to http://sourceforge.net/p/dfu-util/tickets/
+
+Opening DFU capable USB device...
+ID 1d50:6141
+Run-time device DFU version 0100
+Claiming USB DFU Runtime Interface...
+Determining device status: state = appIDLE, status = 0
+Device really in Runtime Mode, send DFU detach request...
+Device will detach and reattach...
+Opening DFU USB Device...
+Claiming USB DFU Interface...
+Setting Alternate Setting #0 ...
+Determining device status: state = dfuIDLE, status = 0
+dfuIDLE, continuing
+DFU mode device DFU version 0110
+Device returned transfer size 512
+Copying data from PC to DFU device
+Download done.
+Resetting USB to switch back to runtime mode

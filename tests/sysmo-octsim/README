@@ -2,3 +2,4 @@ This testsuite assumes you have installed the following utilities:
 - lsusb
 - dfu-util
 - wget
+- pysim
