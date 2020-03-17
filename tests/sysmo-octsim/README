@@ -3,3 +3,4 @@ This testsuite assumes you have installed the following utilities:
 - dfu-util
 - wget
 - pysim
+- usbrelay

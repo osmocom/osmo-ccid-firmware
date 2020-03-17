@@ -3,5 +3,5 @@ osmo-ccid-firmware
 
 this testbed is the hardware-CI interface to make sure the firmware built is also working when flashed onto hardware.
 
-to run it you will need a usb controlled relay board like the devantech_Ltd._USB-RLY08 and a sysmo-octsim board.
+to run it you will need a usb controlled relay board and a sysmo-octsim board.
 

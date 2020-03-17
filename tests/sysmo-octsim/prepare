@@ -3,9 +3,6 @@
 . ./test-data
 
 echo "================ PREPARING TEST RIG ================"
-if [ ! -h "$USB_RELAY" ]; then echo "ERROR: usb relay device - symlink missing" ; exit 1; fi
-if [ ! -c "$USB_RELAY" ]; then echo "ERROR: usb relay device - not a char device" ; exit 1; fi
-if [ ! -h "$USB_RELAY" ]; then echo "ERROR: usb relay device - not writable" ; exit 1; fi
 ./ctl_reset_target.sh
 echo "================ TEST RIG PREPARED ================="
 echo ""
