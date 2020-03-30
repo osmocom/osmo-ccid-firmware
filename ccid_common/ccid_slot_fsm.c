@@ -122,6 +122,7 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 	case ISO7816_E_TPDU_FAILED_IND:
 	case ISO7816_E_PPS_DONE_IND:
 	case ISO7816_E_PPS_FAILED_IND:
+	case ISO7816_E_WTIME_EXP:
 		cs->event_data = data;
 #ifdef OCTSIMFWBUILD
 		asm volatile("dmb st": : :"memory");
@@ -143,10 +144,25 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 
 	if(!event)
 		return 0;
-	if(event && !data)
-		return 0;
+//	if(event && !data)
+//		return 0;
 
 	switch (event) {
+	case ISO7816_E_WTIME_EXP:
+		tpdu = data;
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=0)\n", __func__, event);
+
+
+		/* perform deactivation */
+		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, false);
+		cs->icc_powered = false;
+
+
+		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE, 0, 0);
+		ccid_slot_send_unbusy(cs, resp);
+		cs->event = 0;
+		break;
 	case ISO7816_E_ATR_DONE_IND:
 		tpdu = data;
 		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
