@@ -128,6 +128,17 @@ static const uint8_t convention_convert_lut[256] = {
 	0xf0, 0x70, 0xb0, 0x30, 0xd0, 0x50, 0x90, 0x10, 0xe0, 0x60, 0xa0, 0x20, 0xc0, 0x40, 0x80, 0x00,
 };
 
+struct atr_fsm_priv {
+	uint8_t hist_len;	/*!< store the number of expected historical bytes */
+	uint8_t y;		/*!< last mask of the upcoming TA, TB, TC, TD interface bytes */
+	uint8_t i;		/*!< interface byte subgroup number */
+	struct msgb *atr;	/*!< ATR data */
+	uint8_t computed_checksum;
+	uint16_t protocol_support;
+};
+
+static struct atr_fsm_priv *get_atr_fsm_priv(struct osmo_fsm_inst *fi);
+
 /***********************************************************************
  * ISO7816-3 Main FSM
  ***********************************************************************/
@@ -376,11 +387,15 @@ static void iso7816_3_in_tpdu_action(struct osmo_fsm_inst *fi, uint32_t event, v
 static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
+	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
+	struct atr_fsm_priv *atp = get_atr_fsm_priv(ip->atr_fi);
 
 	switch (event) {
 	case ISO7816_E_HW_ERR_IND:
 	case ISO7816_E_CARD_REMOVAL:
 		/* FIXME: power off? */
+		if(fi->state == ISO7816_S_WAIT_ATR || fi->state == ISO7816_S_IN_ATR)
+			ip->user_cb(fi, ISO7816_E_ATR_ERR_IND, 0, atp->atr);
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
 		break;
 	case ISO7816_E_POWER_DN_IND:
@@ -541,14 +556,13 @@ static struct osmo_fsm iso7816_3_fsm = {
  * ATR FSM
  ***********************************************************************/
 
-struct atr_fsm_priv {
-	uint8_t hist_len;	/*!< store the number of expected historical bytes */
-	uint8_t y;		/*!< last mask of the upcoming TA, TB, TC, TD interface bytes */
-	uint8_t i;		/*!< interface byte subgroup number */
-	struct msgb *atr;	/*!< ATR data */
-	uint8_t computed_checksum;
-	uint16_t protocol_support;
-};
+/* type-safe method to obtain atr_fsm_priv from fi */
+static struct atr_fsm_priv *get_atr_fsm_priv(struct osmo_fsm_inst *fi)
+{
+	OSMO_ASSERT(fi);
+	OSMO_ASSERT(fi->fsm == &atr_fsm);
+	return (struct atr_fsm_priv *) fi->priv;
+}
 
 /* obtain the [software] guard time in milli-seconds from the atr fsm_inst */
 static uint32_t atr_fi_gt_ms(struct osmo_fsm_inst *fi)
@@ -579,7 +593,7 @@ static uint8_t get_rx_byte_evt(struct osmo_fsm_inst *fi, void *data)
 /* append a single byte to the ATR */
 static int atr_append_byte(struct osmo_fsm_inst *fi, uint8_t byte)
 {
-	struct atr_fsm_priv *atp = fi->priv;
+	struct atr_fsm_priv *atp = get_atr_fsm_priv(fi);
 
 	if (!msgb_tailroom(atp->atr)) {
 		LOGPFSML(fi, LOGL_ERROR, "ATR overflow !?!");
@@ -592,7 +606,7 @@ static int atr_append_byte(struct osmo_fsm_inst *fi, uint8_t byte)
 
 static void atr_wait_ts_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
 {
-	struct atr_fsm_priv *atp = fi->priv;
+	struct atr_fsm_priv *atp = get_atr_fsm_priv(fi);
 
 	/* reset state to its initial value */
 	atp->hist_len = 0;
@@ -608,7 +622,7 @@ static void atr_wait_ts_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
 
 static void atr_wait_ts_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	struct atr_fsm_priv *atp = fi->priv;
+	struct atr_fsm_priv *atp = get_atr_fsm_priv(fi);
 	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
 	uint8_t byte;
@@ -654,7 +668,7 @@ restart:
 
 static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	struct atr_fsm_priv *atp = fi->priv;
+	struct atr_fsm_priv *atp = get_atr_fsm_priv(fi);
 	uint32_t guard_time_ms = atr_fi_gt_ms(fi);
 	uint8_t byte;
 
