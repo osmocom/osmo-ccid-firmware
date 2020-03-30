@@ -419,7 +419,7 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		return 20e6 / ncn8025_div_val[settings.clkdiv];
 		break;
 	default:
-		return -EINVAL;
+		return 0;
 	}
 	return 0;
 }
