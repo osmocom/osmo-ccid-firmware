@@ -373,15 +373,32 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		settings.rstin = arg ? true : false;
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
 		usart_async_flush_rx_buffer(cuart->u.asf4.usa_pd);
+
+		/* reset everything, card reset resets pps params */
+		if (arg)
+			slot_set_isorate(cuart, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+
 		break;
-	case CUART_CTL_POWER:
+
+	case CUART_CTL_POWER_5V0:
+	case CUART_CTL_POWER_3V0:
+	case CUART_CTL_POWER_1V8:
 		/* reset everything */
 		slot_set_isorate(cuart, SIM_CLKDIV_8, ISO7816_3_DEFAULT_FD, ISO7816_3_DEFAULT_DD);
+
+
+		enum ncn8025_sim_voltage v = CUART_CTL_POWER_5V0;
+		switch (ctl) {
+			case CUART_CTL_POWER_5V0: v = SIM_VOLT_5V0; break;
+			case CUART_CTL_POWER_3V0: v = SIM_VOLT_3V0; break;
+			case CUART_CTL_POWER_1V8: v = SIM_VOLT_1V8; break;
+			default: break;
+		}
 
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
 		settings.cmdvcc = arg ? true : false;
 		settings.led = arg ? true : false;
-		settings.vsel = SIM_VOLT_5V0;
+		settings.vsel = v;
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
 
 		break;

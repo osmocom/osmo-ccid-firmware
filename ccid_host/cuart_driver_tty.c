@@ -284,7 +284,9 @@ static int tty_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int ar
 	case CUART_CTL_WTIME:
 		/* no driver-specific handling of this */
 		break;
-	case CUART_CTL_POWER:
+	case CUART_CTL_POWER_5V0:
+	case CUART_CTL_POWER_3V0:
+	case CUART_CTL_POWER_1V8:
 	case CUART_CTL_CLOCK:
 	default:
 		return -EINVAL;

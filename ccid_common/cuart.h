@@ -25,7 +25,9 @@ enum card_uart_ctl {
 	CUART_CTL_RX,		/* enable/disable receiver */
 	CUART_CTL_RX_TIMER_HINT, /* tell cuart approximate number of rx bytes */
 	CUART_CTL_NO_RXTX,		/* enable/disable receiver */
-	CUART_CTL_POWER,	/* enable/disable ICC power */
+	CUART_CTL_POWER_5V0,
+	CUART_CTL_POWER_3V0,
+	CUART_CTL_POWER_1V8,
 	CUART_CTL_CLOCK,	/* enable/disable ICC clock */
 	CUART_CTL_SET_CLOCK_FREQ, /* set ICC clock frequency (hz)*/
 	CUART_CTL_RST,		/* enable/disable ICC reset */

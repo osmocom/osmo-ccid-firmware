@@ -77,7 +77,7 @@ static void iso_fsm_slot_icc_set_insertion_status(struct ccid_slot *cs, bool pre
 	if (!present) {
 		osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_CARD_REMOVAL, NULL);
 		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
-		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, false);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
 		cs->icc_powered = false;
 		cs->cmd_busy = false;
 	}
@@ -87,15 +87,24 @@ static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *m
 					const struct ccid_pc_to_rdr_icc_power_on *ipo)
 {
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
+	enum ccid_power_select pwrsel = ipo->bPowerSelect;
+	enum card_uart_ctl cctl;
 
 	ss->seq = ipo->hdr.bSeq;
 	LOGPCS(cs, LOGL_DEBUG, "scheduling power-up\n");
+
+	switch (pwrsel) {
+		case CCID_PWRSEL_5V0: cctl = CUART_CTL_POWER_5V0; break;
+		case CCID_PWRSEL_3V0: cctl = CUART_CTL_POWER_3V0; break;
+		case CCID_PWRSEL_1V8: cctl = CUART_CTL_POWER_1V8; break;
+		default: cctl = CUART_CTL_POWER_5V0;
+	}
 
 	if (! cs->icc_powered) {
 		/* FIXME: do this via a FSM? */
 		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
 		osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_RESET_ACT_IND, NULL);
-		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, true);
+		card_uart_ctrl(ss->cuart, cctl, true);
 		osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_POWER_UP_IND, NULL);
 		cs->icc_powered = true;
 		card_uart_ctrl(ss->cuart, CUART_CTL_CLOCK, true);
@@ -166,7 +175,7 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 
 		/* perform deactivation */
 		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
-		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, false);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
 		cs->icc_powered = false;
 
 
@@ -285,10 +294,10 @@ static void iso_fsm_slot_set_power(struct ccid_slot *cs, bool enable)
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 
 	if (enable) {
-		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, true);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, true);
 		cs->icc_powered = true;
 	} else {
-		card_uart_ctrl(ss->cuart, CUART_CTL_POWER, false);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
 		cs->icc_powered = false;
 	}
 }

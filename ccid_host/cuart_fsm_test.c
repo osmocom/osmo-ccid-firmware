@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
 	/* activate reset, then power up */
 	card_uart_ctrl(&g_cuart, CUART_CTL_RST, true);
-	card_uart_ctrl(&g_cuart, CUART_CTL_POWER, true);
+	card_uart_ctrl(&g_cuart, CUART_CTL_POWER_1V8, true);
 	osmo_fsm_inst_dispatch(fi, ISO7816_E_POWER_UP_IND, NULL);
 
 	/* activate clock */
