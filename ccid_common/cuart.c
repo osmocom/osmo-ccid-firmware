@@ -52,9 +52,16 @@ void card_uart_wtime_restart(struct card_uart *cuart)
 	if(!cuart->current_wtime_byte)
 		return;
 
+	int etu_in_us = get_etu_in_us(cuart) + 1;
+	cuart->wtime_etu = cuart->wtime_etu ? cuart->wtime_etu : 1;
+
 	/* timemout is wtime * ETU + expected number of bytes * (12ETU+1 slack)ETU */
-	usecs = get_etu_in_us(cuart) * cuart->wtime_etu +
-			get_etu_in_us(cuart) * cuart->current_wtime_byte * (12+1);
+	usecs = etu_in_us * cuart->wtime_etu +
+			etu_in_us * cuart->current_wtime_byte * (12+1);
+
+	/* limit lower wait time to reasonable value */
+	usecs = usecs < 300000 ? 300000 : usecs;
+
 	if (usecs > 1000000) {
 		secs = usecs / 1000000;
 		usecs = usecs % 1000000;
