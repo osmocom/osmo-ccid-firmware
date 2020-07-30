@@ -172,7 +172,7 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		tpdu = data;
 		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
 			msgb_hexdump(tpdu));
-		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, msgb_l2(tpdu), msgb_l2len(tpdu));
+		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, msgb_l4(tpdu), msgb_l4len(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
 		msgb_free(tpdu);
 		cs->event = 0;

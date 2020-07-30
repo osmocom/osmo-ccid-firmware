@@ -1175,9 +1175,13 @@ static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		/* start transmission of a TPDU by sending the 5-byte header */
 		tfp->tpdu = (struct msgb *)data;
 		OSMO_ASSERT(msgb_length(tfp->tpdu) >= sizeof(*tpduh));
+		/* l2h = after the 5byte header */
 		tfp->tpdu->l2h = msgb_data(tfp->tpdu) + sizeof(*tpduh);
+		/* l4h = where we start to receive from the card */
+		tfp->tpdu->l4h = msgb_l2(tfp->tpdu) + msgb_l2len(tfp->tpdu);
 		if (msgb_l2len(tfp->tpdu)) {
 			tfp->is_command = true;
+			/* l3h = used as 'next byte to write' pointer */
 			tfp->tpdu->l3h = tfp->tpdu->l2h; /* next tx byte == first byte of body */
 		} else
 			tfp->is_command = false;
