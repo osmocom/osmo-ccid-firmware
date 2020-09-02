@@ -1273,7 +1273,12 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 			} else {
 				card_uart_set_rx_threshold(ip->uart, tpduh->p3);
 				card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, tpduh->p3);
-				osmo_fsm_inst_state_chg(fi, TPDU_S_RX_REMAINING, 0, 0);
+				/* if the expected length is only one byte, cuart will issue
+				 * TPDU_S_RX_SINGLE instead of TPDU_S_RX_REMAINING (OS#4741) */
+				if (tpduh->p3 == 1)
+					osmo_fsm_inst_state_chg(fi, TPDU_S_RX_SINGLE, 0, 0);
+				else
+					osmo_fsm_inst_state_chg(fi, TPDU_S_RX_REMAINING, 0, 0);
 			}
 		} else if (byte == (tpduh->ins ^ 0xFF)) {
 			/* transmit/recieve single byte then wait for proc */
@@ -1521,7 +1526,8 @@ static const struct osmo_fsm_state tpdu_states[] = {
 		.name = "RX_SINGLE",
 		.in_event_mask = S(ISO7816_E_RX_SINGLE),
 		.out_state_mask = S(TPDU_S_INIT) |
-				  S(TPDU_S_PROCEDURE),
+				  S(TPDU_S_PROCEDURE) |
+				  S(TPDU_S_SW1),
 		.action = tpdu_s_rx_single_action,
 	},
 	[TPDU_S_SW1] = {
