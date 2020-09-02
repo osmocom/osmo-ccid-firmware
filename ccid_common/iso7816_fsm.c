@@ -417,6 +417,8 @@ static void iso7816_3_s_wait_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t e
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 	switch (event) {
+	case ISO7816_E_RX_SINGLE:
+		return;
 	case ISO7816_E_TX_COMPL:
 		/* Rx of single byte is already enabled by previous card_uart_tx() call */
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_IN_PPS_RSP, 0, 0);
@@ -517,7 +519,8 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 		.name = "WAIT_PPS_RESP",
 		.in_event_mask =	S(ISO7816_E_TX_COMPL) |
 					S(ISO7816_E_TX_ERR_IND) |
-					S(ISO7816_E_WTIME_EXP),
+					S(ISO7816_E_WTIME_EXP) |
+					S(ISO7816_E_RX_SINGLE),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_WAIT_PPS_RSP) |
@@ -1218,6 +1221,8 @@ static void tpdu_s_tx_hdr_action(struct osmo_fsm_inst *fi, uint32_t event, void 
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
 	OSMO_ASSERT(fi->fsm == &tpdu_fsm);
 	switch (event) {
+	case ISO7816_E_RX_SINGLE:
+		return;
 	case ISO7816_E_TX_COMPL:
 
 		card_uart_set_rx_threshold(ip->uart, 1);
@@ -1307,6 +1312,8 @@ static void tpdu_s_tx_remaining_action(struct osmo_fsm_inst *fi, uint32_t event,
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
 
 	switch (event) {
+	case ISO7816_E_RX_SINGLE:
+		return;
 	case ISO7816_E_TX_COMPL:
 		card_uart_set_rx_threshold(ip->uart, 1);
 		card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
@@ -1325,6 +1332,8 @@ static void tpdu_s_tx_single_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
 
 	switch (event) {
+	case ISO7816_E_RX_SINGLE:
+		return;
 	case ISO7816_E_TX_COMPL:
 		tfp->tpdu->l3h += 1;
 		card_uart_set_rx_threshold(ip->uart, 1);
@@ -1484,7 +1493,8 @@ static const struct osmo_fsm_state tpdu_states[] = {
 	},
 	[TPDU_S_TX_HDR] = {
 		.name = "TX_HDR",
-		.in_event_mask = S(ISO7816_E_TX_COMPL),
+		.in_event_mask = S(ISO7816_E_TX_COMPL) |
+				 S(ISO7816_E_RX_SINGLE),
 		.out_state_mask = S(TPDU_S_INIT) |
 				  S(TPDU_S_PROCEDURE),
 		.action = tpdu_s_tx_hdr_action,
@@ -1503,14 +1513,16 @@ static const struct osmo_fsm_state tpdu_states[] = {
 	},
 	[TPDU_S_TX_REMAINING] = {
 		.name = "TX_REMAINING",
-		.in_event_mask = S(ISO7816_E_TX_COMPL),
+		.in_event_mask = S(ISO7816_E_TX_COMPL) |
+				 S(ISO7816_E_RX_SINGLE),
 		.out_state_mask = S(TPDU_S_INIT) |
 				  S(TPDU_S_SW1),
 		.action = tpdu_s_tx_remaining_action,
 	},
 	[TPDU_S_TX_SINGLE] = {
 		.name = "TX_SINGLE",
-		.in_event_mask = S(ISO7816_E_TX_COMPL),
+		.in_event_mask = S(ISO7816_E_TX_COMPL) |
+				 S(ISO7816_E_RX_SINGLE),
 		.out_state_mask = S(TPDU_S_INIT) |
 				  S(TPDU_S_PROCEDURE),
 		.action = tpdu_s_tx_single_action,
