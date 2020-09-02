@@ -1253,7 +1253,7 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 			osmo_fsm_inst_state_chg(fi, TPDU_S_PROCEDURE, 0, 0);
 		} else if ((byte >= 0x60 && byte <= 0x6f) || (byte >= 0x90 && byte <= 0x9f)) {
 			//msgb_apdu_sw(tfp->apdu) = byte << 8;
-			msgb_put(tfp->tpdu, byte);
+			msgb_put_u8(tfp->tpdu, byte);
 			/* receive second SW byte (SW2) */
 			card_uart_set_rx_threshold(ip->uart, 1);
 			card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
