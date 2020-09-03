@@ -23,8 +23,8 @@ gadgetdir="$GADGET_CONFIGFS/$GADGET_NAME"
 [ -d $gadgetdir ] || mkdir $gadgetdir || die "Cannot create $gadgetdir. Permission problem?"
 set -e -x
 cd $gadgetdir
-echo 0x2342 > idVendor
-echo 0x2342 > idProduct
+echo 0x1d50 > idVendor
+echo 0x615f > idProduct
 [ -d strings/0x409 ] || mkdir strings/0x409
 echo 2342 > strings/0x409/serialnumber
 echo "sysmocom GmbH" > strings/0x409/manufacturer

@@ -26,8 +26,8 @@
 #include <libusb-1.0/libusb.h>
 
 static libusb_context *g_uctx;
-static uint16_t g_vendor_id = 0x2342;
-static uint16_t g_product_id = 0x2342;
+static uint16_t g_vendor_id = 0x1d50;
+static uint16_t g_product_id = 0x615f;
 static uint8_t g_interface = 0;
 
 #define GET_CLOCK_FREQS	0x02

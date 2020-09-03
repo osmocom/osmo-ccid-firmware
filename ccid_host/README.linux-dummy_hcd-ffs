@@ -55,7 +55,7 @@ at which point your 'dmesg' should print something along the lines of
 
 ----
 usb 3-1: new full-speed USB device number 8 using dummy_hcd
-usb 3-1: New USB device found, idVendor=2342, idProduct=2342, bcdDevice= 4.19
+usb 3-1: New USB device found, idVendor=1d50, idProduct=615f, bcdDevice= 4.19
 usb 3-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
 usb 3-1: Product: sysmoOCTSIM
 usb 3-1: Manufacturer: sysmocom GmbH
@@ -76,7 +76,7 @@ to the /etc/libccid_Info.plist with a diff like this:
  		<string>0x08C3</string>
  		<string>0x15E1</string>
  		<string>0x062D</string>
-+		<string>0x2342</string>
++		<string>0x1D50</string>
  	</array>
  
  	<key>ifdProductID</key>
@@ -84,7 +84,7 @@ to the /etc/libccid_Info.plist with a diff like this:
  		<string>0x0402</string>
  		<string>0x2007</string>
  		<string>0x0001</string>
-+		<string>0x2342</string>
++		<string>0x615F</string>
  	</array>
  
  	<key>ifdFriendlyName</key>
