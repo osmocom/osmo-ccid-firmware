@@ -1,6 +1,6 @@
 /* ISO 7816-3 Finite State Machine (reader side)
  *
- * (C) 2019 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2019-2020 by Harald Welte <laforge@gnumonks.org>
  *
  * inspired by earlier work
  * (C) 2016-2017 by Harald Welte <hwelte@hmw-consulting.de>
