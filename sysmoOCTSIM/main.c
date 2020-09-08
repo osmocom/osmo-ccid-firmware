@@ -230,6 +230,9 @@ static void ccid_out_read_compl(const uint8_t ep, enum usb_xfer_code code, uint3
 	llist_add_tail_at(&msg->list, &g_ccid_s.out_ep.list);
 	g_ccid_s.out_ep.in_progress = NULL;
 
+	if(code != USB_XFER_DONE)
+		return;
+
 	/* submit another [free] msgb to receive the next transfer */
 	submit_next_out();
 }
@@ -244,6 +247,9 @@ static void ccid_in_write_compl(const uint8_t ep, enum usb_xfer_code code, uint3
 	llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 	g_ccid_s.in_ep.in_progress = NULL;
 
+	if(code != USB_XFER_DONE)
+		return;
+
 	/* submit the next pending to-be-transmitted msgb (if any) */
 	submit_next_in();
 }
@@ -257,6 +263,9 @@ static void ccid_irq_write_compl(const uint8_t ep, enum usb_xfer_code code, uint
 	/* return the message back to the queue of free message buffers */
 	llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 	g_ccid_s.irq_ep.in_progress = NULL;
+
+	if(code != USB_XFER_DONE)
+		return;
 
 	/* submit the next pending to-be-transmitted msgb (if any) */
 	submit_next_irq();
