@@ -256,7 +256,7 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		 */
 		card_uart_ctrl(ss->cuart, CUART_CTL_SET_CLOCK_FREQ, fmax);
 		card_uart_ctrl(ss->cuart, CUART_CTL_SET_FD, F/D);
-		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer);
+		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer * 960);
 
 		cs->pars = cs->proposed_pars;
 		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_OK, 0);
