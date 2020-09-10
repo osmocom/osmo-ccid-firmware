@@ -39,6 +39,11 @@
 #include <hpl_usb_config.h>
 #include <string.h>
 #include <utils_assert.h>
+#include <hal_delay.h>
+
+/* save previous setup state to allow device reset when receving usb reset after the device
+ * was previously properly configured, i.e. when powered externally and usb is disconnected and reconnected */
+volatile bool address_was_set = false;
 
 /**
  * \brief Dummy callback function
@@ -974,6 +979,17 @@ static inline void _usb_d_dev_reset(void)
 	hri_usbdevice_set_INTEN_reg(USB, USB_D_SUSPEND_INT_FLAGS);
 
 	_usb_d_dev_reset_epts();
+
+	if(address_was_set == true) {
+		_usb_d_dev_detach();
+		address_was_set = 0;
+		delay_ms(100);
+		__disable_irq();
+		__DMB();
+		__DSB();
+		NVIC_SystemReset();
+	}
+
 	dev_inst.callbacks.event(USB_EV_RESET, 0);
 }
 
@@ -1579,6 +1595,7 @@ enum usb_speed _usb_d_dev_get_speed(void)
 void _usb_d_dev_set_address(uint8_t addr)
 {
 	hri_usbdevice_write_DADD_reg(USB, USB_DEVICE_DADD_ADDEN | USB_DEVICE_DADD_DADD(addr));
+	address_was_set = true;
 }
 
 uint8_t _usb_d_dev_get_address(void)
