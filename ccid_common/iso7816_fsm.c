@@ -1276,11 +1276,14 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu), true);
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_REMAINING, 0, 0);
 			} else {
-				card_uart_set_rx_threshold(ip->uart, tpduh->p3);
-				card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, tpduh->p3);
+				/* 7816-3 10.3.2 special case outgoing transfer 0 means 256 */
+				int len_expected = tpduh->p3 == 0 ? 256 : tpduh->p3;
+
+				card_uart_set_rx_threshold(ip->uart, len_expected);
+				card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, len_expected);
 				/* if the expected length is only one byte, cuart will issue
 				 * TPDU_S_RX_SINGLE instead of TPDU_S_RX_REMAINING (OS#4741) */
-				if (tpduh->p3 == 1)
+				if (len_expected == 1)
 					osmo_fsm_inst_state_chg(fi, TPDU_S_RX_SINGLE, 0, 0);
 				else
 					osmo_fsm_inst_state_chg(fi, TPDU_S_RX_REMAINING, 0, 0);
@@ -1357,14 +1360,17 @@ static void tpdu_s_rx_remaining_action(struct osmo_fsm_inst *fi, uint32_t event,
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
 	int rc;
 
+	/* 7816-3 10.3.2 special case outgoing transfer 0 means 256 */
+	int len_expected = tpduh->p3 == 0 ? 256 : tpduh->p3;
+
 	switch (event) {
 	case ISO7816_E_RX_COMPL:
 		/* retrieve pending byte(s) */
-		rc = card_uart_rx(ip->uart, msgb_l2(tfp->tpdu), tpduh->p3);
+		rc = card_uart_rx(ip->uart, msgb_l2(tfp->tpdu), len_expected);
 		OSMO_ASSERT(rc > 0);
 		msgb_put(tfp->tpdu, rc);
-		if (msgb_l2len(tfp->tpdu) != tpduh->p3) {
-			LOGPFSML(fi, LOGL_ERROR, "expected %u bytes; read %d\n", tpduh->p3,
+		if (msgb_l2len(tfp->tpdu) != len_expected) {
+			LOGPFSML(fi, LOGL_ERROR, "expected %u bytes; read %d\n", len_expected,
 				 msgb_l2len(tfp->tpdu));
 		}
 		card_uart_set_rx_threshold(ip->uart, 1);
