@@ -532,9 +532,9 @@ static int ccid_handle_set_parameters(struct ccid_slot *cs, struct msgb *msg)
 	case CCID_PROTOCOL_NUM_T0:
 		rc = decode_ccid_pars_t0(&pars_dec, &spar->abProtocolData.t0);
 		break;
-	case CCID_PROTOCOL_NUM_T1:
-		rc = decode_ccid_pars_t1(&pars_dec, &spar->abProtocolData.t1);
-		break;
+//	case CCID_PROTOCOL_NUM_T1:
+//		rc = decode_ccid_pars_t1(&pars_dec, &spar->abProtocolData.t1);
+//		break;
 	default:
 		LOGP(DCCID, LOGL_ERROR, "SetParameters: Invalid Protocol 0x%02x\n",spar->bProtocolNum);
 		resp = ccid_gen_parameters_t0(cs, seq, CCID_CMD_STATUS_FAILED, 0);
