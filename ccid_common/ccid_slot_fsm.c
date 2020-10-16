@@ -294,8 +294,11 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	ss->seq = xfb->hdr.bSeq;
 
 	/* must be '0' for TPDU level exchanges or for short APDU */
-	OSMO_ASSERT(xfb->wLevelParameter == 0x0000);
-	OSMO_ASSERT(msgb_length(msg) > xfb->hdr.dwLength);
+	if (xfb->wLevelParameter != 0x0000)
+		return -8;
+
+	if (msgb_length(msg) != xfb->hdr.dwLength)
+		return -1;
 
 	msgb_pull(msg, 10);
 
