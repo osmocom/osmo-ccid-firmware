@@ -80,9 +80,6 @@ void card_uart_wtime_restart(struct card_uart *cuart)
 	/* limit lower wait time to reasonable value */
 	usecs = usecs < 300000 ? 300000 : usecs;
 
-	/* HACK: Some cards seem to take more time than specified? SO#4742 */
-	usecs += 100000;
-
 	if (usecs > 1000000) {
 		secs = usecs / 1000000;
 		usecs = usecs % 1000000;
