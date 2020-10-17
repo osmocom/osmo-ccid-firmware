@@ -250,10 +250,9 @@ static void iso7816_3_reset_action(struct osmo_fsm_inst *fi, uint32_t event, voi
 		card_uart_ctrl(ip->uart, CUART_CTL_RX, true);
 
 		/* let's be reasonable here: the 40k cycle delay to ATR start is
-		 * ~1.4ms @ 2.5Mhz/6720 baud, 1ETU = 372 cycles -> 40k/372=107/12ETU ~ 9 byte
-		 * default timeout for rx is 9600 ETU, ATR might be missing the TCK
-		 * so it might time out, so just add this delay */
-		card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 32+9);
+		 * ~1.4ms @ 2.5Mhz/6720 baud, 1ETU = 372 cycles -> 40k/372=107/12ETU(GT!) ~ 9 byte
+		 * but this is WT not GT, so default 9600 x ETU -> 1 byte wait time is ~1.5s */
+		card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_ATR, 0, 0);
 		break;
 	case ISO7816_E_POWER_UP_IND:
@@ -280,6 +279,9 @@ static void iso7816_3_wait_atr_action(struct osmo_fsm_inst *fi, uint32_t event, 
 
 	switch (event) {
 	case ISO7816_E_RX_SINGLE:
+		/* let's expect at most 32 more bytes */
+		card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 32);
+
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_IN_ATR, 0, 0);
 		osmo_fsm_inst_dispatch(ip->atr_fi, event, data);
 		break;
