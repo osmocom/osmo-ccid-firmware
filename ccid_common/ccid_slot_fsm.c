@@ -298,7 +298,8 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	if (xfb->wLevelParameter != 0x0000)
 		return -8;
 
-	if (msgb_length(msg) != xfb->hdr.dwLength)
+	/* ccid header is 10b */
+	if (msgb_length(msg) != xfb->hdr.dwLength + 10)
 		return -1;
 
 	msgb_pull(msg, 10);
