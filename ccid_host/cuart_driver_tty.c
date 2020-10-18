@@ -184,7 +184,7 @@ static int tty_uart_fd_cb(struct osmo_fd *ofd, unsigned int what)
 
 		/* if no more bytes to transmit, disable OSMO_FD_WRITE */
 		if (cuart->u.tty.tx_index >= cuart->u.tty.tx_buf_len) {
-			ofd->when &= ~BSC_FD_WRITE;
+			ofd->when &= ~OSMO_FD_WRITE;
 #ifndef CREAD_ACTUALLY_WORKS
 			/* don't immediately notify user; first wait for characters to be received */
 #else
@@ -212,7 +212,7 @@ static int tty_uart_open(struct card_uart *cuart, const char *device_name)
 	if (rc < 0)
 		return rc;
 
-	osmo_fd_setup(&cuart->u.tty.ofd, rc, BSC_FD_READ, tty_uart_fd_cb, cuart, 0);
+	osmo_fd_setup(&cuart->u.tty.ofd, rc, OSMO_FD_READ, tty_uart_fd_cb, cuart, 0);
         cuart->u.tty.baudrate = B9600;
 
 	rc = _init_uart(cuart->u.tty.ofd.fd);

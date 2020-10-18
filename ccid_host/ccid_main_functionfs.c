@@ -214,7 +214,7 @@ static int ep_out_cb(struct osmo_fd *ofd, unsigned int what)
 	int rc;
 
 	LOGP(DUSB, LOGL_DEBUG, "%s\n", __func__);
-	if (what & BSC_FD_READ) {
+	if (what & OSMO_FD_READ) {
 		rc = read(ofd->fd, msgb_data(msg), msgb_tailroom(msg));
 		if (rc <= 0) {
 			msgb_free(msg);
@@ -229,7 +229,7 @@ static int ep_out_cb(struct osmo_fd *ofd, unsigned int what)
 static int ep_in_cb(struct osmo_fd *ofd, unsigned int what)
 {
 	LOGP(DUSB, LOGL_DEBUG, "%s\n", __func__);
-	if (what & BSC_FD_WRITE) {
+	if (what & OSMO_FD_WRITE) {
 		/* write what we have to write */
 	}
 	return 0;
@@ -287,7 +287,7 @@ static int ep_0_cb(struct osmo_fd *ofd, unsigned int what)
 	struct ufunc_handle *uh = (struct ufunc_handle *) ofd->data;
 	int rc;
 
-	if (what & BSC_FD_READ) {
+	if (what & OSMO_FD_READ) {
 		struct usb_functionfs_event evt;
 		rc = read(ofd->fd, (uint8_t *)&evt, sizeof(evt));
 		if (rc < sizeof(evt))
@@ -427,7 +427,7 @@ static int ep0_init(struct ufunc_handle *uh)
 	/* open control endpoint and write descriptors to it */
 	rc = open("ep0", O_RDWR);
 	assert(rc >= 0);
-	osmo_fd_setup(&uh->ep0, rc, BSC_FD_READ, &ep_0_cb, uh, 0);
+	osmo_fd_setup(&uh->ep0, rc, OSMO_FD_READ, &ep_0_cb, uh, 0);
 	osmo_fd_register(&uh->ep0);
 	rc = write(uh->ep0.fd, &descriptors, sizeof(descriptors));
 	if (rc != sizeof(descriptors)) {
@@ -451,7 +451,7 @@ static int ep0_init(struct ufunc_handle *uh)
 
 	rc = open("ep2", O_RDWR);
 	assert(rc >= 0);
-	osmo_fd_setup(&uh->ep_out, rc, BSC_FD_READ, &ep_out_cb, uh, 2);
+	osmo_fd_setup(&uh->ep_out, rc, OSMO_FD_READ, &ep_out_cb, uh, 2);
 #ifdef FUNCTIONFS_SUPPORTS_POLL
 	osmo_fd_register(&uh->ep_out);
 #endif
@@ -477,7 +477,7 @@ static int ep0_init(struct ufunc_handle *uh)
 	/* create an eventfd, which will be marked readable once some AIO completes */
 	rc = eventfd(0, 0);
 	OSMO_ASSERT(rc >= 0);
-	osmo_fd_setup(&uh->aio_evfd, rc, BSC_FD_READ, &evfd_cb, uh, 0);
+	osmo_fd_setup(&uh->aio_evfd, rc, OSMO_FD_READ, &evfd_cb, uh, 0);
 	osmo_fd_register(&uh->aio_evfd);
 
 	uh->aio_out.iocb = malloc(sizeof(struct iocb));
@@ -499,7 +499,7 @@ static int ccid_ops_send_in(struct ccid_instance *ci, struct msgb *msg)
 #ifndef FUNCTIONFS_SUPPORTS_POLL
 	dequeue_aio_write_in(uh);
 #else
-	uh->ep_in.when |= BSC_FD_WRITE;
+	uh->ep_in.when |= OSMO_FD_WRITE;
 #endif
 	return 0;
 }
@@ -515,7 +515,7 @@ static int ccid_ops_send_int(struct ccid_instance *ci, struct msgb *msg)
 #ifndef FUNCTIONFS_SUPPORTS_POLL
 	dequeue_aio_write_int(uh);
 #else
-	uh->ep_int.when |= BSC_FD_WRITE;
+	uh->ep_int.when |= OSMO_FD_WRITE;
 #endif
 	return 0;
 }

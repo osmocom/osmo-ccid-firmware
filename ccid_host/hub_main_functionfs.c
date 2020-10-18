@@ -342,7 +342,7 @@ static int ep_0_cb(struct osmo_fd *ofd, unsigned int what)
 	struct ufunc_handle *uh = (struct ufunc_handle *) ofd->data;
 	int rc;
 
-	if (what & BSC_FD_READ) {
+	if (what & OSMO_FD_READ) {
 		struct usb_functionfs_event evt;
 		rc = read(ofd->fd, (uint8_t *)&evt, sizeof(evt));
 		if (rc < sizeof(evt))
@@ -425,7 +425,7 @@ static int ep0_init(struct ufunc_handle *uh)
 	/* open control endpoint and write descriptors to it */
 	rc = open("ep0", O_RDWR);
 	assert(rc >= 0);
-	osmo_fd_setup(&uh->ep0, rc, BSC_FD_READ, &ep_0_cb, uh, 0);
+	osmo_fd_setup(&uh->ep0, rc, OSMO_FD_READ, &ep_0_cb, uh, 0);
 	osmo_fd_register(&uh->ep0);
 	rc = write(uh->ep0.fd, &descriptors, sizeof(descriptors));
 	if (rc != sizeof(descriptors)) {
@@ -460,7 +460,7 @@ static int ep0_init(struct ufunc_handle *uh)
 	/* create an eventfd, which will be marked readable once some AIO completes */
 	rc = eventfd(0, 0);
 	OSMO_ASSERT(rc >= 0);
-	osmo_fd_setup(&uh->aio_evfd, rc, BSC_FD_READ, &evfd_cb, uh, 0);
+	osmo_fd_setup(&uh->aio_evfd, rc, OSMO_FD_READ, &evfd_cb, uh, 0);
 	osmo_fd_register(&uh->aio_evfd);
 
 	uh->aio_int.iocb = malloc(sizeof(struct iocb));
