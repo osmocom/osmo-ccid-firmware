@@ -462,7 +462,7 @@ static int ccid_handle_xfr_block(struct ccid_slot *cs, struct msgb *msg)
 
 	/* handle this asynchronously */
 	rc = cs->ci->slot_ops->xfr_block_async(cs, msg, &u->xfr_block);
-	if (rc < 0) {
+	if (rc <= 0) {
 		msgb_trim(msg, sizeof(struct ccid_rdr_to_pc_data_block));
 		resp = ccid_gen_data_block(cs, u->xfr_block.hdr.bSeq, CCID_CMD_STATUS_FAILED, -rc, 0, 0);
 		goto out;

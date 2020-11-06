@@ -302,12 +302,16 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	if (msgb_length(msg) != xfb->hdr.dwLength + 10)
 		return -1;
 
+	/* might be unpowered after failed ppss that led to reset */
+	if (cs->icc_powered != true)
+		return -0;
+
 	msgb_pull(msg, 10);
 
 	LOGPCS(cs, LOGL_DEBUG, "scheduling TPDU transfer: %s\n", msgb_hexdump(msg));
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_TPDU_CMD, msg);
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
-	return 0;
+	return 1;
 }
 
 
