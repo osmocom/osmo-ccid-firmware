@@ -180,7 +180,7 @@ static uint8_t ccid_pc_to_rdr_get_seq(const struct ccid_pc_to_rdr *u)
 
 static struct msgb *ccid_msgb_alloc(void)
 {
-	struct msgb *msg = msgb_alloc(512, "ccid");
+	struct msgb *msg = msgb_alloc(300, "ccid");
 	OSMO_ASSERT(msg);
 	return msg;
 }
