@@ -159,6 +159,7 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 	case ISO7816_E_TPDU_FAILED_IND:
 	case ISO7816_E_PPS_DONE_IND:
 	case ISO7816_E_PPS_FAILED_IND:
+	case ISO7816_E_PPS_UNSUPPORTED_IND:
 	case ISO7816_E_WTIME_EXP:
 		cs->event_data = data;
 #ifdef OCTSIMFWBUILD
@@ -173,6 +174,7 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 	}
 }
 
+/* do not free msgbs passed from the fsms, they are statically allocated! */
 static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct msgb *tpdu, *resp;
@@ -207,7 +209,6 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0,
 					   msgb_data(tpdu), msgb_length(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
-		/* Don't free "TPDU" here, as the ATR should survive */
 		cs->event = 0;
 		break;
 	case ISO7816_E_ATR_ERR_IND:
@@ -217,7 +218,6 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE,
 					   msgb_data(tpdu), msgb_length(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
-		/* Don't free "TPDU" here, as the ATR should survive */
 		cs->event = 0;
 		break;
 		break;
@@ -227,7 +227,6 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 			msgb_hexdump(tpdu));
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, msgb_l4(tpdu), msgb_l4len(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
-		msgb_free(tpdu);
 		cs->event = 0;
 		break;
 	case ISO7816_E_TPDU_FAILED_IND:
@@ -237,7 +236,6 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		/* FIXME: other error causes than card removal?*/
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE, msgb_l2(tpdu), 0);
 		ccid_slot_send_unbusy(cs, resp);
-		msgb_free(tpdu);
 		cs->event = 0;
 		break;
 	case ISO7816_E_PPS_DONE_IND:
@@ -264,17 +262,34 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 
 		ccid_slot_send_unbusy(cs, resp);
 
-		/* this frees the pps req from the host, pps resp buffer stays with the pps fsm */
-		msgb_free(tpdu);
+		cs->event = 0;
+		break;
+	case ISO7816_E_PPS_UNSUPPORTED_IND:
+		tpdu = data;
+
+		/* perform deactivation */
+		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
+		cs->icc_powered = false;
+
+		/* failed comand */
+		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_FAILED, 0);
+		ccid_slot_send_unbusy(cs, resp);
+
 		cs->event = 0;
 		break;
 	case ISO7816_E_PPS_FAILED_IND:
 		tpdu = data;
+
+		/* perform deactivation */
+		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
+		cs->icc_powered = false;
+
 		/* failed fi/di */
 		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_FAILED, 10);
 		ccid_slot_send_unbusy(cs, resp);
-		/* this frees the pps req from the host, pps resp buffer stays with the pps fsm */
-		msgb_free(tpdu);
+
 		cs->event = 0;
 		break;
 	case 0:
@@ -310,6 +325,7 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 
 	LOGPCS(cs, LOGL_DEBUG, "scheduling TPDU transfer: %s\n", msgb_hexdump(msg));
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_TPDU_CMD, msg);
+	msgb_free(msg);
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
 	return 1;
 }
@@ -348,7 +364,7 @@ static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_
 				const struct ccid_pars_decoded *pars_dec)
 {
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
-	struct msgb *tpdu;
+	uint8_t PPS1 = (pars_dec->fi << 4 | pars_dec->di);
 
 	/* see 6.1.7 for error offsets */
 	if(proto != CCID_PROTOCOL_NUM_T0)
@@ -370,17 +386,10 @@ static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_
 	    -> we can't really do 4 stop bits?!
 	*/
 
-	/* Hardware does not support SPU, so no PPS2, and PPS3 is reserved anyway */
-	tpdu = msgb_alloc(6, "PPSRQ");
-	OSMO_ASSERT(tpdu);
-	msgb_put_u8(tpdu, 0xff);
-	msgb_put_u8(tpdu, (1 << 4)); /* only PPS1, T=0 */
-	msgb_put_u8(tpdu, (pars_dec->fi << 4 | pars_dec->di));
-	msgb_put_u8(tpdu, 0xff ^ (1 << 4) ^ (pars_dec->fi << 4 | pars_dec->di));
+	LOGPCS(cs, LOGL_DEBUG, "scheduling PPS transfer, PPS1: %2x\n", PPS1);
 
-
-	LOGPCS(cs, LOGL_DEBUG, "scheduling PPS transfer: %s\n", msgb_hexdump(tpdu));
-	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_PPS_CMD, tpdu);
+	/* pass PPS1 instead of msgb */
+	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_PPS_CMD, PPS1);
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
 	return 0;
 }

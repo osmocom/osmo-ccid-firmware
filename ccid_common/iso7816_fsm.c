@@ -33,6 +33,47 @@
 #include "cuart.h"
 #include "iso7816_fsm.h"
 
+/* unionize to ensure at least properly aligned msgb struct */
+#define DECLARE_STATIC_MSGB(name, size) \
+	struct msgb* name; \
+	union { \
+	struct msgb name ## dummy; \
+	unsigned char name ## _msgbuf[sizeof(struct msgb) + size]; \
+	};
+
+#define INIT_STATIC_MSGB(name) { \
+	name = (struct msgb*)name ## _msgbuf; \
+	memset(name, 0x00, sizeof(name ## _msgbuf)); \
+	name->data_len = sizeof(name ## _msgbuf) - sizeof(struct msgb); \
+	name->len = 0; \
+	name->data = name->_data; \
+	name->head = name->_data; \
+	name->tail = name->_data; \
+}
+
+#define COPY_TO_STATIC_MSGB(src, dst) { \
+	struct msgb *new_msg = dst; \
+	struct msgb *msg = src; \
+	 \
+	/* copy data */ \
+	memcpy(new_msg->_data, msg->_data, new_msg->data_len); \
+	 \
+	/* copy header */ \
+	new_msg->len = msg->len; \
+	new_msg->data += msg->data - msg->_data; \
+	new_msg->head += msg->head - msg->_data; \
+	new_msg->tail += msg->tail - msg->_data; \
+	 \
+	if (msg->l1h) \
+		new_msg->l1h = new_msg->_data + (msg->l1h - msg->_data); \
+	if (msg->l2h) \
+		new_msg->l2h = new_msg->_data + (msg->l2h - msg->_data); \
+	if (msg->l3h) \
+		new_msg->l3h = new_msg->_data + (msg->l3h - msg->_data); \
+	if (msg->l4h) \
+		new_msg->l4h = new_msg->_data + (msg->l4h - msg->_data); \
+	}
+
 /* Section 8.2: the Answer-to-Reset (... a string of at most 32 bytes) */
 #define MAX_ATR_SIZE 32
 
@@ -132,12 +173,25 @@ struct atr_fsm_priv {
 	uint8_t hist_len;	/*!< store the number of expected historical bytes */
 	uint8_t y;		/*!< last mask of the upcoming TA, TB, TC, TD interface bytes */
 	uint8_t i;		/*!< interface byte subgroup number */
-	struct msgb *atr;	/*!< ATR data */
+	DECLARE_STATIC_MSGB(atr, 33) /*!< ATR data */
 	uint8_t computed_checksum;
 	uint16_t protocol_support;
 };
 
+struct pps_fsm_priv {
+	DECLARE_STATIC_MSGB(tx_cmd, 6);
+	DECLARE_STATIC_MSGB(rx_cmd, 6);
+	uint8_t pps0_recv; /*!< contains flags so we know how many pps bytes follow */
+};
+
+struct tpdu_fsm_priv {
+	DECLARE_STATIC_MSGB(tpdu, 300);
+	bool is_command; /* is this a command TPDU (true) or a response (false) */
+};
+
 static struct atr_fsm_priv *get_atr_fsm_priv(struct osmo_fsm_inst *fi);
+static struct pps_fsm_priv *get_pps_fsm_priv(struct osmo_fsm_inst *fi);
+static struct tpdu_fsm_priv *get_tpdu_fsm_priv(struct osmo_fsm_inst *fi);
 
 /***********************************************************************
  * ISO7816-3 Main FSM
@@ -257,6 +311,7 @@ static void iso7816_3_reset_action(struct osmo_fsm_inst *fi, uint32_t event, voi
 		break;
 	case ISO7816_E_POWER_UP_IND:
 		break;
+	case ISO7816_E_PPS_UNSUPPORTED_IND:
 	case ISO7816_E_PPS_FAILED_IND:
 		msg = data;
 		/* notify user about PPS result */
@@ -285,10 +340,6 @@ static void iso7816_3_wait_atr_action(struct osmo_fsm_inst *fi, uint32_t event, 
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_IN_ATR, 0, 0);
 		osmo_fsm_inst_dispatch(ip->atr_fi, event, data);
 		break;
-	case ISO7816_E_WTIME_EXP:
-		ip->user_cb(fi, event, 0, NULL);
-		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
-		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -297,26 +348,18 @@ static void iso7816_3_wait_atr_action(struct osmo_fsm_inst *fi, uint32_t event, 
 static void iso7816_3_in_atr_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
-	struct msgb *atr;
+	struct msgb *atr = data;
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 
 	switch (event) {
 	case ISO7816_E_RX_SINGLE:
 	case ISO7816_E_RX_ERR_IND:
-	case ISO7816_E_WTIME_EXP:
 		/* simply pass this through to the child FSM for the ATR */
 		osmo_fsm_inst_dispatch(ip->atr_fi, event, data);
 		break;
 	case ISO7816_E_ATR_DONE_IND:
-		atr = data;
 		/* FIXME: verify ATR result: success / failure */
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_TPDU, 0, 0);
-		/* notify user about ATR */
-		ip->user_cb(fi, event, 0, atr);
-		break;
-	case ISO7816_E_ATR_ERR_IND:
-		atr = data;
-		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
 		ip->user_cb(fi, event, 0, atr);
 		break;
 	default:
@@ -368,7 +411,7 @@ static void iso7816_3_in_tpdu_action(struct osmo_fsm_inst *fi, uint32_t event, v
 	case ISO7816_E_RX_ERR_IND:
 	case ISO7816_E_TX_COMPL:
 	case ISO7816_E_TX_ERR_IND:
-		/* simply pass this through to the child FSM for the ATR */
+		/* simply pass this through to the child FSM for the TPDU */
 		osmo_fsm_inst_dispatch(ip->tpdu_fi, event, data);
 		break;
 	case ISO7816_E_TPDU_DONE_IND:
@@ -376,10 +419,6 @@ static void iso7816_3_in_tpdu_action(struct osmo_fsm_inst *fi, uint32_t event, v
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_TPDU, 0, 0);
 		/* hand finished TPDU to user */
 		ip->user_cb(fi, event, 0, apdu);
-		break;
-	case ISO7816_E_WTIME_EXP:
-		/* FIXME: power off? */
-		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -391,6 +430,8 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
 	struct atr_fsm_priv *atp = get_atr_fsm_priv(ip->atr_fi);
+	struct pps_fsm_priv *ppp = get_pps_fsm_priv(ip->pps_fi);
+	struct tpdu_fsm_priv *tpdup = get_tpdu_fsm_priv(ip->tpdu_fi);
 
 	switch (event) {
 	case ISO7816_E_HW_ERR_IND:
@@ -398,6 +439,13 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 		/* FIXME: power off? */
 		if(fi->state == ISO7816_S_WAIT_ATR || fi->state == ISO7816_S_IN_ATR)
 			ip->user_cb(fi, ISO7816_E_ATR_ERR_IND, 0, atp->atr);
+
+		if(fi->state == ISO7816_S_WAIT_PPS_RSP || fi->state == ISO7816_S_IN_PPS_RSP)
+			ip->user_cb(fi, ISO7816_E_PPS_FAILED_IND, 0, ppp->tx_cmd);
+
+		if(fi->state == ISO7816_S_WAIT_TPDU || fi->state == ISO7816_S_IN_TPDU)
+			ip->user_cb(fi, ISO7816_E_TPDU_FAILED_IND, 0, tpdup->tpdu);
+
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
 		break;
 	case ISO7816_E_POWER_DN_IND:
@@ -406,6 +454,24 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 		break;
 	case ISO7816_E_ABORT_REQ:
 		/* FIXME */
+		break;
+	case ISO7816_E_WTIME_EXP:
+		if(fi->state == ISO7816_S_WAIT_ATR || fi->state == ISO7816_S_IN_ATR) {
+			/* atr timeout instead of tck might be fine */
+			osmo_fsm_inst_dispatch(ip->atr_fi, event, data);
+			break;
+		}
+		if(fi->state == ISO7816_S_WAIT_PPS_RSP || fi->state == ISO7816_S_IN_PPS_RSP)
+			ip->user_cb(fi, ISO7816_E_PPS_FAILED_IND, 0, ppp->tx_cmd);
+
+		if(fi->state == ISO7816_S_WAIT_TPDU || fi->state == ISO7816_S_IN_TPDU)
+			ip->user_cb(fi, ISO7816_E_TPDU_FAILED_IND, 0, tpdup->tpdu);
+
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
+		break;
+	case ISO7816_E_ATR_ERR_IND:
+		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
+		ip->user_cb(fi, event, 0, atp->atr);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -434,25 +500,28 @@ static void iso7816_3_s_wait_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t e
 static void iso7816_3_s_ins_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
-	struct msgb *ppsrsp;
+	struct msgb *ppsrsp = data;
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 
 	switch (event) {
+	/* --v-- events from outside --v-- */
 	case ISO7816_E_RX_SINGLE:
-	case ISO7816_E_WTIME_EXP:
-		/* simply pass this through to the child FSM for the ATR */
+		/* simply pass this through to the child FSM for the PPS */
 		osmo_fsm_inst_dispatch(ip->pps_fi, event, data);
 		break;
+
+	/* --v-- events from childf fsm --v-- */
 	case ISO7816_E_PPS_DONE_IND:
-	case ISO7816_E_PPS_FAILED_IND:
-		ppsrsp = data;
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_WAIT_TPDU, 0, 0);
 		/* notify user about PPS result */
 		ip->user_cb(fi, event, 0, ppsrsp);
 		break;
+	case ISO7816_E_PPS_UNSUPPORTED_IND:
+	case ISO7816_E_PPS_FAILED_IND:
 	case ISO7816_E_RX_ERR_IND:
-		ppsrsp = data;
+		/* error cases lead to slot reset */
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
+		/* notify user about PPS result */
 		ip->user_cb(fi, event, 0, ppsrsp);
 		break;
 	default:
@@ -466,6 +535,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 		.in_event_mask =	S(ISO7816_E_RESET_REL_IND) |
 							S(ISO7816_E_POWER_UP_IND) |
 							S(ISO7816_E_PPS_FAILED_IND)|
+							S(ISO7816_E_PPS_UNSUPPORTED_IND)|
 							S(ISO7816_E_TPDU_FAILED_IND),
 		.out_state_mask =	S(ISO7816_S_WAIT_ATR) |
 					S(ISO7816_S_RESET),
@@ -474,8 +544,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 	},
 	[ISO7816_S_WAIT_ATR] = {
 		.name = "WAIT_ATR",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
-					S(ISO7816_E_WTIME_EXP),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_IN_ATR),
 		.action = iso7816_3_wait_atr_action,
@@ -484,9 +553,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 		.name = "IN_ATR",
 		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
 					S(ISO7816_E_RX_ERR_IND) |
-					S(ISO7816_E_ATR_DONE_IND) |
-					S(ISO7816_E_ATR_ERR_IND) |
-					S(ISO7816_E_WTIME_EXP),
+					S(ISO7816_E_ATR_DONE_IND),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_IN_ATR) |
 					S(ISO7816_S_WAIT_TPDU),
@@ -510,8 +577,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 					S(ISO7816_E_TX_COMPL) |
 					S(ISO7816_E_RX_ERR_IND) |
 					S(ISO7816_E_TX_ERR_IND) |
-					S(ISO7816_E_TPDU_DONE_IND) |
-					S(ISO7816_E_WTIME_EXP),
+					S(ISO7816_E_TPDU_DONE_IND),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_TPDU),
@@ -521,7 +587,6 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 		.name = "WAIT_PPS_RESP",
 		.in_event_mask =	S(ISO7816_E_TX_COMPL) |
 					S(ISO7816_E_TX_ERR_IND) |
-					S(ISO7816_E_WTIME_EXP) |
 					S(ISO7816_E_RX_SINGLE),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
@@ -536,7 +601,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 					S(ISO7816_E_RX_ERR_IND) |
 					S(ISO7816_E_PPS_DONE_IND) |
 					S(ISO7816_E_PPS_FAILED_IND) |
-					S(ISO7816_E_WTIME_EXP),
+					S(ISO7816_E_PPS_UNSUPPORTED_IND),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_PPS_RSP),
@@ -554,7 +619,9 @@ static struct osmo_fsm iso7816_3_fsm = {
 				S(ISO7816_E_POWER_DN_IND) |
 				S(ISO7816_E_RESET_ACT_IND) |
 				S(ISO7816_E_HW_ERR_IND) |
-				S(ISO7816_E_ABORT_REQ),
+				S(ISO7816_E_ABORT_REQ) |
+				S(ISO7816_E_WTIME_EXP) |
+				S(ISO7816_E_ATR_ERR_IND),
 };
 
 /***********************************************************************
@@ -617,10 +684,12 @@ static void atr_wait_ts_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
 	atp->hist_len = 0;
 	atp->y = 0;
 	atp->i = 0;
-	if (!atp->atr)
-		atp->atr = msgb_alloc_c(fi, 33, "ATR"); /* TS + 32 chars */
-	else
-		msgb_reset(atp->atr);
+
+	/* might be used by cb later, but this is fine - error means broken, no one cares about a half-received atr
+	 * in the error repsonse anyway, next state after atr is wait tpdu, not reset, unless error, so we should
+	 * not end up here during normal operation.
+	 */
+	msgb_reset(atp->atr);
 	atp->computed_checksum = 0;
 	atp->protocol_support = 0;
 }
@@ -764,16 +833,16 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		break;
 	case ISO7816_E_WTIME_EXP:
 		switch (fi->state) {
-		case ATR_S_WAIT_HIST:
-		case ATR_S_WAIT_TCK:
-			/* Some cards have an ATR with long indication of historical bytes */
-			/* FIXME: should we check the checksum? */
-			osmo_fsm_inst_state_chg(fi, ATR_S_DONE, 0, 0);
-			osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_DONE_IND, atp->atr);
-			break;
-		default:
-			osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, NULL);
-			break;
+			case ATR_S_WAIT_HIST:
+			case ATR_S_WAIT_TCK:
+				/* Some cards have an ATR with long indication of historical bytes */
+				/* FIXME: should we check the checksum? */
+				osmo_fsm_inst_state_chg(fi, ATR_S_DONE, 0, 0);
+				osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_DONE_IND, atp->atr);
+				break;
+			default:
+				osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, NULL);
+				break;
 		}
 		break;
 	default:
@@ -900,43 +969,41 @@ static struct osmo_fsm atr_fsm = {
 /***********************************************************************
  * PPS FSM
  ***********************************************************************/
-struct pps_fsm_priv {
-	struct msgb* tx_cmd;
-	struct msgb* rx_cmd;
-	uint8_t pps0_recv;
-};
 
-static void pps_s_pps_req_init_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
+/* type-safe method to obtain pps_fsm_priv from fi */
+static struct pps_fsm_priv *get_pps_fsm_priv(struct osmo_fsm_inst *fi)
 {
-	struct pps_fsm_priv *atp = fi->priv;
-
-	if (!atp->rx_cmd)
-		atp->rx_cmd = msgb_alloc_c(fi, 6, "PPSRSP"); /* at most 6 */
-	else
-		msgb_reset(atp->rx_cmd);
-
-	/* notify in case card got pulled out */
-	if (atp->tx_cmd && old_state != PPS_S_DONE){
-		osmo_fsm_inst_dispatch(fi->proc.parent,
-				ISO7816_E_PPS_FAILED_IND, atp->tx_cmd);
-		atp->tx_cmd = 0;
-	}
+	OSMO_ASSERT(fi);
+	OSMO_ASSERT(fi->fsm == &pps_fsm);
+	return (struct pps_fsm_priv *) fi->priv;
 }
 
 static void pps_s_pps_req_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	struct pps_fsm_priv *atp = fi->priv;
+	struct pps_fsm_priv *atp = get_pps_fsm_priv(fi);
 	struct osmo_fsm_inst *parent_fi = fi->proc.parent;
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
+	struct msgb* pps_to_transmit = atp->tx_cmd;
 
-	/* keep the buffer to compare it with the received response */
-	atp->tx_cmd = data;
+	/* data passed is PPS1, not msgb ptr! */
+	uint8_t PPS1 = (uint8_t)data;
 
 	switch (event) {
 	case ISO7816_E_XCEIVE_PPS_CMD:
+
+		/* buf might be required for cb until we end up here */
+		msgb_reset(atp->rx_cmd);
+		msgb_reset(atp->tx_cmd);
+
+		/* Hardware does not support SPU, so no PPS2, and PPS3 is reserved anyway */
+		msgb_put_u8(pps_to_transmit, 0xff);
+		msgb_put_u8(pps_to_transmit, (1 << 4)); /* only PPS1, T=0 */
+		msgb_put_u8(pps_to_transmit, PPS1);
+		msgb_put_u8(pps_to_transmit, 0xff ^ (1 << 4) ^ PPS1);
+
 		osmo_fsm_inst_state_chg(fi, PPS_S_TX_PPS_REQ, 0, 0);
 		card_uart_set_rx_threshold(ip->uart, 1);
-		card_uart_tx(ip->uart, msgb_data(data), msgb_length(data), true);
+		card_uart_tx(ip->uart, msgb_data(pps_to_transmit), msgb_length(pps_to_transmit), true);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -957,9 +1024,6 @@ static void pps_s_tx_pps_req_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 		OSMO_ASSERT(0);
 	}
 }
-
-
-
 
 static void pps_wait_pX_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
@@ -1020,29 +1084,18 @@ static void pps_wait_pX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 
 				osmo_fsm_inst_state_chg(fi, PPS_S_DONE, 0, 0);
 
-				/* pps was successful if response equals request
-				 * rx buffer stays with the fsm, tx buffer gets handed back and freed
-				 * by the cb */
+				/* pps was successful if response equals request */
 				if (msgb_length(atp->rx_cmd) == msgb_length(atp->tx_cmd) &&
 					!memcmp(pps_received, pps_sent, msgb_length(atp->rx_cmd))) {
-					osmo_fsm_inst_dispatch(fi->proc.parent,
-							ISO7816_E_PPS_DONE_IND, atp->tx_cmd);
+					osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_PPS_DONE_IND, atp->tx_cmd);
 				} else {
-					osmo_fsm_inst_dispatch(fi->proc.parent,
-							ISO7816_E_PPS_FAILED_IND, atp->tx_cmd);
+					osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_PPS_FAILED_IND, atp->tx_cmd);
 				}
-				/* ownership transfer */
-				atp->tx_cmd = 0;
 			}
 			break;
 		default:
 			OSMO_ASSERT(0);
 		}
-		break;
-	case ISO7816_E_WTIME_EXP:
-		osmo_fsm_inst_state_chg(fi, PPS_S_DONE, 0, 0);
-		/* FIXME: timeout handling if no pps supported ? */
-		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_RX_ERR_IND, NULL);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -1062,12 +1115,10 @@ static void pps_s_done_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
 static const struct osmo_fsm_state pps_states[] = {
 	[PPS_S_PPS_REQ_INIT] = {
 		.name = "INIT",
-		.in_event_mask =	S(ISO7816_E_XCEIVE_PPS_CMD) |
-							S(ISO7816_E_WTIME_EXP),
+		.in_event_mask =	S(ISO7816_E_XCEIVE_PPS_CMD),
 		.out_state_mask =	S(PPS_S_PPS_REQ_INIT) |
 							S(PPS_S_TX_PPS_REQ),
 		.action = pps_s_pps_req_init_action,
-		.onenter = pps_s_pps_req_init_onenter,
 	},
 	[PPS_S_TX_PPS_REQ] = {
 		.name = "TX_PPS_REQ",
@@ -1077,51 +1128,57 @@ static const struct osmo_fsm_state pps_states[] = {
 	},
 	[PPS_S_WAIT_PPSX] = {
 		.name = "WAIT_PPSS",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
-							S(ISO7816_E_WTIME_EXP),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
 		.out_state_mask =	S(PPS_S_WAIT_PPS0) |
-							S(PPS_S_WAIT_PPSX),
+							S(PPS_S_WAIT_PPSX) |
+							S(PPS_S_PPS_REQ_INIT) |
+							S(PPS_S_DONE),
 		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS0] = {
 		.name = "WAIT_PPS0",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
-							S(ISO7816_E_WTIME_EXP),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
 		.out_state_mask =	S(PPS_S_WAIT_PPS1) |
 							S(PPS_S_WAIT_PPS2) |
 							S(PPS_S_WAIT_PPS3) |
-							S(PPS_S_WAIT_PCK),
+							S(PPS_S_WAIT_PCK) |
+							S(PPS_S_PPS_REQ_INIT) |
+							S(PPS_S_DONE),
 		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS1] = {
 		.name = "WAIT_PPS1",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
-							S(ISO7816_E_WTIME_EXP),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
 		.out_state_mask =	S(PPS_S_WAIT_PPS2) |
 							S(PPS_S_WAIT_PPS3) |
-							S(PPS_S_WAIT_PCK),
+							S(PPS_S_WAIT_PCK) |
+							S(PPS_S_PPS_REQ_INIT) |
+							S(PPS_S_DONE),
 		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS2] = {
 		.name = "WAIT_PPS2",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
-							S(ISO7816_E_WTIME_EXP),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
 		.out_state_mask =	S(PPS_S_WAIT_PPS3) |
-							S(PPS_S_WAIT_PCK),
+							S(PPS_S_WAIT_PCK) |
+							S(PPS_S_PPS_REQ_INIT) |
+							S(PPS_S_DONE),
 		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PPS3] = {
 		.name = "WAIT_PPS3",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
-							S(ISO7816_E_WTIME_EXP),
-		.out_state_mask =	S(PPS_S_WAIT_PCK),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.out_state_mask =	S(PPS_S_WAIT_PCK) |
+							S(PPS_S_PPS_REQ_INIT) |
+							S(PPS_S_DONE),
 		.action = pps_wait_pX_action,
 	},
 	[PPS_S_WAIT_PCK] = {
 		.name = "WAIT_PCK",
-		.in_event_mask =	S(ISO7816_E_RX_SINGLE) |
-							S(ISO7816_E_WTIME_EXP),
-		.out_state_mask =	S(PPS_S_DONE),
+		.in_event_mask =	S(ISO7816_E_RX_SINGLE),
+		.out_state_mask =	S(PPS_S_DONE) |
+							S(PPS_S_PPS_REQ_INIT) |
+							S(PPS_S_DONE),
 		.action = pps_wait_pX_action,
 	},
 	[PPS_S_DONE] = {
@@ -1158,28 +1215,12 @@ static inline struct osim_apdu_cmd_hdr *msgb_tpdu_hdr(struct msgb *msg) {
 	return (struct osim_apdu_cmd_hdr *) msgb_data(msg);
 }
 
-struct tpdu_fsm_priv {
-	struct msgb *tpdu;
-	bool is_command; /* is this a command TPDU (true) or a response (false) */
-};
-
 /* type-safe method to obtain iso7816_3_priv from fi */
 static struct tpdu_fsm_priv *get_tpdu_fsm_priv(struct osmo_fsm_inst *fi)
 {
 	OSMO_ASSERT(fi);
 	OSMO_ASSERT(fi->fsm == &tpdu_fsm);
 	return (struct tpdu_fsm_priv *) fi->priv;
-}
-
-static void tpdu_s_init_onenter(struct osmo_fsm_inst *fi, uint32_t old_state)
-{
-	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);
-
-	/* notify in case card got pulled out */
-	if (tfp->tpdu && old_state != TPDU_S_DONE){
-		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_TPDU_FAILED_IND, tfp->tpdu);
-		tfp->tpdu = 0;
-	}
 }
 
 static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -1191,8 +1232,12 @@ static void tpdu_s_init_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 
 	switch (event) {
 	case ISO7816_E_XCEIVE_TPDU_CMD:
+
+		/* buf might be required for cb until we end up here */
+		msgb_reset(tfp->tpdu);
+		COPY_TO_STATIC_MSGB(data, tfp->tpdu);
+
 		/* start transmission of a TPDU by sending the 5-byte header */
-		tfp->tpdu = (struct msgb *)data;
 		OSMO_ASSERT(msgb_length(tfp->tpdu) >= sizeof(*tpduh));
 		/* l2h = after the 5byte header */
 		tfp->tpdu->l2h = msgb_data(tfp->tpdu) + sizeof(*tpduh);
@@ -1455,8 +1500,6 @@ static void tpdu_s_sw2_action(struct osmo_fsm_inst *fi, uint32_t event, void *da
 		/* Notify parent FSM */
 		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_TPDU_DONE_IND, tfp->tpdu);
 
-		/* ownership transfer */
-		tfp->tpdu = 0;
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -1497,7 +1540,6 @@ static const struct osmo_fsm_state tpdu_states[] = {
 		.out_state_mask = S(TPDU_S_INIT) |
 				  S(TPDU_S_TX_HDR),
 		.action = tpdu_s_init_action,
-		.onenter = tpdu_s_init_onenter,
 	},
 	[TPDU_S_TX_HDR] = {
 		.name = "TX_HDR",
@@ -1590,6 +1632,10 @@ struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id
 {
 	struct iso7816_3_priv *ip;
 	struct osmo_fsm_inst *fi;
+	struct atr_fsm_priv *atp;
+	struct pps_fsm_priv *ppsp;
+	struct tpdu_fsm_priv *tpdup;
+
 
 	fi = osmo_fsm_inst_alloc(&iso7816_3_fsm, ctx, NULL, log_level, id);
 	ip = talloc_zero(fi, struct iso7816_3_priv);
@@ -1611,6 +1657,9 @@ struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id
 	if (!ip->atr_fi->priv)
 		goto out_atr;
 
+	atp = get_atr_fsm_priv(ip->atr_fi);
+	INIT_STATIC_MSGB(atp->atr);
+
 	ip->tpdu_fi = osmo_fsm_inst_alloc_child(&tpdu_fsm, fi, ISO7816_E_SW_ERR_IND);
 	if (!ip->tpdu_fi)
 		goto out_atr;
@@ -1618,14 +1667,20 @@ struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id
 	if (!ip->tpdu_fi->priv)
 		goto out_tpdu;
 
-#if 1
+	tpdup = get_tpdu_fsm_priv(ip->tpdu_fi);
+	INIT_STATIC_MSGB(tpdup->tpdu);
+
 	ip->pps_fi = osmo_fsm_inst_alloc_child(&pps_fsm, fi, ISO7816_E_SW_ERR_IND);
 	if (!ip->pps_fi)
 		goto out_tpdu;
 	ip->pps_fi->priv = talloc_zero(ip->pps_fi, struct pps_fsm_priv);
 	if (!ip->pps_fi->priv)
 		goto out_pps;
-#endif
+
+	ppsp = get_pps_fsm_priv(ip->pps_fi);
+	INIT_STATIC_MSGB(ppsp->rx_cmd);
+	INIT_STATIC_MSGB(ppsp->tx_cmd);
+
 
 	/* This ensures the 'onenter' function of the initial state is called */
 	osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
