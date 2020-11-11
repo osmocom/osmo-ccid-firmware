@@ -159,6 +159,19 @@ static const double sercom_glck_freqs[] = {100E6 / CONF_GCLK_GEN_2_DIV, 100E6 / 
  */
 static const uint8_t SIM_peripheral_GCLK_ID[] = {SERCOM0_GCLK_ID_CORE, SERCOM1_GCLK_ID_CORE, SERCOM2_GCLK_ID_CORE, SERCOM3_GCLK_ID_CORE, SERCOM4_GCLK_ID_CORE, SERCOM5_GCLK_ID_CORE, SERCOM6_GCLK_ID_CORE, SERCOM7_GCLK_ID_CORE};
 
+/** inverted signalling as per 7816-3 : inverted bit, inverted bit order
+ */
+static void set_inverted_signalling(void* hw, bool on) {
+
+	hri_sercomusart_clear_CTRLA_ENABLE_bit(hw);
+
+	hri_sercomusart_write_CTRLA_DORD_bit(hw, !on); // inverted == msb first
+	hri_sercomusart_write_CTRLA_TXINV_bit(hw, on);
+	hri_sercomusart_write_CTRLA_RXINV_bit(hw, on);
+	hri_sercomusart_write_CTRLB_PMODE_bit(hw, on); // inverted == even parity
+
+	hri_sercomusart_set_CTRLA_ENABLE_bit(hw);
+}
 
 /** change baud rate of card slot
  *  @param[in] slotnr slot number for which the baud rate should be set
@@ -237,6 +250,7 @@ static bool slot_set_baudrate(struct card_uart *cuart, uint32_t baudrate)
 static bool slot_set_isorate(struct card_uart *cuart, enum ncn8025_sim_clkdiv clkdiv, uint16_t f, uint8_t d)
 {
 	uint8_t slotnr = cuart->u.asf4.slot_nr;
+	struct usart_async_descriptor* slot = SIM_peripheral_descriptors[slotnr];
 
 	// input checks
 	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
@@ -274,6 +288,12 @@ static bool slot_set_isorate(struct card_uart *cuart, enum ncn8025_sim_clkdiv cl
 		freq /= 8;
 		break;
 	}
+
+	/* error interrupt off after reset due to possbile inverted atr and accompanying parity error
+	 * this was automatically enabled during error callback registration */
+	hri_sercomusart_write_INTEN_ERROR_bit(slot->device.hw, 0);
+
+	set_inverted_signalling(slot->device.hw, false);
 
 	// set baud rate
 	uint32_t baudrate = (freq * d) / f; // calculate actual baud rate
@@ -434,6 +454,15 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 	case CUART_CTL_GET_CLOCK_FREQ:
 		ncn8025_get(cuart->u.asf4.slot_nr, &settings);
 		return 20e6 / ncn8025_div_val[settings.clkdiv];
+		break;
+	case CUART_CTL_ERROR_AND_INV:
+		set_inverted_signalling(sercom, arg);
+
+		/* clear pending errors that happened while the interrupt was off (ATR) and enable it*/
+		hri_sercomusart_clear_interrupt_ERROR_bit(sercom);
+		hri_sercomusart_clear_STATUS_reg(sercom, 0xff);
+		volatile uint8_t dummy = hri_sercomusart_read_RXERRCNT_reg(sercom);
+		hri_sercomusart_set_INTEN_ERROR_bit(sercom);
 		break;
 	default:
 		return 0;

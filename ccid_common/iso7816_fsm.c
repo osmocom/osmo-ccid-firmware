@@ -639,6 +639,15 @@ static uint8_t get_rx_byte_evt(struct osmo_fsm_inst *fi, void *data)
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
 	uint8_t byte = *(uint8_t *)data;
 
+	return byte;
+}
+
+/* obtain the 'byte' (possbily inverted) parameter of an ISO7816_E_RX event */
+static uint8_t get_atr_rx_byte_evt(struct osmo_fsm_inst *fi, void *data)
+{
+	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
+	uint8_t byte = *(uint8_t *)data;
+
 	/* apply inverse convention */
 	if (ip->convention_convert)
 		byte = convention_convert_lut[byte];
@@ -689,14 +698,14 @@ static void atr_wait_ts_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 	case ISO7816_E_RX_SINGLE:
 		OSMO_ASSERT(msgb_length(atp->atr) == 0);
 restart:
-		byte = get_rx_byte_evt(parent_fi, data);
+		byte = get_atr_rx_byte_evt(parent_fi, data);
 		LOGPFSML(fi, LOGL_DEBUG, "RX byte '%02x'\n", byte);
 		switch (byte) {
 		case 0x23:
 			/* direct convention used, but decoded using inverse
 			 * convention (a parity error should also have occurred) */
 			/* fall-through */
-		case 0x30:
+		case 0x03:
 			/* inverse convention used, but decoded using direct
 			 * convention (a parity error should also have occurred) */
 			ip->convention_convert = !ip->convention_convert;
@@ -732,7 +741,7 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 
 	switch (event) {
 	case ISO7816_E_RX_SINGLE:
-		byte = get_rx_byte_evt(fi->proc.parent, data);
+		byte = get_atr_rx_byte_evt(fi->proc.parent, data);
 		LOGPFSML(fi, LOGL_DEBUG, "RX byte '%02x'\n", byte);
 		atr_append_byte(fi, byte);
 		switch (fi->state) {

@@ -54,6 +54,7 @@ enum card_uart_ctl {
 	CUART_CTL_SET_FD,
 	CUART_CTL_GET_BAUDRATE,
 	CUART_CTL_GET_CLOCK_FREQ,
+	CUART_CTL_ERROR_AND_INV, /* enable error interrupt and maybe inverse signalling according to arg */
 };
 
 struct card_uart;

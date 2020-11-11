@@ -204,10 +204,16 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		break;
 	case ISO7816_E_ATR_DONE_IND:
 		tpdu = data;
-		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
-			msgb_hexdump(tpdu));
-		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0,
-					   msgb_data(tpdu), msgb_length(tpdu));
+
+		/* inverse condition, error interrupt is always disabled during atr and reenabled here after atr */
+		if(*msgb_data(tpdu) == 0x3f) {
+			card_uart_ctrl(ss->cuart, CUART_CTL_ERROR_AND_INV, true);
+		} else {
+			card_uart_ctrl(ss->cuart, CUART_CTL_ERROR_AND_INV, false);
+		}
+
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event, msgb_hexdump(tpdu));
+		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_OK, 0, msgb_data(tpdu), msgb_length(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
 		cs->event = 0;
 		break;
