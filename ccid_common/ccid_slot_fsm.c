@@ -265,19 +265,12 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		cs->event = 0;
 		break;
 	case ISO7816_E_PPS_UNSUPPORTED_IND:
-		tpdu = data;
-
-		/* perform deactivation */
-		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
-		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
-		cs->icc_powered = false;
-
-		/* failed comand */
-		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_FAILED, 0);
-		ccid_slot_send_unbusy(cs, resp);
-
-		cs->event = 0;
-		break;
+	/* unsupported means no response, failed means request/response mismatch
+	 * yet both lead to a deactivation, and the host always gets a fi/di error
+	 * 10 "FI - DI pair invalid or not supported" since that part of the
+	 * ccid setparameters is handled by the pps exchange
+	 */
+		/* fall-through */
 	case ISO7816_E_PPS_FAILED_IND:
 		tpdu = data;
 
@@ -389,7 +382,7 @@ static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_
 	LOGPCS(cs, LOGL_DEBUG, "scheduling PPS transfer, PPS1: %2x\n", PPS1);
 
 	/* pass PPS1 instead of msgb */
-	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_PPS_CMD, PPS1);
+	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_PPS_CMD, (void*)PPS1);
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
 	return 0;
 }

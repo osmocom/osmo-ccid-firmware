@@ -311,17 +311,6 @@ static void iso7816_3_reset_action(struct osmo_fsm_inst *fi, uint32_t event, voi
 		break;
 	case ISO7816_E_POWER_UP_IND:
 		break;
-	case ISO7816_E_PPS_UNSUPPORTED_IND:
-	case ISO7816_E_PPS_FAILED_IND:
-		msg = data;
-		/* notify user about PPS result */
-		ip->user_cb(fi, event, 0, msg);
-		break;
-	case ISO7816_E_TPDU_FAILED_IND:
-		msg = data;
-		/* hand finished TPDU to user */
-		ip->user_cb(fi, event, 0, msg);
-		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -441,7 +430,7 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 			ip->user_cb(fi, ISO7816_E_ATR_ERR_IND, 0, atp->atr);
 
 		if(fi->state == ISO7816_S_WAIT_PPS_RSP || fi->state == ISO7816_S_IN_PPS_RSP)
-			ip->user_cb(fi, ISO7816_E_PPS_FAILED_IND, 0, ppp->tx_cmd);
+			ip->user_cb(fi, ISO7816_E_PPS_UNSUPPORTED_IND, 0, ppp->tx_cmd);
 
 		if(fi->state == ISO7816_S_WAIT_TPDU || fi->state == ISO7816_S_IN_TPDU)
 			ip->user_cb(fi, ISO7816_E_TPDU_FAILED_IND, 0, tpdup->tpdu);
@@ -462,7 +451,7 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 			break;
 		}
 		if(fi->state == ISO7816_S_WAIT_PPS_RSP || fi->state == ISO7816_S_IN_PPS_RSP)
-			ip->user_cb(fi, ISO7816_E_PPS_FAILED_IND, 0, ppp->tx_cmd);
+			ip->user_cb(fi, ISO7816_E_PPS_UNSUPPORTED_IND, 0, ppp->tx_cmd);
 
 		if(fi->state == ISO7816_S_WAIT_TPDU || fi->state == ISO7816_S_IN_TPDU)
 			ip->user_cb(fi, ISO7816_E_TPDU_FAILED_IND, 0, tpdup->tpdu);
@@ -516,7 +505,6 @@ static void iso7816_3_s_ins_pps_rsp_action(struct osmo_fsm_inst *fi, uint32_t ev
 		/* notify user about PPS result */
 		ip->user_cb(fi, event, 0, ppsrsp);
 		break;
-	case ISO7816_E_PPS_UNSUPPORTED_IND:
 	case ISO7816_E_PPS_FAILED_IND:
 	case ISO7816_E_RX_ERR_IND:
 		/* error cases lead to slot reset */
@@ -533,10 +521,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 	[ISO7816_S_RESET] = {
 		.name = "RESET",
 		.in_event_mask =	S(ISO7816_E_RESET_REL_IND) |
-							S(ISO7816_E_POWER_UP_IND) |
-							S(ISO7816_E_PPS_FAILED_IND)|
-							S(ISO7816_E_PPS_UNSUPPORTED_IND)|
-							S(ISO7816_E_TPDU_FAILED_IND),
+							S(ISO7816_E_POWER_UP_IND),
 		.out_state_mask =	S(ISO7816_S_WAIT_ATR) |
 					S(ISO7816_S_RESET),
 		.action = iso7816_3_reset_action,
@@ -600,8 +585,7 @@ static const struct osmo_fsm_state iso7816_3_states[] = {
 					S(ISO7816_E_RX_COMPL) |
 					S(ISO7816_E_RX_ERR_IND) |
 					S(ISO7816_E_PPS_DONE_IND) |
-					S(ISO7816_E_PPS_FAILED_IND) |
-					S(ISO7816_E_PPS_UNSUPPORTED_IND),
+					S(ISO7816_E_PPS_FAILED_IND),
 		.out_state_mask =	S(ISO7816_S_RESET) |
 					S(ISO7816_S_WAIT_TPDU) |
 					S(ISO7816_S_IN_PPS_RSP),
