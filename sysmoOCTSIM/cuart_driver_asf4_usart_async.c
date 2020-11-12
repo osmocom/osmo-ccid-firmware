@@ -56,11 +56,10 @@ static void _SIM_tx_cb(const struct usart_async_descriptor *const io_descr, uint
 #include <hpl_usart_sync.h>
 
 
-static void _SIM_error_cb(const struct usart_async_descriptor *const descr){
-	volatile uint32_t status = hri_sercomusart_read_STATUS_reg(descr->device.hw);
-	volatile uint32_t data = hri_sercomusart_read_DATA_reg(descr->device.hw);
-	volatile uint32_t errrs = hri_sercomusart_read_RXERRCNT_reg(descr->device.hw);
-	OSMO_ASSERT(0 == 1)
+static void _SIM_error_cb(const struct usart_async_descriptor *const io_descr, uint8_t slot_nr) {
+	struct card_uart *cuart = cuart4slot_nr(slot_nr);
+	OSMO_ASSERT(cuart);
+	card_uart_notification(cuart, CUART_E_HW_ERROR, 0);
 }
 
 /* the below ugli-ness is required as the usart_async_descriptor doesn't have
@@ -139,6 +138,44 @@ static usart_cb_t SIM_tx_cb[8] = {
 	SIM4_tx_cb, SIM5_tx_cb, SIM6_tx_cb, SIM7_tx_cb,
 };
 
+static void SIM0_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 0);
+}
+static void SIM1_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 1);
+}
+static void SIM2_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 2);
+}
+static void SIM3_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 3);
+}
+static void SIM4_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 4);
+}
+static void SIM5_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 5);
+}
+static void SIM6_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 6);
+}
+static void SIM7_error_cb(const struct usart_async_descriptor *const io_descr)
+{
+	_SIM_error_cb(io_descr, 7);
+}
+static usart_cb_t SIM_error_cb[8] = {
+	SIM0_error_cb, SIM1_error_cb, SIM2_error_cb, SIM3_error_cb,
+	SIM4_error_cb, SIM5_error_cb, SIM6_error_cb, SIM7_error_cb,
+};
+
+
 #include <math.h>
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
@@ -182,8 +219,13 @@ static void set_inverted_signalling(void* hw, bool on) {
 static bool slot_set_baudrate(struct card_uart *cuart, uint32_t baudrate)
 {
 	uint8_t slotnr = cuart->u.asf4.slot_nr;
-
+	struct usart_async_descriptor* slot = SIM_peripheral_descriptors[slotnr];
+	Sercom *sercom = cuart->u.asf4.usa_pd->device.hw;
 	ASSERT(slotnr < ARRAY_SIZE(SIM_peripheral_descriptors));
+
+	if (NULL == slot) {
+		return false;
+	}
 
 	// calculate the error corresponding to the clock sources
 	uint16_t bauds[ARRAY_SIZE(sercom_glck_freqs)];
@@ -218,11 +260,6 @@ static bool slot_set_baudrate(struct card_uart *cuart, uint32_t baudrate)
 		return false;
 	}
 
-	// set clock and baud rate
-	struct usart_async_descriptor* slot = SIM_peripheral_descriptors[slotnr]; // get slot
-	if (NULL == slot) {
-		return false;
-	}
 
 	// update cached values
 	cuart->u.asf4.current_baudrate = baudrate;
@@ -231,7 +268,7 @@ static bool slot_set_baudrate(struct card_uart *cuart, uint32_t baudrate)
 	printf("(%u) switching SERCOM clock to GCLK%u (freq = %lu kHz) and baud rate to %lu bps (baud = %u)\r\n", slotnr, (best + 1) * 2, (uint32_t)(round(sercom_glck_freqs[best] / 1000)), baudrate, bauds[best]);
 
 	/* only wait if the uart is enabled.... */
-	if (hri_sercomusart_get_CTRLA_reg(slot->device.hw, SERCOM_USART_CTRLA_ENABLE)) {
+	if (hri_sercomusart_get_CTRLA_reg(sercom, SERCOM_USART_CTRLA_ENABLE)) {
 		while (!usart_async_is_tx_empty(slot)); // wait for transmission to complete (WARNING no timeout)
 		usart_async_disable(slot); // disable SERCOM peripheral
 	}
@@ -241,6 +278,17 @@ static bool slot_set_baudrate(struct card_uart *cuart, uint32_t baudrate)
 	// it does not seem we need to completely disable the peripheral using hri_mclk_clear_APBDMASK_SERCOMn_bit
 	hri_gclk_write_PCHCTRL_reg(GCLK, SIM_peripheral_GCLK_ID[slotnr], sercom_glck_sources[best] | (1 << GCLK_PCHCTRL_CHEN_Pos)); // set peripheral core clock and re-enable it
 	usart_async_set_baud_rate(slot, bauds[best]); // set the new baud rate
+
+	/* clear pending errors that happened while
+	 * - the interrupt was off (inverse ATR? -> parity error)
+	 *  -- OR --
+	 * - the uart was disabled due to a hw error
+	 * and enable it*/
+	hri_sercomusart_clear_interrupt_ERROR_bit(sercom);
+	hri_sercomusart_clear_STATUS_reg(sercom, 0xff);
+	volatile uint8_t dummy = hri_sercomusart_read_RXERRCNT_reg(sercom);
+
+	usart_async_flush_rx_buffer(cuart->u.asf4.usa_pd);
 	usart_async_enable(slot); // re-enable SERCOM peripheral
 
 	return true;
@@ -330,7 +378,7 @@ static int asf4_usart_open(struct card_uart *cuart, const char *device_name)
 
 	usart_async_register_callback(usa_pd, USART_ASYNC_RXC_CB, SIM_rx_cb[slot_nr]);
 	usart_async_register_callback(usa_pd, USART_ASYNC_TXC_CB, SIM_tx_cb[slot_nr]);
-	usart_async_register_callback(usa_pd, USART_ASYNC_ERROR_CB, _SIM_error_cb);
+	usart_async_register_callback(usa_pd, USART_ASYNC_ERROR_CB, SIM_error_cb[slot_nr]);
 	usart_async_enable(usa_pd);
 
 	// set USART baud rate to match the interface (f = 2.5 MHz) and card default settings (Fd = 372, Dd = 1)
@@ -385,7 +433,13 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 
 	switch (ctl) {
 	case CUART_CTL_NO_RXTX:
-		/* no op */
+
+		/* immediately disables the uart, useful for hw errors (parity, colllision, ...)
+		 * uart is automatically re-enabled during slot_set_isorate which also clears the errors
+		 * when resetting the slot which happens automatically during error callback handling or powerup
+		 * so the uart usually does not stay disabled for a long time */
+		if (arg)
+			_usart_async_disable(&cuart->u.asf4.usa_pd->device);
 		break;
 	case CUART_CTL_RX:
 		if (arg){

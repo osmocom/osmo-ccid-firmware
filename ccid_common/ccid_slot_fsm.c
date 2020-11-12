@@ -147,12 +147,18 @@ static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *m
 	msgb_free(msg);
 	/* continues in iso_fsm_clot_user_cb once ATR is received */
 }
+
 static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause, void *data)
 {
 	struct iso_fsm_slot *ss = iso7816_fsm_get_user_priv(fi);
 	struct ccid_slot *cs = ss->cs;
 
 	switch (event) {
+	/* special case: not handled as a normal callback below, in case slot was busy the fsm will
+	 * additionally emit a proper error event handled below to notify the host */
+	case ISO7816_E_HW_ERR_IND:
+		card_uart_ctrl(ss->cuart, CUART_CTL_NO_RXTX, true);
+		break;
 	case ISO7816_E_ATR_DONE_IND:
 	case ISO7816_E_ATR_ERR_IND:
 	case ISO7816_E_TPDU_DONE_IND:
@@ -219,10 +225,14 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		break;
 	case ISO7816_E_ATR_ERR_IND:
 		tpdu = data;
-		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
-			msgb_hexdump(tpdu));
-		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE,
-					   msgb_data(tpdu), msgb_length(tpdu));
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event, msgb_hexdump(tpdu));
+
+		/* perform deactivation */
+		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
+		cs->icc_powered = false;
+
+		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE, msgb_data(tpdu), msgb_length(tpdu));
 		ccid_slot_send_unbusy(cs, resp);
 		cs->event = 0;
 		break;
@@ -237,8 +247,13 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		break;
 	case ISO7816_E_TPDU_FAILED_IND:
 		tpdu = data;
-		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event,
-			msgb_hexdump(tpdu));
+
+		/* perform deactivation */
+		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
+		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
+		cs->icc_powered = false;
+
+		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=%s)\n", __func__, event, msgb_hexdump(tpdu));
 		/* FIXME: other error causes than card removal?*/
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE, msgb_l2(tpdu), 0);
 		ccid_slot_send_unbusy(cs, resp);

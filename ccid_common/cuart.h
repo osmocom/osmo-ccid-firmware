@@ -36,6 +36,7 @@ enum card_uart_event {
 	CUART_E_RX_TIMEOUT,
 	/* an entire block of data was written, as instructed in prior card_uart_tx() call */
 	CUART_E_TX_COMPLETE,
+	CUART_E_HW_ERROR, /* might be uart parity or mystery error, might be something else */
 };
 
 extern const struct value_string card_uart_event_vals[];

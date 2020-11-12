@@ -276,6 +276,9 @@ static void tpdu_uart_notification(struct card_uart *cuart, enum card_uart_event
 	case CUART_E_TX_COMPLETE:
 		osmo_fsm_inst_dispatch(fi, ISO7816_E_TX_COMPL, data);
 		break;
+	case CUART_E_HW_ERROR:
+		osmo_fsm_inst_dispatch(fi, ISO7816_E_HW_ERR_IND, data);
+		break;
 	}
 }
 
@@ -361,7 +364,7 @@ static void iso7816_3_wait_tpdu_onenter(struct osmo_fsm_inst *fi, uint32_t prev_
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 	card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 0);
-	card_uart_ctrl(ip->uart, CUART_CTL_NO_RXTX, true);
+
 	/* reset the TPDU state machine */
 	osmo_fsm_inst_dispatch(ip->tpdu_fi, ISO7816_E_TPDU_CLEAR_REQ, NULL);
 }
@@ -424,6 +427,9 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 
 	switch (event) {
 	case ISO7816_E_HW_ERR_IND:
+		/* deactivates uart, then continues with the callbacks below for proper error reporting */
+		ip->user_cb(fi, ISO7816_E_HW_ERR_IND, 0, 0);
+		/* no break */
 	case ISO7816_E_CARD_REMOVAL:
 		/* FIXME: power off? */
 		if(fi->state == ISO7816_S_WAIT_ATR || fi->state == ISO7816_S_IN_ATR)
