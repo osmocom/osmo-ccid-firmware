@@ -5,6 +5,7 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/utils.h>
 
+#include <include/sam.h>
 #include <hal_usart_async.h>
 #include <utils_ringbuffer.h>
 #include "driver_init.h"
@@ -228,8 +229,13 @@ static bool slot_set_baudrate(struct card_uart *cuart, uint32_t baudrate)
 	cuart->u.asf4.extrawait_after_rx = 1./baudrate * 1000 * 1000;
 
 	printf("(%u) switching SERCOM clock to GCLK%u (freq = %lu kHz) and baud rate to %lu bps (baud = %u)\r\n", slotnr, (best + 1) * 2, (uint32_t)(round(sercom_glck_freqs[best] / 1000)), baudrate, bauds[best]);
-	while (!usart_async_is_tx_empty(slot)); // wait for transmission to complete (WARNING no timeout)
-	usart_async_disable(slot); // disable SERCOM peripheral
+
+	/* only wait if the uart is enabled.... */
+	if (hri_sercomusart_get_CTRLA_reg(slot->device.hw, SERCOM_USART_CTRLA_ENABLE)) {
+		while (!usart_async_is_tx_empty(slot)); // wait for transmission to complete (WARNING no timeout)
+		usart_async_disable(slot); // disable SERCOM peripheral
+	}
+
 	hri_gclk_clear_PCHCTRL_reg(GCLK, SIM_peripheral_GCLK_ID[slotnr], (1 << GCLK_PCHCTRL_CHEN_Pos)); // disable clock for this peripheral
 	while (hri_gclk_get_PCHCTRL_reg(GCLK, SIM_peripheral_GCLK_ID[slotnr], (1 << GCLK_PCHCTRL_CHEN_Pos))); // wait until clock is really disabled
 	// it does not seem we need to completely disable the peripheral using hri_mclk_clear_APBDMASK_SERCOMn_bit
