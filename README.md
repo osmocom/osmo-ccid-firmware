@@ -3,7 +3,7 @@ osmo-ccid-firmware - CCID implementation (not just) for firmware
 
 This repository contains a C-language implementation of the USB CCID
 (Smart Card Reader) device class.  The code is written in a portable
-fashin and can be found in the `ccid_common` sub-directory.
+fashion and can be found in the `ccid_common` sub-directory.
 
 The code can be built to run as an userspace program on Linux,
 implementing a USB Gadget using the FunctionFS interface.  For this
@@ -31,7 +31,7 @@ Contributing
 Our coding standards are described at
 <https://osmocom.org/projects/cellular-infrastructure/wiki/Coding_standards>
 
-We us a gerrit based patch submission/review process for managing
+We use a gerrit based patch submission/review process for managing
 contributions.  Please see
 <https://osmocom.org/projects/cellular-infrastructure/wiki/Gerrit> for
 more details
