@@ -438,7 +438,7 @@ static void iso7816_3_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, 
 		if(fi->state == ISO7816_S_WAIT_PPS_RSP || fi->state == ISO7816_S_IN_PPS_RSP)
 			ip->user_cb(fi, ISO7816_E_PPS_UNSUPPORTED_IND, 0, ppp->tx_cmd);
 
-		if(fi->state == ISO7816_S_WAIT_TPDU || fi->state == ISO7816_S_IN_TPDU)
+		if(fi->state == ISO7816_S_IN_TPDU)
 			ip->user_cb(fi, ISO7816_E_TPDU_FAILED_IND, 0, tpdup->tpdu);
 
 		osmo_fsm_inst_state_chg(fi, ISO7816_S_RESET, 0, 0);
