@@ -481,6 +481,12 @@ static int asf4_usart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int 
 		settings.vsel = v;
 		ncn8025_set(cuart->u.asf4.slot_nr, &settings);
 
+		/* we have to reset this somewhere, and powering down loses all state */
+		if (!arg) {
+			cuart->tx_busy = false;
+			cuart->wtime_etu = 9600; /* ISO 7816-3 Section 8.1 */
+		}
+
 		break;
 	case CUART_CTL_WTIME:
 		/* no driver-specific handling of this */
