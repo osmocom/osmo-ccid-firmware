@@ -296,7 +296,7 @@
 // <i> Indicates whether Bypass Coarse Lock is enabled or not
 // <id> dfll_arch_bplckc
 #ifndef CONF_DFLL_BPLCKC
-#define CONF_DFLL_BPLCKC 0
+#define CONF_DFLL_BPLCKC 1
 #endif
 
 // <q> Quick Lock Disable
@@ -324,7 +324,7 @@
 // <i> Indicates whether Stable DFLL Frequency is enabled or not
 // <id> dfll_arch_stable
 #ifndef CONF_DFLL_STABLE
-#define CONF_DFLL_STABLE 0
+#define CONF_DFLL_STABLE 1
 #endif
 
 // <o> Operating Mode Selection
@@ -344,7 +344,7 @@
 // <o> Fine Maximum Step <0x0-0xFF>
 // <id> dfll_arch_fstep
 #ifndef CONF_DFLL_FSTEP
-#define CONF_DFLL_FSTEP 0x1
+#define CONF_DFLL_FSTEP 0xA
 #endif
 
 // <o> DFLL Multiply Factor <0x0-0xFFFF>
