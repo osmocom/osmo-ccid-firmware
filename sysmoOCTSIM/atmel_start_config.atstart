@@ -663,10 +663,10 @@ drivers:
     functionality: System
     api: HAL:HPL:GCLK
     configuration:
-      $input: 100000000
-      $input_id: Digital Phase Locked Loop (DPLL1)
-      RESERVED_InputFreq: 100000000
-      RESERVED_InputFreq_id: Digital Phase Locked Loop (DPLL1)
+      $input: 32768
+      $input_id: 32kHz Ultra Low Power Internal Oscillator (OSCULP32K)
+      RESERVED_InputFreq: 32768
+      RESERVED_InputFreq_id: 32kHz Ultra Low Power Internal Oscillator (OSCULP32K)
       _$freq_output_Generic clock generator 0: 120000000
       _$freq_output_Generic clock generator 1: 48000000
       _$freq_output_Generic clock generator 10: 12000000
@@ -780,7 +780,7 @@ drivers:
       gclk_gen_2_oscillator: Digital Phase Locked Loop (DPLL1)
       gclk_gen_3_div: 1
       gclk_gen_3_div_sel: false
-      gclk_gen_3_oscillator: 32kHz External Crystal Oscillator (XOSC32K)
+      gclk_gen_3_oscillator: 32kHz Ultra Low Power Internal Oscillator (OSCULP32K)
       gclk_gen_4_div: 2
       gclk_gen_4_div_sel: false
       gclk_gen_4_oscillator: Digital Phase Locked Loop (DPLL1)
@@ -838,23 +838,23 @@ drivers:
     api: HAL:HPL:OSC32KCTRL
     configuration:
       $input: 32768
-      $input_id: 32kHz External Crystal Oscillator (XOSC32K)
+      $input_id: 32kHz Ultra Low Power Internal Oscillator (OSCULP32K)
       RESERVED_InputFreq: 32768
-      RESERVED_InputFreq_id: 32kHz External Crystal Oscillator (XOSC32K)
-      _$freq_output_RTC source: 32768
+      RESERVED_InputFreq_id: 32kHz Ultra Low Power Internal Oscillator (OSCULP32K)
+      _$freq_output_RTC source: 1024
       enable_osculp32k: true
       enable_rtc_source: false
-      enable_xosc32k: true
+      enable_xosc32k: false
       osculp32k_calib: 0
       osculp32k_calib_enable: false
-      rtc_1khz_selection: false
-      rtc_source_oscillator: 32kHz External Crystal Oscillator (XOSC32K)
+      rtc_1khz_selection: true
+      rtc_source_oscillator: 32kHz Ultra Low Power Internal Oscillator (OSCULP32K)
       xosc32k_arch_cfden: false
       xosc32k_arch_cfdeo: false
       xosc32k_arch_cgm: Standard mode
       xosc32k_arch_en1k: true
       xosc32k_arch_en32k: true
-      xosc32k_arch_enable: true
+      xosc32k_arch_enable: false
       xosc32k_arch_ondemand: false
       xosc32k_arch_runstdby: true
       xosc32k_arch_startup: 62592us

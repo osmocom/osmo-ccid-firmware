@@ -25,7 +25,7 @@
  * \brief RTC's Clock frequency
  */
 #ifndef CONF_GCLK_RTC_FREQUENCY
-#define CONF_GCLK_RTC_FREQUENCY 32768
+#define CONF_GCLK_RTC_FREQUENCY 1024
 #endif
 
 // <y> Core Clock Source
