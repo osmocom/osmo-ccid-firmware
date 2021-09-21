@@ -158,7 +158,7 @@
 // <0xF=>1000000us
 // <id> xosc1_arch_startup
 #ifndef CONF_XOSC1_STARTUP
-#define CONF_XOSC1_STARTUP 0
+#define CONF_XOSC1_STARTUP 0xB
 #endif
 
 // <q> Clock Switch Back
