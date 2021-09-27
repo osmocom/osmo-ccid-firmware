@@ -2,12 +2,17 @@ format_version: '2'
 name: sysmoOCTSIM
 versions:
   api: '1.0'
-  backend: 1.5.122
-  commit: 820baecf7dd115d94b0d42ee3b0b9d6ba2da7113
-  content: 1.0.1507
-  content_pack_name: acme-packs-all
+  backend: 1.8.580
+  commit: f3d8d96e294de8dee688333bbbe8d8458a4f6b4c
+  content: unknown
+  content_pack_name: unknown
   format: '2'
-  frontend: 1.5.1877
+  frontend: 1.8.580
+  packs_version_avr8: 1.0.1463
+  packs_version_qtouch: unknown
+  packs_version_sam: 1.0.1726
+  version_backend: 1.8.580
+  version_frontend: ''
 board:
   identifier: CustomBoard
   device: SAME54N19A-AF
@@ -658,18 +663,46 @@ drivers:
     functionality: System
     api: HAL:HPL:GCLK
     configuration:
+      $input: 100000000
+      $input_id: Digital Phase Locked Loop (DPLL1)
+      RESERVED_InputFreq: 100000000
+      RESERVED_InputFreq_id: Digital Phase Locked Loop (DPLL1)
+      _$freq_output_Generic clock generator 0: 120000000
+      _$freq_output_Generic clock generator 1: 48000000
+      _$freq_output_Generic clock generator 10: 12000000
+      _$freq_output_Generic clock generator 11: 2000000
+      _$freq_output_Generic clock generator 2: 12500000
+      _$freq_output_Generic clock generator 3: 32768
+      _$freq_output_Generic clock generator 4: 50000000
+      _$freq_output_Generic clock generator 5: 20000000
+      _$freq_output_Generic clock generator 6: 7058823.529411765
+      _$freq_output_Generic clock generator 7: 12000000
+      _$freq_output_Generic clock generator 8: 12000000
+      _$freq_output_Generic clock generator 9: 12000000
       enable_gclk_gen_0: true
+      enable_gclk_gen_0__externalclock: 1000000
       enable_gclk_gen_1: true
       enable_gclk_gen_10: false
-      enable_gclk_gen_11: true
+      enable_gclk_gen_10__externalclock: 1000000
+      enable_gclk_gen_11: false
+      enable_gclk_gen_11__externalclock: 1000000
+      enable_gclk_gen_1__externalclock: 1000000
       enable_gclk_gen_2: true
+      enable_gclk_gen_2__externalclock: 1000000
       enable_gclk_gen_3: true
+      enable_gclk_gen_3__externalclock: 1000000
       enable_gclk_gen_4: true
+      enable_gclk_gen_4__externalclock: 1000000
       enable_gclk_gen_5: true
+      enable_gclk_gen_5__externalclock: 1000000
       enable_gclk_gen_6: true
+      enable_gclk_gen_6__externalclock: 1000000
       enable_gclk_gen_7: false
+      enable_gclk_gen_7__externalclock: 1000000
       enable_gclk_gen_8: false
+      enable_gclk_gen_8__externalclock: 1000000
       enable_gclk_gen_9: false
+      enable_gclk_gen_9__externalclock: 1000000
       gclk_arch_gen_0_enable: true
       gclk_arch_gen_0_idc: false
       gclk_arch_gen_0_oe: false
@@ -680,7 +713,7 @@ drivers:
       gclk_arch_gen_10_oe: false
       gclk_arch_gen_10_oov: false
       gclk_arch_gen_10_runstdby: false
-      gclk_arch_gen_11_enable: true
+      gclk_arch_gen_11_enable: false
       gclk_arch_gen_11_idc: false
       gclk_arch_gen_11_oe: false
       gclk_arch_gen_11_oov: false
@@ -776,6 +809,11 @@ drivers:
     functionality: System
     api: HAL:HPL:MCLK
     configuration:
+      $input: 120000000
+      $input_id: Generic clock generator 0
+      RESERVED_InputFreq: 120000000
+      RESERVED_InputFreq_id: Generic clock generator 0
+      _$freq_output_CPU: 120000000
       cpu_clock_source: Generic clock generator 0
       cpu_div: '1'
       enable_cpu_clock: true
@@ -799,6 +837,11 @@ drivers:
     functionality: System
     api: HAL:HPL:OSC32KCTRL
     configuration:
+      $input: 32768
+      $input_id: 32kHz External Crystal Oscillator (XOSC32K)
+      RESERVED_InputFreq: 32768
+      RESERVED_InputFreq_id: 32kHz External Crystal Oscillator (XOSC32K)
+      _$freq_output_RTC source: 32768
       enable_osculp32k: true
       enable_rtc_source: false
       enable_xosc32k: true
@@ -809,11 +852,11 @@ drivers:
       xosc32k_arch_cfden: false
       xosc32k_arch_cfdeo: false
       xosc32k_arch_cgm: Standard mode
-      xosc32k_arch_en1k: false
+      xosc32k_arch_en1k: true
       xosc32k_arch_en32k: true
       xosc32k_arch_enable: true
-      xosc32k_arch_ondemand: true
-      xosc32k_arch_runstdby: false
+      xosc32k_arch_ondemand: false
+      xosc32k_arch_runstdby: true
       xosc32k_arch_startup: 62592us
       xosc32k_arch_swben: false
       xosc32k_arch_xtalen: true
@@ -827,19 +870,28 @@ drivers:
     functionality: System
     api: HAL:HPL:OSCCTRL
     configuration:
-      dfll_arch_bplckc: false
+      $input: 32768
+      $input_id: Generic clock generator 3
+      RESERVED_InputFreq: 32768
+      RESERVED_InputFreq_id: Generic clock generator 3
+      _$freq_output_Digital Frequency Locked Loop (DFLL48M): 48000000
+      _$freq_output_Digital Phase Locked Loop (DPLL0): 120000000
+      _$freq_output_Digital Phase Locked Loop (DPLL1): 100000000
+      _$freq_output_External Crystal Oscillator 8-48MHz (XOSC0): 12000000
+      _$freq_output_External Crystal Oscillator 8-48MHz (XOSC1): 12000000
+      dfll_arch_bplckc: true
       dfll_arch_calibration: false
       dfll_arch_ccdis: true
       dfll_arch_coarse: 31
       dfll_arch_cstep: 1
       dfll_arch_enable: true
       dfll_arch_fine: 128
-      dfll_arch_fstep: 1
+      dfll_arch_fstep: 10
       dfll_arch_llaw: false
       dfll_arch_ondemand: false
       dfll_arch_qldis: false
       dfll_arch_runstdby: false
-      dfll_arch_stable: false
+      dfll_arch_stable: true
       dfll_arch_usbcrm: true
       dfll_arch_waitlock: false
       dfll_mode: Closed Loop Mode
@@ -863,7 +915,7 @@ drivers:
       fdpll0_clock_div: 2
       fdpll0_ldr: 59
       fdpll0_ldrfrac: 0
-      fdpll0_ref_clock: Generic clock generator 11
+      fdpll0_ref_clock: External Crystal Oscillator 8-48MHz (XOSC1)
       fdpll1_arch_dcoen: false
       fdpll1_arch_enable: true
       fdpll1_arch_filter: 0
@@ -877,7 +929,7 @@ drivers:
       fdpll1_clock_div: 2
       fdpll1_ldr: 49
       fdpll1_ldrfrac: 0
-      fdpll1_ref_clock: Generic clock generator 11
+      fdpll1_ref_clock: External Crystal Oscillator 8-48MHz (XOSC1)
       xosc0_arch_cfden: false
       xosc0_arch_enable: false
       xosc0_arch_enalc: false
@@ -969,7 +1021,7 @@ drivers:
     api: HAL:Driver:Calendar
     configuration:
       rtc_arch_init_reset: true
-      rtc_arch_prescaler: Peripheral clock divided by 1
+      rtc_arch_prescaler: Peripheral clock divided by 1024
       rtc_cmpeo0: false
       rtc_cmpeo1: false
       rtc_event_control: false
@@ -1037,11 +1089,11 @@ drivers:
       usart_gtime: 2-bit times
       usart_inack: NACK is transmitted when a parity error is received.
       usart_inverse_enabled: false
-      usart_iso7816_type: T=0
+      usart_iso7816_type: T=1
       usart_maxiter: 7
       usart_parity: Even parity
       usart_rx_enable: true
-      usart_stop_bit: One stop bit
+      usart_stop_bit: Two stop bits
       usart_tx_enable: true
     optional_signals: []
     variant:
@@ -1084,11 +1136,11 @@ drivers:
       usart_gtime: 2-bit times
       usart_inack: NACK is transmitted when a parity error is received.
       usart_inverse_enabled: false
-      usart_iso7816_type: T=0
+      usart_iso7816_type: T=1
       usart_maxiter: 7
       usart_parity: Even parity
       usart_rx_enable: true
-      usart_stop_bit: One stop bit
+      usart_stop_bit: Two stop bits
       usart_tx_enable: true
     optional_signals: []
     variant:
@@ -1131,11 +1183,11 @@ drivers:
       usart_gtime: 2-bit times
       usart_inack: NACK is transmitted when a parity error is received.
       usart_inverse_enabled: false
-      usart_iso7816_type: T=0
+      usart_iso7816_type: T=1
       usart_maxiter: 7
       usart_parity: Even parity
       usart_rx_enable: true
-      usart_stop_bit: One stop bit
+      usart_stop_bit: Two stop bits
       usart_tx_enable: true
     optional_signals: []
     variant:
@@ -1178,11 +1230,11 @@ drivers:
       usart_gtime: 2-bit times
       usart_inack: NACK is transmitted when a parity error is received.
       usart_inverse_enabled: false
-      usart_iso7816_type: T=0
+      usart_iso7816_type: T=1
       usart_maxiter: 7
       usart_parity: Even parity
       usart_rx_enable: true
-      usart_stop_bit: One stop bit
+      usart_stop_bit: Two stop bits
       usart_tx_enable: true
     optional_signals: []
     variant:
@@ -1225,11 +1277,11 @@ drivers:
       usart_gtime: 2-bit times
       usart_inack: NACK is transmitted when a parity error is received.
       usart_inverse_enabled: false
-      usart_iso7816_type: T=0
+      usart_iso7816_type: T=1
       usart_maxiter: 7
       usart_parity: Even parity
       usart_rx_enable: true
-      usart_stop_bit: One stop bit
+      usart_stop_bit: Two stop bits
       usart_tx_enable: true
     optional_signals: []
     variant:
@@ -1272,11 +1324,11 @@ drivers:
       usart_gtime: 2-bit times
       usart_inack: NACK is transmitted when a parity error is received.
       usart_inverse_enabled: false
-      usart_iso7816_type: T=0
+      usart_iso7816_type: T=1
       usart_maxiter: 7
       usart_parity: Even parity
       usart_rx_enable: true
-      usart_stop_bit: One stop bit
+      usart_stop_bit: Two stop bits
       usart_tx_enable: true
     optional_signals: []
     variant:
@@ -1319,11 +1371,11 @@ drivers:
       usart_gtime: 2-bit times
       usart_inack: NACK is transmitted when a parity error is received.
       usart_inverse_enabled: false
-      usart_iso7816_type: T=0
+      usart_iso7816_type: T=1
       usart_maxiter: 7
       usart_parity: Even parity
       usart_rx_enable: true
-      usart_stop_bit: One stop bit
+      usart_stop_bit: Two stop bits
       usart_tx_enable: true
     optional_signals: []
     variant:
@@ -1416,9 +1468,9 @@ drivers:
       usb_ep5_I_CACHE: No cache
       usb_ep6_I_CACHE: No cache
       usb_ep7_I_CACHE: No cache
-      usbd_arch_max_ep_n: 2 (EP 0x82 or 0x02)
+      usbd_arch_max_ep_n: 4 (EP 0x84 or 0x04)
       usbd_arch_speed: Full speed
-      usbd_num_ep_sp: 4 (EP0 + 3 endpoints)
+      usbd_num_ep_sp: 7 (EP0 + 6 endpoints)
     optional_signals: []
     variant:
       specification: default
@@ -1664,3 +1716,4 @@ pads:
     user_label: SDA2
     configuration: null
 toolchain_options: []
+static_files: []

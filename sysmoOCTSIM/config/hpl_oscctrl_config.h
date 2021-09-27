@@ -404,7 +404,6 @@
 // <i> Select the clock source.
 // <id> fdpll0_ref_clock
 #ifndef CONF_FDPLL0_GCLK
-// directly use XOSC1 as clock input (no need to use an additional GCLK)
 #define CONF_FDPLL0_GCLK GCLK_GENCTRL_SRC_XOSC1
 #endif
 
@@ -431,23 +430,24 @@
 #endif
 
 // <o> Loop Divider Ratio Fractional Part <0x0-0x1F>
+// <i> Value of LDRFRAC is calculated using Fclk_dpll=Fckr*(LDR+1+LDRFRAC/32) formula as given in datasheet. This value is directly written in to DPLLRATIO register
 // <id> fdpll0_ldrfrac
 #ifndef CONF_FDPLL0_LDRFRAC
 #define CONF_FDPLL0_LDRFRAC 0x0
 #endif
 
 // <o> Loop Divider Ratio Integer Part <0x0-0x1FFF>
+// <i> Value of LDR is calculated using Fclk_dpll=Fckr*(LDR+1+LDRFRAC/32) formula as given in datasheet. This value is directly written in to DPLLRATIO register
 // <id> fdpll0_ldr
 #ifndef CONF_FDPLL0_LDR
-// 2 MHz input clock * ( <59> + 1 = 60 ) = 120 MHz output clock
-#define CONF_FDPLL0_LDR 59
+#define CONF_FDPLL0_LDR 0x3b
 #endif
 
 // <o> Clock Divider <0x0-0x7FF>
+// <i> This Clock divider is only for XOSC clock input to DPLL
 // <id> fdpll0_clock_div
 #ifndef CONF_FDPLL0_DIV
-// XOSC1 = 12 MHz, divide by 2 * ( <2> + 1 ) = 6 to have a 2 MHz clock input (maximum is 3.4 MHz)
-#define CONF_FDPLL0_DIV 2
+#define CONF_FDPLL0_DIV 0x2
 #endif
 
 // <q> DCO Filter Enable
@@ -488,7 +488,6 @@
 // <0x3=>XOSC1 clock reference
 // <id> fdpll0_arch_refclk
 #ifndef CONF_FDPLL0_REFCLK
-// XOSC1 is used as input signal, thus also use it as reference
 #define CONF_FDPLL0_REFCLK 0x3
 #endif
 
@@ -533,7 +532,6 @@
 // <i> Select the clock source.
 // <id> fdpll1_ref_clock
 #ifndef CONF_FDPLL1_GCLK
-// directly use XOSC1 as clock input (no need to use an additional GCLK)
 #define CONF_FDPLL1_GCLK GCLK_GENCTRL_SRC_XOSC1
 #endif
 
@@ -560,23 +558,24 @@
 #endif
 
 // <o> Loop Divider Ratio Fractional Part <0x0-0x1F>
+// <i> Value of LDRFRAC is calculated using Fclk_dpll=Fckr*(LDR+1+LDRFRAC/32) formula as given in datasheet. This value is directly written in to DPLLRATIO register
 // <id> fdpll1_ldrfrac
 #ifndef CONF_FDPLL1_LDRFRAC
 #define CONF_FDPLL1_LDRFRAC 0x0
 #endif
 
 // <o> Loop Divider Ratio Integer Part <0x0-0x1FFF>
+// <i> Value of LDR is calculated using Fclk_dpll=Fckr*(LDR+1+LDRFRAC/32) formula as given in datasheet. This value is directly written in to DPLLRATIO register
 // <id> fdpll1_ldr
 #ifndef CONF_FDPLL1_LDR
-// 2 MHz input clock * ( <49> + 1 = 50 ) = 100 MHz output clock
-#define CONF_FDPLL1_LDR 49
+#define CONF_FDPLL1_LDR 0x31
 #endif
 
 // <o> Clock Divider <0x0-0x7FF>
+// <i> This Clock divider is only for XOSC clock input to DPLL
 // <id> fdpll1_clock_div
 #ifndef CONF_FDPLL1_DIV
-// XOSC1 = 12 MHz, divide by 2 * ( <2> + 1 ) = 6 to have a 2 MHz clock input (maximum is 3.4 MHz)
-#define CONF_FDPLL1_DIV 2
+#define CONF_FDPLL1_DIV 0x2
 #endif
 
 // <q> DCO Filter Enable
@@ -617,7 +616,6 @@
 // <0x3=>XOSC1 clock reference
 // <id> fdpll1_arch_refclk
 #ifndef CONF_FDPLL1_REFCLK
-// XOSC1 is used as input signal, thus also use it as reference
 #define CONF_FDPLL1_REFCLK 0x3
 #endif
 
