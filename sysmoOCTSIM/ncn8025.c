@@ -98,7 +98,9 @@ static const uint8_t slot2int_pin(unsigned int slot)
 bool ncn8025_interrupt_level(uint8_t slot)
 {
 	uint8_t pin = slot2int_pin(slot);
-	return gpio_get_pin_level(pin);
+	uint32_t pin_values = hri_port_read_IN_reg(PORT, GPIO_PORT(pin));
+
+	return (bool)(pin_values & (0x01U << GPIO_PIN(pin)));
 }
 
 
