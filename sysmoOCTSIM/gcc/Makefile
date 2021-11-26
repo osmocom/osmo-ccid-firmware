@@ -13,6 +13,8 @@ CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
 CFLAGS=-x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls \
        -g3 -Wall -c -std=gnu99 $(CFLAGS_CPU) -DOCTSIMFWBUILD -DDISABLE_DFU_DETACH=$(DISABLE_DFU_DETACH)
 
+CFLAGS += -DLIBOSMOCORE_NO_LOGGING
+
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
 SIZE = $(CROSS_COMPILE)size
