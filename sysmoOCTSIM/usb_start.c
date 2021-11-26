@@ -132,14 +132,14 @@ void cdc_device_acm_init(void)
 	usbdc_init(ctrl_buffer);
 	usbdc_register_handler(USBDC_HDL_REQ, &string_req_h);
 
+#ifdef WITH_DEBUG_CDC
 	/* usbdc_register_funcion inside */
 	cdcdf_acm_init();
-
+#endif
 	dfudf_init();
 
 	printf("usb_descs_size=%u\r\n", usb_descs[0].eod - usb_descs[0].sod);
-	usbdc_start((struct usbd_descriptors *) usb_descs);
-	usbdc_attach();
+
 }
 
 /**
@@ -147,15 +147,22 @@ void cdc_device_acm_init(void)
  */
 void usb_start(void)
 {
+
+#ifdef WITH_DEBUG_CDC
 	while (!cdcdf_acm_is_enabled()) {
 		// wait cdc acm to be installed
 	};
 
 	cdcdf_acm_register_callback(CDCDF_ACM_CB_STATE_C, (FUNC_PTR)usb_device_cb_state_c);
+#endif
+	while (!ccid_df_is_enabled());
 }
 
 void usb_init(void)
 {
 	cdc_device_acm_init();
 	ccid_df_init();
+	usbdc_start((struct usbd_descriptors *) usb_descs);
+	usbdc_attach();
+
 }

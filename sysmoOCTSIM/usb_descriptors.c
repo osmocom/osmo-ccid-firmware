@@ -46,17 +46,24 @@ const struct usb_desc_collection usb_fs_descs = {
 		.bLength = sizeof(struct usb_config_desc),
 		.bDescriptorType = USB_DT_CONFIG,
 		.wTotalLength = sizeof(usb_fs_descs.cfg) +
+#ifdef WITH_DEBUG_CDC
 				sizeof(usb_fs_descs.cdc) +
+#endif
 				sizeof(usb_fs_descs.ccid) +
 				sizeof(usb_fs_descs.dfu_rt) +
 				sizeof(usb_fs_descs.func_dfu),
+#ifdef WITH_DEBUG_CDC
 		.bNumInterfaces = 4,
+#else
+		.bNumInterfaces = 2,
+#endif
 		.bConfigurationValue = CONF_USB_CDCD_ACM_BCONFIGVAL,
 		.iConfiguration = STR_DESC_CONFIG,
 		.bmAttributes = CONF_USB_CDCD_ACM_BMATTRI,
 		/* FIXME: The device should offer at least one 100mA configuration. */
 		.bMaxPower = 250, /* request 500mA */
 	},
+#ifdef WITH_DEBUG_CDC
 	.cdc = {
 		.comm = {
 			.iface = {
@@ -139,6 +146,7 @@ const struct usb_desc_collection usb_fs_descs = {
 			},
 		},
 	},
+#endif
 	.ccid = {
 		.iface = {
 			.bLength = sizeof(struct usb_iface_desc),
@@ -208,7 +216,11 @@ const struct usb_desc_collection usb_fs_descs = {
 			},
 		},
 	},
+#ifdef WITH_DEBUG_CDC
 	DFURT_IF_DESCRIPTOR(3, STR_DESC_INTF_DFURT),
+#else
+	DFURT_IF_DESCRIPTOR(1, STR_DESC_INTF_DFURT),
+#endif
 	.str = {
 #if 0
 		CDCD_ACM_STR_DESCES

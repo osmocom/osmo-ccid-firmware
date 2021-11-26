@@ -506,8 +506,10 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	usb_start();
 
 	board_init();
-	command_init("sysmoOCTSIM> ");
 
+#ifdef WITH_DEBUG_CDC
+	command_init("sysmoOCTSIM> ");
+#endif
 	/* boost uart priority by setting all other irqs to uartprio+1 */
 	for(int i = 0; i < PERIPH_COUNT_IRQn; i++)
 		NVIC_SetPriority(i, 2);

@@ -43,6 +43,7 @@ struct usb_desc_collection {
 	struct usb_dev_desc dev;
 	struct usb_config_desc cfg;
 
+#ifdef WITH_DEBUG_CDC
 	/* CDC-ACM: Two interfaces, one with IRQ EP and one with BULK IN + OUT */
 	struct {
 		struct {
@@ -59,6 +60,7 @@ struct usb_desc_collection {
 		} data;
 	} cdc;
 
+#endif
 	/* CCID: One interface with CCID class descriptor and three endpoints */
 	struct {
 		struct usb_iface_desc iface;
