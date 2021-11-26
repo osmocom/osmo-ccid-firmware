@@ -129,7 +129,7 @@ static int32_t ccid_df_disable(struct usbdf_driver *drv, struct usbd_descriptors
 		usb_d_ep_deinit(func_data->func_ep_irq);
 	}
 
-	_ccid_df_funcd.enabled = true;
+	_ccid_df_funcd.enabled = false;
 	return ERR_NONE;
 }
 
