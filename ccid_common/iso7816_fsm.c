@@ -46,9 +46,9 @@
 	memset(name, 0x00, sizeof(name ## _msgbuf)); \
 	name->data_len = sizeof(name ## _msgbuf) - sizeof(struct msgb); \
 	name->len = 0; \
-	name->data = name->_data; \
-	name->head = name->_data; \
-	name->tail = name->_data; \
+	name->data = &name->_data[0]; \
+	name->head = &name->_data[0]; \
+	name->tail = &name->_data[0]; \
 }
 
 #define COPY_TO_STATIC_MSGB(src, dst) { \
