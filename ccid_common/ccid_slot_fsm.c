@@ -148,6 +148,10 @@ static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *m
 	/* continues in iso_fsm_clot_user_cb once ATR is received */
 }
 
+#ifndef __NOP
+#define __NOP()
+#endif
+
 static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause, void *data)
 {
 	struct iso_fsm_slot *ss = iso7816_fsm_get_user_priv(fi);
@@ -159,14 +163,16 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 	case ISO7816_E_HW_ERR_IND:
 		card_uart_ctrl(ss->cuart, CUART_CTL_NO_RXTX, true);
 		break;
-	case ISO7816_E_ATR_DONE_IND:
 	case ISO7816_E_ATR_ERR_IND:
-	case ISO7816_E_TPDU_DONE_IND:
 	case ISO7816_E_TPDU_FAILED_IND:
-	case ISO7816_E_PPS_DONE_IND:
 	case ISO7816_E_PPS_FAILED_IND:
 	case ISO7816_E_PPS_UNSUPPORTED_IND:
 	case ISO7816_E_WTIME_EXP:
+		__NOP();
+		/* no break */
+	case ISO7816_E_ATR_DONE_IND:
+	case ISO7816_E_TPDU_DONE_IND:
+	case ISO7816_E_PPS_DONE_IND:
 		cs->event_data = data;
 #ifdef OCTSIMFWBUILD
 		asm volatile("dmb st": : :"memory");
