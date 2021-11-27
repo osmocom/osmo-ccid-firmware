@@ -32,6 +32,8 @@
 #include "iso7816_fsm.h"
 #include "iso7816_3.h"
 
+#define FAKE_CCID_SETPARAMETERS
+
 struct iso_fsm_slot {
 	/* CCID slot above us */
 	struct ccid_slot *cs;
@@ -280,11 +282,20 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		 * - after ATR while card is idle
 		 * - after PPS while card is idle
 		 */
+#ifndef FAKE_CCID_SETPARAMETERS
 		card_uart_ctrl(ss->cuart, CUART_CTL_SET_CLOCK_FREQ, fmax);
 		card_uart_ctrl(ss->cuart, CUART_CTL_SET_FD, F/D);
 		card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer * 960 * D_or_one);
 
 		cs->pars = cs->proposed_pars;
+#else
+		//card_uart_ctrl(ss->cuart, CUART_CTL_SET_CLOCK_FREQ, fmax);
+		card_uart_ctrl(ss->cuart, CUART_CTL_SET_FD, F/D);
+		//card_uart_ctrl(ss->cuart, CUART_CTL_WTIME, cs->proposed_pars.t0.waiting_integer);
+
+		cs->pars.fi = cs->proposed_pars.fi;
+		cs->pars.di = cs->proposed_pars.di;
+#endif
 		resp = ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_OK, 0);
 
 		ccid_slot_send_unbusy(cs, resp);
@@ -408,8 +419,13 @@ static int iso_fsm_slot_set_params(struct ccid_slot *cs, uint8_t seq, enum ccid_
 
 	LOGPCS(cs, LOGL_DEBUG, "scheduling PPS transfer, PPS1: %2x\n", PPS1);
 
+#ifdef FAKE_CCID_SETPARAMETERS
+	ccid_slot_send_unbusy(cs, ccid_gen_parameters_t0(cs, ss->seq, CCID_CMD_STATUS_OK, 0));
+#else
 	/* pass PPS1 instead of msgb */
 	osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_XCEIVE_PPS_CMD, (void*)PPS1);
+#endif
+
 	/* continues in iso_fsm_clot_user_cb once response/error/timeout is received */
 	return 0;
 }
