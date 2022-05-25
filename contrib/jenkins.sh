@@ -71,14 +71,22 @@ if [ "x$publish" = "x--publish" ]; then
 [ftp.osmocom.org]:48 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK8iivY70EiR5NiGChV39gRLjNpC8lvu1ZdHtdMw2zuX
 EOF
 	SSH_COMMAND="ssh -o 'UserKnownHostsFile=/build/known_hosts' -p 48"
-	rsync --archive --copy-links --verbose --compress --delete --rsh "$SSH_COMMAND" \
-		$TOPDIR/sysmoOCTSIM/gcc/sysmoOCTSIM.{bin,elf} \
-			binaries@ftp.osmocom.org:web-files/osmo-ccid-firmware/latest/
-	rsync --archive --verbose --compress --rsh "$SSH_COMMAND" \
-		--exclude $TOPDIR/sysmoOCTSIM/gcc/sysmoOCTSIM.bin \
-		--exclude $TOPDIR/sysmoOCTSIM/gcc/sysmoOCTSIM.elf \
-		$TOPDIR/sysmoOCTSIM/gcc/*-*.{bin,elf} \
-			binaries@ftp.osmocom.org:web-files/osmo-ccid-firmware/all/
+	LATEST_BIN="$(cd "$TOPDIR"/sysmoOCTSIM/gcc/; ls -1 sysmoOCTSIM-*-*.bin)"
+
+	echo "LATEST_BIN: $LATEST_BIN"
+
+	if rsync --rsh "$SSH_COMMAND" binaries@ftp.osmocom.org:web-files/osmo-ccid-firmware/all/ | grep -q "$LATEST_BIN"; then
+		echo "Skipping upload, $LATEST_BIN has already been uploaded."
+	else
+		rsync --archive --copy-links --verbose --compress --delete --rsh "$SSH_COMMAND" \
+			$TOPDIR/sysmoOCTSIM/gcc/sysmoOCTSIM.{bin,elf} \
+				binaries@ftp.osmocom.org:web-files/osmo-ccid-firmware/latest/
+		rsync --archive --verbose --compress --rsh "$SSH_COMMAND" \
+			--exclude $TOPDIR/sysmoOCTSIM/gcc/sysmoOCTSIM.bin \
+			--exclude $TOPDIR/sysmoOCTSIM/gcc/sysmoOCTSIM.elf \
+			$TOPDIR/sysmoOCTSIM/gcc/*-*.{bin,elf} \
+				binaries@ftp.osmocom.org:web-files/osmo-ccid-firmware/all/
+	fi
 fi
 
 echo
