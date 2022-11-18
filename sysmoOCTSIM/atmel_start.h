@@ -12,7 +12,7 @@ extern "C" {
 #include "stdio_start.h"
 
 /** flag set when the memory to memory DMA is complete */
-volatile bool dma_m2m_complete_flag;
+extern volatile bool dma_m2m_complete_flag;
 
 /**
  * Initializes MCU, drivers and middleware in the project
