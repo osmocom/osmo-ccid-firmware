@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <osmocom/core/utils.h>
 
+#define USB_CLASS_CCID 11
+
 /* Identifies the length of type of subordinate descriptors of a CCID device
  * Table 5.1-1 Smart Card Device Class descriptors */
 struct usb_ccid_class_descriptor {
