@@ -1635,7 +1635,6 @@ struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id
 	struct pps_fsm_priv *ppsp;
 	struct tpdu_fsm_priv *tpdup;
 
-
 	fi = osmo_fsm_inst_alloc(&iso7816_3_fsm, ctx, NULL, log_level, id);
 	ip = talloc_zero(fi, struct iso7816_3_priv);
 	if (!ip)

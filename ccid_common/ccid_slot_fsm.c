@@ -91,7 +91,7 @@ static void iso_fsm_slot_pre_proc_cb(struct ccid_slot *cs, struct msgb *msg)
 static void iso_fsm_slot_icc_set_insertion_status(struct ccid_slot *cs, bool present) {
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 
-	if(present == cs->icc_present)
+	if (present == cs->icc_present)
 		return;
 
 	cs->icc_present = present;
@@ -116,13 +116,20 @@ static void iso_fsm_slot_icc_power_on_async(struct ccid_slot *cs, struct msgb *m
 	LOGPCS(cs, LOGL_DEBUG, "scheduling power-up\n");
 
 	switch (pwrsel) {
-		case CCID_PWRSEL_5V0: cctl = CUART_CTL_POWER_5V0; break;
-		case CCID_PWRSEL_3V0: cctl = CUART_CTL_POWER_3V0; break;
-		case CCID_PWRSEL_1V8: cctl = CUART_CTL_POWER_1V8; break;
-		default: cctl = CUART_CTL_POWER_5V0;
+	case CCID_PWRSEL_5V0:
+		cctl = CUART_CTL_POWER_5V0;
+		break;
+	case CCID_PWRSEL_3V0:
+		cctl = CUART_CTL_POWER_3V0;
+		break;
+	case CCID_PWRSEL_1V8:
+		cctl = CUART_CTL_POWER_1V8;
+		break;
+	default:
+		cctl = CUART_CTL_POWER_5V0;
 	}
 
-	if (! cs->icc_powered) {
+	if (!cs->icc_powered) {
 		/* FIXME: do this via a FSM? */
 		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
 		osmo_fsm_inst_dispatch(ss->fi, ISO7816_E_RESET_ACT_IND, NULL);
@@ -198,7 +205,7 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 	volatile uint32_t event = cs->event;
 	volatile void * volatile data = cs->event_data;
 
-	if(!event)
+	if (!event)
 		return 0;
 //	if(event && !data)
 //		return 0;
@@ -208,12 +215,10 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		tpdu = data;
 		LOGPCS(cs, LOGL_DEBUG, "%s(event=%d, data=0)\n", __func__, event);
 
-
 		/* perform deactivation */
 		card_uart_ctrl(ss->cuart, CUART_CTL_RST, true);
 		card_uart_ctrl(ss->cuart, CUART_CTL_POWER_5V0, false);
 		cs->icc_powered = false;
-
 
 		resp = ccid_gen_data_block(cs, ss->seq, CCID_CMD_STATUS_FAILED, CCID_ERR_ICC_MUTE, 0, 0);
 		ccid_slot_send_unbusy(cs, resp);
@@ -223,7 +228,7 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 		tpdu = data;
 
 		/* inverse condition, error interrupt is always disabled during atr and reenabled here after atr */
-		if(*msgb_data(tpdu) == 0x3f) {
+		if (*msgb_data(tpdu) == 0x3f) {
 			card_uart_ctrl(ss->cuart, CUART_CTL_ERROR_AND_INV, true);
 		} else {
 			card_uart_ctrl(ss->cuart, CUART_CTL_ERROR_AND_INV, false);

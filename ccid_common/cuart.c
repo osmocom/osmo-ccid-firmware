@@ -68,7 +68,7 @@ void card_uart_wtime_restart(struct card_uart *cuart)
 {
 	int secs, usecs;
 
-	if(!cuart->current_wtime_byte)
+	if (!cuart->current_wtime_byte)
 		return;
 
 	int etu_in_us = get_etu_in_us(cuart) + 1;

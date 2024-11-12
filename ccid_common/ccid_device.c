@@ -718,7 +718,7 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 		return ccid_send(ci, resp);
 	}
 
-	if(!cs->icc_present) {
+	if (!cs->icc_present) {
 		LOGPCS(cs, LOGL_ERROR, "No icc present, but another cmd received\n");
 		/* FIXME: ABORT logic as per section 5.3.1 of CCID Spec v1.1 */
 		resp = gen_err_resp(ch->bMessageType, ch->bSlot, get_icc_status(cs), ch->bSeq,
