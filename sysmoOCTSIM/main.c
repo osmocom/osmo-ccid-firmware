@@ -48,7 +48,7 @@ static struct ccid_instance g_ci;
 
 static void ccid_app_init(void);
 
-static void board_init()
+static void board_init(void)
 {
 	int i;
 
