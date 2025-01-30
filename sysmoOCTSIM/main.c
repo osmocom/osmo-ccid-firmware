@@ -462,8 +462,8 @@ static const struct ccid_ops c_ops = {
 char sernr_buf[16*2+1];
 char product_buf[] = "sysmoOCTSIM "GIT_VERSION;
 //len, type, 2 byte per hex char * 2 for unicode
-uint8_t sernr_buf_descr[1+1+16*2*2];
-uint8_t product_buf_descr[1+1+sizeof(product_buf)*2];
+uint8_t sernr_buf_descr[1 + 1 + 16 * 2 * 2];
+uint8_t product_buf_descr[1 + 1 + (sizeof(product_buf) - 1) * 2];
 
 char rstcause_buf[RSTCAUSE_STR_SIZE];
 
@@ -498,7 +498,7 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	get_chip_unique_serial_str(sernr_buf, sizeof(sernr_buf));
 	str_to_usb_desc(sernr_buf, sizeof(sernr_buf), sernr_buf_descr, sizeof(sernr_buf_descr));
 
-	str_to_usb_desc(product_buf, sizeof(product_buf), product_buf_descr, sizeof(product_buf_descr));
+	str_to_usb_desc(product_buf, sizeof(product_buf) - 1, product_buf_descr, sizeof(product_buf_descr));
 	get_rstcause_str(rstcause_buf);
 
 
