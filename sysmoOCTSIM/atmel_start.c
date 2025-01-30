@@ -9,5 +9,4 @@ void atmel_start_init(void)
 #ifdef ENABLE_DBG_UART7
 	stdio_redirect_init();
 #endif
-	usb_init();
 }

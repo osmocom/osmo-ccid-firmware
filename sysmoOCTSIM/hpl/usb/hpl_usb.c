@@ -44,6 +44,7 @@
 /* save previous setup state to allow device reset when receving usb reset after the device
  * was previously properly configured, i.e. when powered externally and usb is disconnected and reconnected */
 volatile bool address_was_set = false;
+volatile bool delayed_usb_reset = false;
 
 /**
  * \brief Dummy callback function
@@ -980,14 +981,9 @@ static inline void _usb_d_dev_reset(void)
 
 	_usb_d_dev_reset_epts();
 
-	if(address_was_set == true) {
-		_usb_d_dev_detach();
+	if (address_was_set == true) {
 		address_was_set = 0;
-		delay_ms(100);
-		__disable_irq();
-		__DMB();
-		__DSB();
-		NVIC_SystemReset();
+		delayed_usb_reset = true;
 	}
 
 	dev_inst.callbacks.event(USB_EV_RESET, 0);

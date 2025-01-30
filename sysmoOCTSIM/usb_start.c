@@ -10,13 +10,13 @@
 #include "usb_descriptors.h"
 
 #define CDCD_ECHO_BUF_SIZ CONF_USB_CDCD_ACM_DATA_BULKIN_MAXPKSZ
-
+#ifdef WITH_DEBUG_CDC
 /** Buffers to receive and echo the communication bytes. */
 static uint32_t usbd_cdc_buffer[CDCD_ECHO_BUF_SIZ / 4];
-
+#endif
 /** Ctrl endpoint buffer */
 static uint8_t ctrl_buffer[64];
-
+#ifdef WITH_DEBUG_CDC
 /**
  * \brief Callback invoked when bulk OUT data received
  */
@@ -56,7 +56,7 @@ static bool usb_device_cb_state_c(usb_cdc_control_signal_t state)
 	/* No error. */
 	return false;
 }
-
+#endif
 extern const struct usbd_descriptors usb_descs[];
 
 /* transmit given string descriptor */

@@ -65,8 +65,6 @@ static void board_init(void)
 	/* increase drive strength of 20Mhz SIM clock output to 8mA
 	 * (there are 8 inputs + traces to drive!) */
 	hri_port_set_PINCFG_DRVSTR_bit(PORT, 0, 11);
-
-	ccid_app_init();
 }
 
 /***********************************************************************
@@ -467,6 +465,17 @@ uint8_t product_buf_descr[1 + 1 + (sizeof(product_buf) - 1) * 2];
 
 char rstcause_buf[RSTCAUSE_STR_SIZE];
 
+void do_usb_res(void)
+{
+	hri_usbdevice_set_CTRLA_SWRST_bit(USB);
+	uint32_t *application_start_address = (uint32_t *)(16384);
+	__set_MSP(*application_start_address);
+	__DSB();
+	__ISB();
+	asm("bx %0" ::"r"(*(application_start_address + 1)));
+}
+
+extern volatile bool delayed_usb_reset;
 
 int main(void)
 {
@@ -494,18 +503,23 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 
 #endif
 
-	atmel_start_init();
+	// return to dfu on mismatched old BL with improper clock config.
+	if (hri_gclk_read_GENCTRL_SRC_bf(GCLK, 0) == GCLK_GENCTRL_SRC_XOSC1_Val) {
+		*(uint32_t *)HSRAM_ADDR = 0x44465521;
+		NVIC_SystemReset();
+	}
+
 	get_chip_unique_serial_str(sernr_buf, sizeof(sernr_buf));
 	str_to_usb_desc(sernr_buf, sizeof(sernr_buf), sernr_buf_descr, sizeof(sernr_buf_descr));
 
 	str_to_usb_desc(product_buf, sizeof(product_buf) - 1, product_buf_descr, sizeof(product_buf_descr));
 	get_rstcause_str(rstcause_buf);
 
-
-
-	usb_start();
-
+	atmel_start_init();
 	board_init();
+	usb_init();
+	usb_start();
+	ccid_app_init();
 
 #ifdef WITH_DEBUG_CDC
 	command_init("sysmoOCTSIM> ");
@@ -562,6 +576,8 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 
 //	command_print_prompt();
 	while (true) { // main loop
+		if (delayed_usb_reset)
+			do_usb_res();
 		command_try_recv();
 		poll_card_detect();
 		submit_next_irq();

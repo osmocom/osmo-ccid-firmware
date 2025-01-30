@@ -53,14 +53,15 @@
 void _init_chip(void)
 {
 	hri_nvmctrl_set_CTRLA_RWS_bf(NVMCTRL, CONF_NVM_WAIT_STATE);
-
+#if 0
 	_osc32kctrl_init_sources();
 	_oscctrl_init_sources();
 	_mclk_init();
-#if _GCLK_INIT_1ST
+	#if _GCLK_INIT_1ST
 	_gclk_init_generators_by_fref(_GCLK_INIT_1ST);
-#endif
+	#endif
 	_oscctrl_init_referenced_generators();
+#endif
 	_gclk_init_generators_by_fref(_GCLK_INIT_LAST);
 
 #if CONF_DMAC_ENABLE
