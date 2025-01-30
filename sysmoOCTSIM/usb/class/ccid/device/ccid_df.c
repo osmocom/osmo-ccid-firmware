@@ -24,7 +24,9 @@
 #include "ccid_proto.h"
 #include "usb_includes.h"
 
+#ifdef WITH_DEBUG_CDC
 #include "cdcdf_acm_desc.h"
+#endif
 #include "usb_descriptors.h"
 
 #ifndef USB_CLASS_CCID

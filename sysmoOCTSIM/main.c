@@ -17,9 +17,7 @@
 */
 
 #include <stdlib.h>
-#include <inttypes.h>
 #include <stdio.h>
-#include <math.h>
 #include <parts.h>
 #include <errno.h>
 
@@ -31,12 +29,10 @@
 
 #include "atmel_start.h"
 #include "atmel_start_pins.h"
-#include "config/hpl_gclk_config.h"
 
 #include "i2c_bitbang.h"
 #include "octsim_i2c.h"
 #include "ncn8025.h"
-#include "iso7816_3.h"
 
 #include "command.h"
 
