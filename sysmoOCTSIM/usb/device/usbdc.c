@@ -35,6 +35,8 @@
 
 #define USBDC_VERSION 0x00000001u
 
+extern bool old_extpwer_state;
+
 /**
  * \brief USB Device Core Sof Handler
  */
@@ -318,6 +320,8 @@ static bool usbdc_get_status_req(const uint8_t ep, const struct usb_req *req)
 
 	switch (req->bmRequestType & USB_REQT_RECIP_MASK) {
 	case USB_REQT_RECIP_DEVICE:
+		st = old_extpwer_state ? 0x0 : 0x1;
+		break;
 	case USB_REQT_RECIP_INTERFACE:
 		st = 0;
 		break;

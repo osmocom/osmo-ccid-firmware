@@ -324,7 +324,19 @@ static void poll_card_detect(void)
 	}
 }
 
+/* used to update the usb ext power dev status flag + reset the device when (un)plugging ext power */
+bool old_extpwer_state = 0;
+void init_extpower_detect(void)
+{
+	old_extpwer_state = gpio_get_pin_level(MUX_STAT);
+}
 
+void poll_extpower_detect(void)
+{
+	if (old_extpwer_state != gpio_get_pin_level(MUX_STAT)) {
+		NVIC_SystemReset();
+	}
+}
 
 /***********************************************************************
  * Command Line interface
@@ -516,6 +528,7 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	get_rstcause_str(rstcause_buf);
 
 	atmel_start_init();
+	init_extpower_detect();
 	board_init();
 	usb_init();
 	usb_start();
@@ -578,6 +591,7 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	while (true) { // main loop
 		if (delayed_usb_reset)
 			do_usb_res();
+		poll_extpower_detect();
 		command_try_recv();
 		poll_card_detect();
 		submit_next_irq();
