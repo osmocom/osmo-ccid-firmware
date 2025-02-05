@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+##########################################
+#
+# this file goes to .git/hooks/pre-commit
+#
+# git config --global clangFormat.binary clang-format-18
+# git config --global alias.clang-format clang-format-18
+# git config --global clangFormat.style file
+#
+# workflow:
+# 1) try to commit / with or without staged changes
+# 2) hook complains -> changes now staged
+# 3) run git clang-format
+# 4) inspect new unstaged formatting changes, stage/modify
+# 5) commit
+##########################################
+
+# needs to be staged/cached or check would fail with staged
+# wrong changes + unstaged fmt fixes
+cfmsg=$(git clang-format -v --cached --diff)
+
+if [[ "$cfmsg" == *"no modified files to format"* ]]; then exit 0; fi
+if [[ "$cfmsg" == *"clang-format did not modify any files"* ]]; then exit 0; fi
+
+echo "formatting issues, run \"git clang-format\" !"
+exit 1
