@@ -205,7 +205,7 @@ static int submit_next_out(void)
 	rc = ccid_df_read_out(msgb_data(msg), msgb_tailroom(msg));
 	if (rc != ERR_NONE) {
 		/* re-add to the list of free msgb's */
-		llist_add_tail_at(&g_ccid_s.free_q, &msg->list);
+		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 		return 0;
 	}
 	return 1;
