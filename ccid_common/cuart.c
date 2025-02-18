@@ -154,6 +154,7 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 		/* we have to reset this somewhere, and powering down loses all state
 		 * this is not hw specific so it belongs here, after handling the hw specific part */
 		if (!arg) {
+			osmo_timer_del(&cuart->wtime_tmr);
 			cuart->tx_busy = false;
 			cuart->rx_threshold = 1;
 			cuart->wtime_etu = 9600; /* ISO 7816-3 Section 8.1 */

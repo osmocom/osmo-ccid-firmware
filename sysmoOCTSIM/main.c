@@ -38,6 +38,12 @@
 
 #include "ccid_device.h"
 #include "usb_descriptors.h"
+
+static void bdg_bkptpanic(const char *fmt, va_list args)
+{
+	__asm("BKPT #0");
+}
+
 extern struct ccid_slot_ops iso_fsm_slot_ops;
 static struct ccid_instance g_ci;
 
@@ -129,6 +135,10 @@ struct msgb *msgb_dequeue_irqsafe(struct llist_head *q)
 {
 	struct msgb *msg;
 	CRITICAL_SECTION_ENTER()
+	OSMO_ASSERT(q->next != LLIST_POISON1)
+	OSMO_ASSERT(q->next->next != LLIST_POISON1)
+	OSMO_ASSERT(q->prev != LLIST_POISON2)
+	OSMO_ASSERT(q->prev->prev != LLIST_POISON2)
 	msg = msgb_dequeue(q);
 	CRITICAL_SECTION_LEAVE()
 	return msg;
@@ -138,6 +148,10 @@ void msgb_enqueue_irqsafe(struct llist_head *q, struct msgb *msg)
 {
 	CRITICAL_SECTION_ENTER()
 	msgb_enqueue(q, msg);
+	OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+	OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+	OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+	OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 	CRITICAL_SECTION_LEAVE()
 }
 
@@ -158,6 +172,10 @@ static int submit_next_in(void)
 	ep_q->in_progress = msg;
 	rc = ccid_df_write_in(msgb_data(msg), msgb_length(msg));
 	if (rc != ERR_NONE) {
+		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 		printf("EP %s failed: %d\r\n", ep_q->name, rc);
 		return -1;
 	}
@@ -183,6 +201,10 @@ static int submit_next_irq(void)
 	rc = ccid_df_write_irq(msgb_data(msg), msgb_length(msg));
 	/* may return HALTED/ERROR/DISABLED/BUSY/ERR_PARAM/ERR_FUNC/ERR_DENIED */
 	if (rc != ERR_NONE) {
+		// ep_q->in_progress = msg;
+		// msgb_enqueue_irqsafe(&ep_q->list, msg);
+		// OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+		// OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
 		printf("EP %s failed: %d\r\n", ep_q->name, rc);
 		return -1;
 	}
@@ -195,7 +217,9 @@ static int submit_next_out(void)
 	struct msgb *msg;
 	int rc;
 
-	OSMO_ASSERT(!ep_q->in_progress);
+	if (ep_q->in_progress)
+		return 0;
+
 	msg = msgb_dequeue_irqsafe(&g_ccid_s.free_q);
 	if (!msg)
 		return -1;
@@ -206,6 +230,10 @@ static int submit_next_out(void)
 	if (rc != ERR_NONE) {
 		/* re-add to the list of free msgb's */
 		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 		return 0;
 	}
 	return 1;
@@ -216,12 +244,32 @@ static void ccid_out_read_compl(const uint8_t ep, enum usb_xfer_code code, uint3
 {
 	struct msgb *msg = g_ccid_s.out_ep.in_progress;
 
+	/*
+	reset: resubmit from main loop when ready
+	unhalt: resubmit immediately
+	*/
+	if (code == USB_XFER_RESET || code == USB_XFER_UNHALT || code == USB_XFER_HALT) {
+		if (msg) {
+			msgb_reset(msg);
+			llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+			g_ccid_s.out_ep.in_progress = NULL;
+		}
+		if (code == USB_XFER_UNHALT) {
+			submit_next_out();
+		}
+		return;
+	}
+
 	/* add just-received msg to tail of endpoint queue */
 	OSMO_ASSERT(msg);
 	/* update msgb with the amount of data received */
 	msgb_put(msg, transferred);
 	/* append to list of pending-to-be-handed messages */
 	llist_add_tail_at(&msg->list, &g_ccid_s.out_ep.list);
+	OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+	OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+	OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+	OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 	g_ccid_s.out_ep.in_progress = NULL;
 
 	if(code != USB_XFER_DONE)
@@ -236,10 +284,18 @@ static void ccid_in_write_compl(const uint8_t ep, enum usb_xfer_code code, uint3
 {
 	struct msgb *msg = g_ccid_s.in_ep.in_progress;
 
-	OSMO_ASSERT(msg);
-	/* return the message back to the queue of free message buffers */
-	llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
-	g_ccid_s.in_ep.in_progress = NULL;
+	if (msg) {
+		/* return the message back to the queue of free message buffers */
+		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
+		g_ccid_s.in_ep.in_progress = NULL;
+	}
+
+	if (code == USB_XFER_UNHALT)
+		submit_next_in();
 
 	if(code != USB_XFER_DONE)
 		return;
@@ -253,10 +309,18 @@ static void ccid_irq_write_compl(const uint8_t ep, enum usb_xfer_code code, uint
 {
 	struct msgb *msg = g_ccid_s.irq_ep.in_progress;
 
-	OSMO_ASSERT(msg);
-	/* return the message back to the queue of free message buffers */
-	llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
-	g_ccid_s.irq_ep.in_progress = NULL;
+	if (msg) {
+		/* return the message back to the queue of free message buffers */
+		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
+		g_ccid_s.irq_ep.in_progress = NULL;
+	}
+
+	if (code == USB_XFER_UNHALT)
+		submit_next_irq();
 
 	if(code != USB_XFER_DONE)
 		return;
@@ -452,6 +516,10 @@ static int ccid_ops_send_in(struct ccid_instance *ci, struct msgb *msg)
 
 	/* append to list of pending-to-be-handed messages */
 	llist_add_tail_at(&msg->list, &g_ccid_s.in_ep.list);
+	OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+	OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+	OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+	OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 	submit_next_in();
 	return 0;
 }
@@ -473,21 +541,83 @@ uint8_t product_buf_descr[1 + 1 + (sizeof(product_buf) - 1) * 2];
 
 char rstcause_buf[RSTCAUSE_STR_SIZE];
 
-void do_usb_res(void)
+void reset_all_stuff_irq(void)
 {
-	hri_usbdevice_set_CTRLA_SWRST_bit(USB);
-	uint32_t *application_start_address = (uint32_t *)(16384);
-	__set_MSP(*application_start_address);
-	__DSB();
-	__ISB();
-	asm("bx %0" ::"r"(*(application_start_address + 1)));
+	SysTick->CTRL = 0; // no clock ticks for osmo timers
+
+	Sercom *const sercom_modules[] = SERCOM_INSTS;
+	for (uint32_t i = 0; i < SERCOM_INST_NUM; i++) {
+		hri_sercomusart_clear_CTRLA_ENABLE_bit(sercom_modules[i]);
+		hri_sercomusart_clear_INTFLAG_reg(sercom_modules[i], 0xff);
+	}
 }
 
-extern volatile bool delayed_usb_reset;
+extern volatile bool was_unconfigured_flag;
+
+void reset_all_stuff_non_irq(void)
+{
+	if (!was_unconfigured_flag)
+		return;
+
+	CRITICAL_SECTION_ENTER()
+
+	for (int i = 0; i <= usb_fs_descs.ccid.class.bMaxSlotIndex; i++) {
+		g_ci.slot_ops->handle_fsm_events(&g_ci.slot[i], true);
+	}
+
+	for (int i = 0; i <= usb_fs_descs.ccid.class.bMaxSlotIndex; i++) {
+		g_ci.slot_ops->icc_set_insertion_status(&g_ci.slot[i], false);
+		g_ci.slot_ops->handle_fsm_events(&g_ci.slot[i], true);
+	}
+
+	for (int i = 0; i <= usb_fs_descs.ccid.class.bMaxSlotIndex; i++) {
+		g_ci.slot_ops->handle_fsm_events(&g_ci.slot[i], true);
+	}
+
+	volatile struct usb_ep_q *all_epqs[] = { &g_ccid_s.in_ep, &g_ccid_s.irq_ep, &g_ccid_s.out_ep };
+	for (int i = 0; i < ARRAY_SIZE(all_epqs); i++) {
+		volatile struct usb_ep_q *cur_epq = all_epqs[i];
+		struct msgb *msg;
+		while ((msg = msgb_dequeue_irqsafe(&cur_epq->list))) {
+			msgb_reset(msg);
+			llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+			OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+			OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+			OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+			OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
+		}
+#if 0
+		struct msgb *cur_msg = cur_epq->in_progress;
+		if (cur_msg) {
+			/*
+			if (i == 2 && usb_d_ep_get_status(/*_ccid_df_funcd.func_ep_out*/ 2, 0) == USB_BUSY)
+			 	continue;
+			*/
+
+			msgb_reset(cur_msg);
+			llist_add_tail_at(&cur_msg->list, &g_ccid_s.free_q);
+			OSMO_ASSERT(msg->list.next != LLIST_POISON1)
+			OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
+			OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
+			OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
+			cur_epq->in_progress = NULL;
+		}
+#endif
+	}
+
+	SysTick->CTRL = 1;
+
+	// while (!ccid_df_is_enabled())
+	// 	;
+	g_ccid_s.card_insert_mask = 0;
+	was_unconfigured_flag = false;
+	CRITICAL_SECTION_LEAVE()
+	ccid_eps_enable();
+}
 
 int main(void)
 {
-
+	osmo_set_panic_handler(&bdg_bkptpanic);
 #if 0
 CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk ; //| /* tracing*/
 ////CoreDebug_DEMCR_MON_EN_Msk; /* mon interupt catcher */
@@ -567,9 +697,10 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 		struct msgb *msg = msgb_alloc(300, "ccid");
 		OSMO_ASSERT(msg);
 		/* return the message back to the queue of free message buffers */
+		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
 		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 	}
-	submit_next_out();
+	// submit_next_out();
 	CRITICAL_SECTION_LEAVE()
 #if 0
 	/* CAN_RX */
@@ -585,8 +716,10 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 
 //	command_print_prompt();
 	while (true) { // main loop
-		if (delayed_usb_reset)
-			do_usb_res();
+		if (was_unconfigured_flag) {
+			reset_all_stuff_non_irq();
+			submit_next_out();
+		}
 		poll_extpower_detect();
 		command_try_recv();
 		poll_card_detect();
@@ -597,19 +730,18 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 		feed_ccid();
 		osmo_timers_update();
 		int qs = llist_count_at(&g_ccid_s.free_q);
-		if(qs > NUM_OUT_BUF)
-			for (int i= 0; i < qs-NUM_OUT_BUF; i++){
+		if (qs > NUM_OUT_BUF)
+			for (int i = 0; i < qs - NUM_OUT_BUF; i++) {
 				struct msgb *msg = msgb_dequeue_irqsafe(&g_ccid_s.free_q);
 				if (msg)
-				msgb_free(msg);
+					msgb_free(msg);
 			}
-		if(qs < NUM_OUT_BUF)
-			for (int i= 0; i < NUM_OUT_BUF-qs; i++){
-				struct msgb *msg = msgb_alloc(300,"ccid");
+		if (qs < NUM_OUT_BUF)
+			for (int i = 0; i < NUM_OUT_BUF - qs; i++) {
+				struct msgb *msg = msgb_alloc(300, "ccid");
 				OSMO_ASSERT(msg);
 				/* return the message back to the queue of free message buffers */
 				llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 			}
-
 	}
 }

@@ -41,11 +41,6 @@
 #include <utils_assert.h>
 #include <hal_delay.h>
 
-/* save previous setup state to allow device reset when receving usb reset after the device
- * was previously properly configured, i.e. when powered externally and usb is disconnected and reconnected */
-volatile bool address_was_set = false;
-volatile bool delayed_usb_reset = false;
-
 /**
  * \brief Dummy callback function
  * \return Always false.
@@ -981,11 +976,6 @@ static inline void _usb_d_dev_reset(void)
 
 	_usb_d_dev_reset_epts();
 
-	if (address_was_set == true) {
-		address_was_set = 0;
-		delayed_usb_reset = true;
-	}
-
 	dev_inst.callbacks.event(USB_EV_RESET, 0);
 }
 
@@ -1591,7 +1581,6 @@ enum usb_speed _usb_d_dev_get_speed(void)
 void _usb_d_dev_set_address(uint8_t addr)
 {
 	hri_usbdevice_write_DADD_reg(USB, USB_DEVICE_DADD_ADDEN | USB_DEVICE_DADD_DADD(addr));
-	address_was_set = true;
 }
 
 uint8_t _usb_d_dev_get_address(void)
@@ -1732,9 +1721,10 @@ int32_t _usb_d_dev_ep_enable(const uint8_t ep)
 		_usb_d_dev_trans_setup(ept);
 
 	} else if (dir) {
-		if (epcfg & USB_DEVICE_EPCFG_EPTYPE1_Msk) {
-			return -USB_ERR_REDO;
-		}
+		/* prevents init->enable->disable->enable again from working without reinit...*/
+		// if (epcfg & USB_DEVICE_EPCFG_EPTYPE1_Msk) {
+		// 	return -USB_ERR_REDO;
+		// }
 		epcfg |= USB_DEVICE_EPCFG_EPTYPE1(ept->flags.bits.eptype);
 		hri_usbendpoint_write_EPCFG_reg(hw, epn, epcfg);
 
@@ -1746,10 +1736,10 @@ int32_t _usb_d_dev_ep_enable(const uint8_t ep)
 		_usbd_ep_clear_bank_status(epn, 1);
 
 	} else {
-
-		if (epcfg & USB_DEVICE_EPCFG_EPTYPE0_Msk) {
-			return -USB_ERR_REDO;
-		}
+		/* prevents init->enable->disable->enable again from working without reinit...*/
+		// if (epcfg & USB_DEVICE_EPCFG_EPTYPE0_Msk) {
+		// 	return -USB_ERR_REDO;
+		// }
 		epcfg |= USB_DEVICE_EPCFG_EPTYPE0(ept->flags.bits.eptype);
 		hri_usbendpoint_write_EPCFG_reg(hw, epn, epcfg);
 

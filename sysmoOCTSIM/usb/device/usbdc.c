@@ -36,6 +36,8 @@
 #define USBDC_VERSION 0x00000001u
 
 extern bool old_extpwer_state;
+volatile bool was_unconfigured_flag = false;
+extern void reset_all_stuff_irq(void);
 
 /**
  * \brief USB Device Core Sof Handler
@@ -450,6 +452,9 @@ static bool usbdc_set_ftr_req(const uint8_t ep, const struct usb_req *req)
  */
 static void usbdc_unconfig(void)
 {
+	reset_all_stuff_irq();
+	was_unconfigured_flag = true;
+
 	struct usbdf_driver *func = (struct usbdf_driver *)usbdc.func_list.head;
 	while (NULL != func) {
 		func->ctrl(func, USBDF_DISABLE, NULL);
