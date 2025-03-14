@@ -71,7 +71,7 @@ if [ "x$publish" = "x--publish" ]; then
 [ftp.osmocom.org]:48 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK8iivY70EiR5NiGChV39gRLjNpC8lvu1ZdHtdMw2zuX
 EOF
 	SSH_COMMAND="ssh -o 'UserKnownHostsFile=/build/known_hosts' -p 48"
-	LATEST_BIN="$(cd "$TOPDIR"/sysmoOCTSIM/gcc/; ls -1 sysmoOCTSIM-*-*.bin)"
+	LATEST_BIN="$(cd "$TOPDIR"/sysmoOCTSIM/gcc/; ls -1 sysmoOCTSIM-*.bin)"
 
 	echo "LATEST_BIN: $LATEST_BIN"
 
