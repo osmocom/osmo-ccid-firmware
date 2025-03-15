@@ -13,9 +13,9 @@ Device Descriptor:
   idVendor           0x1d50 OpenMoko, Inc.
   idProduct          0x6141 
   bcdDevice            0.00
-  iManufacturer           1 sysmocom
-  iProduct                2 sysmoOCTSIM (osmo-ASF4-DFU)
-  iSerial                 0 
+  iManufacturer           1 sysmocom - s.f.m.c. GmbH
+  iProduct                2 sysmoOCTSIM DFU-0.2.2-1644
+  iSerial                 3 ecc68ade3335355320202034463715ff
   bNumConfigurations      1
   Configuration Descriptor:
     bLength                 9
@@ -36,7 +36,7 @@ Device Descriptor:
       bInterfaceClass       254 Application Specific Interface
       bInterfaceSubClass      1 Device Firmware Update
       bInterfaceProtocol      2 
-      iInterface              3 SAM D5x/E5x DFU bootloader (DFU mode)
+      iInterface              4 SAM D5x/E5x DFU bootloader (DFU mode)
       Device Firmware Upgrade Interface Descriptor:
         bLength                             9
         bDescriptorType                    33

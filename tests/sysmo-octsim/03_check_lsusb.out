@@ -4,7 +4,7 @@ Device Descriptor:
   bLength                18
   bDescriptorType         1
   bcdUSB               2.00
-  bDeviceClass            2 Communications
+  bDeviceClass            0 
   bDeviceSubClass         0 
   bDeviceProtocol         0 
   bMaxPacketSize0        64
