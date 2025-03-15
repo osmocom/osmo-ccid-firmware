@@ -3,3 +3,6 @@ ccid_host/ccid_functionfs
 ccid_host/cuart_test
 ccid_host/hub_functionfs
 contrib/ccid-control
+sysmoOCTSIM/gcc/*.ihex
+**/.cache/*
+**/compile_commands.json

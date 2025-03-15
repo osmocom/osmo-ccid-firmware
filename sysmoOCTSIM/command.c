@@ -35,7 +35,7 @@ DEFUN(help, help_cmd, "help", "Print command reference")
 		printf(" %-16s %s\r\n", g_cmds.cmd[i]->command, g_cmds.cmd[i]->help);
 }
 
-static void cmd_execute()
+static void cmd_execute(void)
 {
 	char *argv[16];
 	unsigned int i;

@@ -22,6 +22,9 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef OCTSIMFWBUILD
+#include "hal/include/hal_delay.h"
+#endif
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/timer.h>
 #include <osmocom/core/logging.h>

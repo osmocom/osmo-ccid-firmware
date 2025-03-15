@@ -137,7 +137,7 @@ static void encode_ccid_pars_t1(struct ccid_proto_data_t1 *out, const struct cci
 
 static struct ccid_slot *get_ccid_slot(struct ccid_instance *ci, uint8_t slot_nr)
 {
-	if (slot_nr >= sizeof(ci->slot))
+	if (slot_nr >= ARRAY_SIZE(ci->slot))
 		return NULL;
 	else
 		return &ci->slot[slot_nr];

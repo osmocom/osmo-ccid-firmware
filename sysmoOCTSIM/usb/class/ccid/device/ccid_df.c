@@ -24,7 +24,9 @@
 #include "ccid_proto.h"
 #include "usb_includes.h"
 
+#ifdef WITH_DEBUG_CDC
 #include "cdcdf_acm_desc.h"
+#endif
 #include "usb_descriptors.h"
 
 #ifndef USB_CLASS_CCID
@@ -36,7 +38,7 @@ struct ccid_df_func_data {
 	uint8_t func_ep_in;	/*!< IN endpoint number */
 	uint8_t func_ep_out;	/*!< OUT endpoint number */
 	uint8_t func_ep_irq;	/*!< IRQ endpoint number */
-	bool enabled;		/*!< is this driver/function enabled? */
+	volatile bool enabled; /*!< is this driver/function enabled? */
 	const struct usb_ccid_class_descriptor *ccid_cd;
 };
 
@@ -44,6 +46,21 @@ static struct usbdf_driver _ccid_df;
 static struct ccid_df_func_data _ccid_df_funcd;
 
 extern const struct usb_desc_collection usb_fs_descs;
+
+void ccid_eps_enable(void)
+{
+	while (!ccid_df_is_enabled())
+		;
+
+	CRITICAL_SECTION_ENTER()
+	usb_d_ep_disable(_ccid_df_funcd.func_ep_in);
+	usb_d_ep_enable(_ccid_df_funcd.func_ep_in);
+	usb_d_ep_disable(_ccid_df_funcd.func_ep_irq);
+	usb_d_ep_enable(_ccid_df_funcd.func_ep_irq);
+	usb_d_ep_disable(_ccid_df_funcd.func_ep_out);
+	usb_d_ep_enable(_ccid_df_funcd.func_ep_out);
+	CRITICAL_SECTION_LEAVE()
+}
 
 /* FIXME: make those configurable, ensure they're sized according to
  * bNumClockSupported / bNumDataRatesSupported */
@@ -91,7 +108,10 @@ static int32_t ccid_df_enable(struct usbdf_driver *drv, struct usbd_descriptors 
 		} else {
 			func_data->func_ep_out = ep_desc.bEndpointAddress;
 		}
+		/*
+		don't do this here: too early for reset, config 0, .. ccid not ready.
 		usb_d_ep_enable(ep_desc.bEndpointAddress);
+		*/
 		desc->sod = ep;
 		ep = usb_find_ep_desc(usb_desc_next(desc->sod), desc->eod);
 	}
@@ -117,16 +137,16 @@ static int32_t ccid_df_disable(struct usbdf_driver *drv, struct usbd_descriptors
 
 	func_data->func_iface = 0xff;
 	if (func_data->func_ep_in != 0xff) {
-		func_data->func_ep_in = 0xff;
 		usb_d_ep_deinit(func_data->func_ep_in);
+		func_data->func_ep_in = 0xff;
 	}
 	if (func_data->func_ep_out != 0xff) {
-		func_data->func_ep_out = 0xff;
 		usb_d_ep_deinit(func_data->func_ep_out);
+		func_data->func_ep_out = 0xff;
 	}
 	if (func_data->func_ep_irq != 0xff) {
-		func_data->func_ep_irq = 0xff;
 		usb_d_ep_deinit(func_data->func_ep_irq);
+		func_data->func_ep_irq = 0xff;
 	}
 
 	_ccid_df_funcd.enabled = false;
@@ -198,6 +218,39 @@ static int32_t ccid_df_ctrl_req_ccid_get_data_rates(uint8_t ep, struct usb_req *
 /* process a control endpoint request */
 static int32_t ccid_df_ctrl_req(uint8_t ep, struct usb_req *req, enum usb_ctrl_stage stage)
 {
+	/* ERR_NOT_FOUND defers to default handlers which do the right thing */
+	if (stage == USB_SETUP_STAGE) {
+		if ((req->bmRequestType & USB_REQT_RECIP_MASK) == USB_REQT_RECIP_ENDPOINT) {
+			int32_t st;
+			static uint8_t ctrl_buffer[8] = { 0 };
+			uint8_t epad = req->wIndex & 0xFF;
+			// if (!(_ccid_df_funcd.func_ep_in == epad || _ccid_df_funcd.func_ep_irq == epad || _ccid_df_funcd.func_ep_out == epad))
+			// 	return ERR_NOT_FOUND;
+
+			switch (req->bRequest) {
+			case USB_REQ_CLEAR_FTR:
+				// usb_d_ep_halt(epad, USB_EP_HALT_CLR);
+				// usbdc_xfer(ep, NULL, 0, true);
+				return ERR_NOT_FOUND;
+			case USB_REQ_SET_FTR:
+				// usb_d_ep_halt(epad, USB_EP_HALT_SET);
+				// usbdc_xfer(ep, NULL, 0, true);
+				return ERR_NOT_FOUND;
+			case USB_REQ_GET_STATUS:
+				// st = usb_d_ep_halt(epad, USB_EP_HALT_GET);
+				// if (st < 0) {
+				// 	return ERR_NONE;
+				// }
+				// st = st & 0x1;
+				// memcpy(ctrl_buffer, &st, 2);
+				// usbdc_xfer(ep, ctrl_buffer, 2, false);
+				return ERR_NOT_FOUND;
+			default:
+				return ERR_NOT_FOUND;
+			}
+		}
+	}
+
 	/* verify this is a class-specific request */
 	if (0x01 != ((req->bmRequestType >> 5) & 0x03))
                 return ERR_NOT_FOUND;
