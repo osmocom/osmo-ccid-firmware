@@ -1,7 +1,15 @@
 resetting target to dfu
+BITFT_1=1
+BITFT_2=0
+BITFT_1=0
+BITFT_2=0
+BITFT_1=0
+BITFT_2=1
+BITFT_1=1
+BITFT_2=1
 done
 
-ID 1d50:6141 OpenMoko, Inc. 
+ID 1d50:6141 OpenMoko, Inc. sysmoOCTSIM DFU-0.2.2-1644
 Device Descriptor:
   bLength                18
   bDescriptorType         1
@@ -51,4 +59,8 @@ Device Descriptor:
 Device Status:     0x0000
   (Bus Powered)
 resetting target
+BITFT_1=1
+BITFT_2=0
+BITFT_1=0
+BITFT_2=0
 done

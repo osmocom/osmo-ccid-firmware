@@ -1,23 +1,30 @@
 fetch image
 done
 resetting target to dfu
+BITFT_1=1
+BITFT_2=0
+BITFT_1=0
+BITFT_2=0
+BITFT_1=0
+BITFT_2=1
+BITFT_1=1
+BITFT_2=1
 done
-dfu-util 0.9
+dfu-util 0.11
 
 Copyright 2005-2009 Weston Schmidt, Harald Welte and OpenMoko Inc.
-Copyright 2010-2016 Tormod Volden and Stefan Schmidt
+Copyright 2010-2021 Tormod Volden and Stefan Schmidt
 This program is Free Software and has ABSOLUTELY NO WARRANTY
 Please report bugs to http://sourceforge.net/p/dfu-util/tickets/
 
 Opening DFU capable USB device...
-ID 1d50:6141
-Run-time device DFU version 0110
+Device ID 1d50:6141
+Device DFU version 0110
 Claiming USB DFU Interface...
-Setting Alternate Setting #0 ...
-Determining device status: state = dfuIDLE, status = 0
-dfuIDLE, continuing
+Setting Alternate Interface #0 ...
+Determining device status...
+DFU state(2) = dfuIDLE, status(0) = No error condition is present
 DFU mode device DFU version 0110
 Device returned transfer size 512
 Copying data from PC to DFU device
 Download done.
-Resetting USB to switch back to runtime mode
