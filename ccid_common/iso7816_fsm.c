@@ -668,7 +668,7 @@ static int atr_append_byte(struct osmo_fsm_inst *fi, uint8_t byte)
 
 	if (!msgb_tailroom(atp->atr)) {
 		LOGPFSML(fi, LOGL_ERROR, "ATR overflow !?!");
-		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_SW_ERR_IND, NULL);
+		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_SW_ERR_IND, atp->atr);
 		return -1;
 	}
 	msgb_put_u8(atp->atr, byte);
@@ -726,15 +726,15 @@ restart:
 		default:
 			LOGPFSML(fi, LOGL_ERROR, "Invalid TS received: 0x%02X\n", byte);
 			/* FIXME: somehow indiicate to user */
-			osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_SW_ERR_IND, NULL);
+			osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_SW_ERR_IND, atp->atr);
 			break;
 		}
 		atp->i = 0; /* first interface byte sub-group is coming (T0 is kind of TD0) */
 		break;
 	case ISO7816_E_WTIME_EXP:
-		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, NULL);
+		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, atp->atr);
 		break;
-	default: 
+	default:
 		OSMO_ASSERT(0);
 	}
 }
@@ -840,7 +840,7 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 				osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_DONE_IND, atp->atr);
 				break;
 			default:
-				osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, NULL);
+				osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_ATR_ERR_IND, atp->atr);
 				break;
 		}
 		break;
@@ -1507,14 +1507,14 @@ static void tpdu_s_sw2_action(struct osmo_fsm_inst *fi, uint32_t event, void *da
 
 static void tpdu_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	OSMO_ASSERT(fi->fsm == &tpdu_fsm);
+	struct tpdu_fsm_priv *tfp = get_tpdu_fsm_priv(fi);
 
 	switch (event) {
 	case ISO7816_E_RX_ERR_IND:
 	case ISO7816_E_TX_ERR_IND:
 		/* FIXME: handle this in some different way */
 		osmo_fsm_inst_state_chg(fi, TPDU_S_DONE, 0, 0);
-		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_TPDU_FAILED_IND, NULL);
+		osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_TPDU_FAILED_IND, tfp->tpdu);
 		break;
 	case ISO7816_E_TPDU_CLEAR_REQ:
 		osmo_fsm_inst_state_chg(fi, TPDU_S_INIT, 0, 0);
