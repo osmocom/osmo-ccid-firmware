@@ -149,6 +149,19 @@ static struct osmo_fsm atr_fsm;
 static struct osmo_fsm tpdu_fsm;
 static struct osmo_fsm pps_fsm;
 
+#if defined(__arm__)
+#define invert_flip_uint8(XX)                                                                                                            \
+	do {                                                                                                                             \
+		_Static_assert(__builtin_types_compatible_p(__typeof__(XX), uint8_t),                                                    \
+			       "invert_flip_uint8 argument must be uint8_t");                                                            \
+		/* xor to flip done by the compiler, since it might be a mvns instead of eor if convenient, so don't force it manually*/ \
+		XX = ~XX;                                                                                                                \
+		__asm__ volatile("rbit %0, %0\n\t"                                                                                       \
+				 "uxtb.w %0, %0, ror #24\n\t"                                                                            \
+				 : "+r"(XX)::/* lsr clobbers cc, uxtb does not */                                                        \
+		);                                                                                                                       \
+	} while (0)
+#else
 /* look-up table for bit-wise inversion to convert from "inverse convention" to normal */
 static const uint8_t convention_convert_lut[256] = {
 	0xff, 0x7f, 0xbf, 0x3f, 0xdf, 0x5f, 0x9f, 0x1f, 0xef, 0x6f, 0xaf, 0x2f, 0xcf, 0x4f, 0x8f, 0x0f,
@@ -168,6 +181,13 @@ static const uint8_t convention_convert_lut[256] = {
 	0xf8, 0x78, 0xb8, 0x38, 0xd8, 0x58, 0x98, 0x18, 0xe8, 0x68, 0xa8, 0x28, 0xc8, 0x48, 0x88, 0x08,
 	0xf0, 0x70, 0xb0, 0x30, 0xd0, 0x50, 0x90, 0x10, 0xe0, 0x60, 0xa0, 0x20, 0xc0, 0x40, 0x80, 0x00,
 };
+#define invert_flip_uint8(XX)                                                                                          \
+	do {                                                                                                           \
+		_Static_assert(__builtin_types_compatible_p(__typeof__(XX), uint8_t),                                  \
+			       "invert_flip_uint8 argument must be uint8_t");                                          \
+		XX = convention_convert_lut[XX];                                                                       \
+	} while (0)
+#endif
 
 struct atr_fsm_priv {
 	uint8_t hist_len;	/*!< store the number of expected historical bytes */
@@ -656,7 +676,7 @@ static uint8_t get_atr_rx_byte_evt(struct osmo_fsm_inst *fi, void *data)
 
 	/* apply inverse convention */
 	if (ip->convention_convert)
-		byte = convention_convert_lut[byte];
+		invert_flip_uint8(byte);
 
 	return byte;
 }
