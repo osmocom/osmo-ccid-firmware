@@ -543,7 +543,7 @@ char rstcause_buf[RSTCAUSE_STR_SIZE];
 
 void reset_all_stuff_irq(void)
 {
-	SysTick->CTRL = 0; // no clock ticks for osmo timers
+	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk; // no clock ticks for osmo timers
 
 	Sercom *const sercom_modules[] = SERCOM_INSTS;
 	for (uint32_t i = 0; i < SERCOM_INST_NUM; i++) {
@@ -605,7 +605,7 @@ void reset_all_stuff_non_irq(void)
 #endif
 	}
 
-	SysTick->CTRL = 1;
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 
 	// while (!ccid_df_is_enabled())
 	// 	;
