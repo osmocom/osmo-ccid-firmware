@@ -71,7 +71,6 @@ static void signal_handler(int signal)
 int main(int argc, char **argv)
 {
 	struct osmo_fsm_inst *fi;
-	uint8_t atr[64];
 	int rc;
 
 	g_tall_ctx = talloc_named_const(NULL, 0, "main");

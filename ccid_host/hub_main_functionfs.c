@@ -228,7 +228,6 @@ int hub_handle_ctrl(void *ci, const uint8_t *ctrl_req, const uint8_t **data_in)
 {
 	const struct _usb_ctrl_req *req = (const struct _usb_ctrl_req *) ctrl_req;
 	static uint16_t status[2];
-	int rc;
 
 	LOGP(DUSB, LOGL_NOTICE, "CTRL bmReqT=0x%02X bRequest=%s, wValue=0x%04X, wIndex=0x%04X, wLength=%d\n",
 		req->bRequestType, get_value_string(hub_class_spec_req_vals, req->bRequest),
@@ -339,7 +338,7 @@ static void handle_setup(int fd, const struct usb_ctrlrequest *setup)
 
 static int ep_0_cb(struct osmo_fd *ofd, unsigned int what)
 {
-	struct ufunc_handle *uh = (struct ufunc_handle *) ofd->data;
+	// struct ufunc_handle *uh = (struct ufunc_handle *) ofd->data;
 	int rc;
 
 	if (what & OSMO_FD_READ) {
@@ -389,7 +388,6 @@ static int evfd_cb(struct osmo_fd *ofd, unsigned int what)
 {
 	struct ufunc_handle *uh = (struct ufunc_handle *) ofd->data;
 	struct io_event evt[1];
-	struct msgb *msg;
 	uint64_t ev_cnt;
 	int i, rc;
 
