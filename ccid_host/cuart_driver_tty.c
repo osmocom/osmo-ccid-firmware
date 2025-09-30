@@ -59,20 +59,6 @@ static int _init_uart(int fd)
 	return 0;
 }
 
-static void _set_dtr(int fd, bool dtr)
-{
-	int status, rc;
-
-	rc = ioctl(fd, TIOCMGET, &status);
-	OSMO_ASSERT(rc == 0);
-	if (dtr) /* set DTR */
-		status |= TIOCM_DTR;
-	else
-		status &= ~TIOCM_DTR;
-	rc = ioctl(fd, TIOCMSET, &status);
-	OSMO_ASSERT(rc == 0);
-}
-
 static void _set_rts(int fd, bool rts)
 {
 	int status, rc;
