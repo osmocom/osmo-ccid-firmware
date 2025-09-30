@@ -16,7 +16,7 @@ export deps inst
 
 
 echo
-echo "=============== libosmocore hostt build ==========="
+echo "=============== libosmocore host build ==========="
 osmo-build-dep.sh libosmocore "" --disable-doxygen
 export PKG_CONFIG_PATH="$inst/lib/pkgconfig:$PKG_CONFIG_PATH"
 export LD_LIBRARY_PATH="$inst/lib"
