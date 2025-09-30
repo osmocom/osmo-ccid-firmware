@@ -14,6 +14,7 @@ deps="$TOPDIR/deps"
 inst="$TOPDIR/install"
 export deps inst
 
+osmo-clean-workspace.sh
 
 echo
 echo "=============== libosmocore host build ==========="
