@@ -24,6 +24,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <linux/usb/functionfs.h>
+#include <talloc.h>
 
 #include "ccid_proto.h"
 #include "logging.h"

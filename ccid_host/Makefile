@@ -1,12 +1,14 @@
 CFLAGS= \
 	-Wall \
 	-g \
+	$(shell pkg-config --cflags talloc) \
 	$(shell pkg-config --cflags libosmocore) \
 	-I../ccid_common \
 	-I. \
 	$(NULL)
 LIBS?= \
 	-lasan \
+	$(shell pkg-config --libs talloc) \
 	$(shell pkg-config --libs libosmocore) \
 	$(NULL)
 

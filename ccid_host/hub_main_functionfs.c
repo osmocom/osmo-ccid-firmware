@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <linux/usb/functionfs.h>
 #include <linux/usb/ch11.h>
+#include <talloc.h>
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define cpu_to_le16(x)  (x)

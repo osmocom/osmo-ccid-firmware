@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <signal.h>
+#include <talloc.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/core/application.h>
