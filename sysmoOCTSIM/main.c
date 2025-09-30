@@ -335,7 +335,8 @@ static struct msgb *ccid_gen_notify_slot_status(uint8_t old_bm, uint8_t new_bm)
 	uint8_t statusbytes[2] = {0};
 	//struct msgb *msg = ccid_msgb_alloc();
 	struct msgb *msg = msgb_alloc(300,"IRQ");
-	struct ccid_rdr_to_pc_notify_slot_change *nsc = msgb_put(msg, sizeof(*nsc) + sizeof(statusbytes));
+	struct ccid_rdr_to_pc_notify_slot_change *nsc =
+		(struct ccid_rdr_to_pc_notify_slot_change *)msgb_put(msg, sizeof(*nsc) + sizeof(statusbytes));
 	nsc->bMessageType = RDR_to_PC_NotifySlotChange;
 
 	for(int i = 0; i <8; i++) {
