@@ -87,6 +87,7 @@ static void _set_rts(int fd, bool rts)
 	OSMO_ASSERT(rc == 0);
 }
 
+#if 0
 static int read_timeout(int fd, uint8_t *out, size_t len, unsigned long timeout_ms)
 {
 	struct timeval tv = { .tv_sec = timeout_ms / 1000, .tv_usec = (timeout_ms % 1000) * 1000 };
@@ -103,6 +104,7 @@ static int read_timeout(int fd, uint8_t *out, size_t len, unsigned long timeout_
 
 	return read(fd, out, len);
 }
+#endif
 
 static int _flush(int fd)
 {
