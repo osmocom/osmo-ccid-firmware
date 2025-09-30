@@ -22,7 +22,7 @@
 
 #include "dfudf.h"
 #include "usb_dfu.h"
-
+#include "hal_delay.h"
 
 /** USB Device DFU Function Specific Data */
 struct dfudf_func_data {
