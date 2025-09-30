@@ -1,5 +1,14 @@
-CFLAGS=-Wall -g $(shell pkg-config --cflags libosmocore) -I../ccid_common -I.
-LIBS?=-lasan $(shell pkg-config --libs libosmocore)
+CFLAGS= \
+	-Wall \
+	-g \
+	$(shell pkg-config --cflags libosmocore) \
+	-I../ccid_common \
+	-I. \
+	$(NULL)
+LIBS?= \
+	-lasan \
+	$(shell pkg-config --libs libosmocore) \
+	$(NULL)
 
 all: ccid_functionfs hub_functionfs cuart_test cuart_fsm_test
 
