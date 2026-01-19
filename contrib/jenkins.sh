@@ -39,6 +39,11 @@ cd "$deps"
 osmo-deps.sh libosmocore master
 cd libosmocore
 
+CFLAGS="-Os -g3 -ffunction-sections -fdata-sections -nostartfiles -nodefaultlibs"
+CFLAGS="$CFLAGS -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -mthumb -mlong-calls"
+CFLAGS="$CFLAGS -Werror -Wno-error=deprecated -Wno-error=deprecated-declarations -Wno-error=cpp -Wno-error=format"
+CFLAGS="$CFLAGS -I$TOPDIR/sysmoOCTSIM" # this is needed for talloc.h (--disable-pseudotalloc)
+
 mkdir -p "$inst/stow"
 autoreconf --install --force
 ./configure \
@@ -49,8 +54,8 @@ autoreconf --install --force
 	--enable-embedded \
 	--disable-pseudotalloc \
 	--disable-doxygen \
-		CFLAGS="-Os -ffunction-sections -fdata-sections -nostartfiles -nodefaultlibs -Werror -Wno-error=deprecated -Wno-error=deprecated-declarations -Wno-error=cpp -mthumb -Os -mlong-calls -g3 -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -I$TOPDIR/sysmoOCTSIM -Wno-error=format" \
-		CPPFLAGS="-D__thread=''"
+	CFLAGS="$CFLAGS" \
+	CPPFLAGS="-D__thread=''"
 make $PARALLEL_MAKE install
 make clean
 STOW_DIR="$inst/stow" stow --restow libosmocore
