@@ -41,10 +41,14 @@ cd libosmocore
 
 mkdir -p "$inst/stow"
 autoreconf --install --force
-./configure	--enable-static --prefix="$inst/stow/libosmocore" --host=arm-none-eabi \
-		--enable-embedded --disable-log-macros --disable-doxygen --disable-shared --disable-pseudotalloc \
-		--disable-libsctp --disable-libusb --disable-gb --enable-external-tests \
-		--disable-libmnl --disable-syslog-logging \
+./configure \
+	--prefix="$inst/stow/libosmocore" \
+	--host=arm-none-eabi \
+	--enable-static \
+	--disable-shared \
+	--enable-embedded \
+	--disable-pseudotalloc \
+	--disable-doxygen \
 		CFLAGS="-Os -ffunction-sections -fdata-sections -nostartfiles -nodefaultlibs -Werror -Wno-error=deprecated -Wno-error=deprecated-declarations -Wno-error=cpp -mthumb -Os -mlong-calls -g3 -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -I$TOPDIR/sysmoOCTSIM -Wno-error=format" \
 		CPPFLAGS="-D__thread=''"
 make $PARALLEL_MAKE install
