@@ -1488,12 +1488,19 @@ static void tpdu_s_sw1_action(struct osmo_fsm_inst *fi, uint32_t event, void *da
 	case ISO7816_E_RX_SINGLE:
 		byte = get_rx_byte_evt(fi->proc.parent, data);
 		LOGPFSML(fi, LOGL_DEBUG, "Received 0x%02x from UART\n", byte);
-		/* record byte */
-		//msgb_apdu_sw(tfp->apdu) = byte << 8;
-		msgb_put_u8(tfp->tpdu, byte);
-		card_uart_set_rx_threshold(ip->uart, 1);
-		card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
-		osmo_fsm_inst_state_chg(fi, TPDU_S_SW2, 0, 0);
+		if (byte == 0x60) {
+			/* NULL: wait for actual SW1 */
+			card_uart_set_rx_threshold(ip->uart, 1);
+			card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
+			osmo_fsm_inst_state_chg(fi, TPDU_S_SW1, 0, 0);
+		} else {
+			/* record byte */
+			//msgb_apdu_sw(tfp->apdu) = byte << 8;
+			msgb_put_u8(tfp->tpdu, byte);
+			card_uart_set_rx_threshold(ip->uart, 1);
+			card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
+			osmo_fsm_inst_state_chg(fi, TPDU_S_SW2, 0, 0);
+		}
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -1615,6 +1622,7 @@ static const struct osmo_fsm_state tpdu_states[] = {
 		.name = "SW1",
 		.in_event_mask = S(ISO7816_E_RX_SINGLE),
 		.out_state_mask = S(TPDU_S_INIT) |
+				  S(TPDU_S_SW1) |
 				  S(TPDU_S_SW2),
 		.action = tpdu_s_sw1_action,
 	},
