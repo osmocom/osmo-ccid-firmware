@@ -199,7 +199,8 @@ static void iso_fsm_clot_user_cb(struct osmo_fsm_inst *fi, int event, int cause,
 }
 
 /* do not free msgbs passed from the fsms, they are statically allocated! */
-static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
+static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable)
+{
 	struct iso_fsm_slot *ss = ccid_slot2iso_fsm_slot(cs);
 	struct msgb *tpdu, *resp;
 	volatile uint32_t event = cs->event;
@@ -338,6 +339,8 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable){
 			__func__, event, data);
 		break;
 	}
+
+	return 0;
 }
 
 static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
