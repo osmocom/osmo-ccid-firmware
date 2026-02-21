@@ -194,7 +194,9 @@ void msgb_enqueue_irqsafe(struct llist_head *q, struct msgb *msg)
 	CRITICAL_SECTION_LEAVE()
 }
 
-/* submit the next pending (if any) message for the IN EP */
+/* submit the next pending (if any) message for the IN EP
+ * Called from IRQ and mainloop.
+ */
 static int submit_next_in(void)
 {
 	struct usb_ep_q *ep_q = &g_ccid_s.in_ep;
@@ -218,7 +220,9 @@ static int submit_next_in(void)
 
 }
 
-/* submit the next pending (if any) message for the IRQ EP */
+/* submit the next pending (if any) message for the IRQ EP.
+ * Called from IRQ and mainloop.
+ */
 static int submit_next_irq(void)
 {
 	struct usb_ep_q *ep_q = &g_ccid_s.irq_ep;
