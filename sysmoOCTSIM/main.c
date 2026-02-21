@@ -172,10 +172,6 @@ static int submit_next_in(void)
 	ep_q->in_progress = msg;
 	rc = ccid_df_write_in(msgb_data(msg), msgb_length(msg));
 	if (rc != ERR_NONE) {
-		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 		printf("EP %s failed: %d\r\n", ep_q->name, rc);
 		return -1;
 	}
