@@ -198,7 +198,8 @@ static int32_t dfudf_out_req(uint8_t ep, struct usb_req *req, enum usb_ctrl_stag
 		__disable_irq();
 		delay_us(10000);
 		usbdc_detach();
-		delay_us(100000);
+		delay_us(50000);
+		delay_us(50000);
 		NVIC_SystemReset();
 #endif
 		break;
