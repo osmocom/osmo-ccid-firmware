@@ -38,9 +38,14 @@
 #include "ccid_device.h"
 #include "usb_descriptors.h"
 
-static void bdg_bkptpanic(const char *fmt, va_list args)
+volatile bool break_on_panic = false;
+
+static void panic_handler(const char *fmt, va_list args)
 {
-	__asm("BKPT #0");
+	if (break_on_panic)
+		__asm("BKPT #0"); /* wait for JTAG/SWD */
+	else
+		NVIC_SystemReset();
 }
 
 extern struct ccid_slot_ops iso_fsm_slot_ops;
@@ -600,7 +605,7 @@ static inline void user_led_set(bool state)
 
 int main(void)
 {
-	osmo_set_panic_handler(&bdg_bkptpanic);
+	osmo_set_panic_handler(&panic_handler);
 #if 0
 CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk ; //| /* tracing*/
 ////CoreDebug_DEMCR_MON_EN_Msk; /* mon interupt catcher */
