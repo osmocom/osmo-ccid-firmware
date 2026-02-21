@@ -47,66 +47,66 @@ int main(void);
 void __libc_init_array(void);
 
 /* Default empty handler */
-void Dummy_Handler(void);
+void Fallback_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
 
 /* Cortex-M4 core handlers */
-void NonMaskableInt_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void HardFault_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void MemManagement_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void BusFault_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void UsageFault_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void SVCall_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void DebugMonitor_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void PendSV_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void SysTick_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void NonMaskableInt_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void HardFault_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void MemManagement_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void BusFault_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void UsageFault_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void SVCall_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void DebugMonitor_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void PendSV_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void SysTick_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 
 /* Peripherals handlers */
-void PM_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void MCLK_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void OSCCTRL_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* OSCCTRL_XOSCFAIL_0, OSCCTRL_XOSCRDY_0 */
-void OSCCTRL_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* OSCCTRL_XOSCFAIL_1, OSCCTRL_XOSCRDY_1 */
-void OSCCTRL_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* OSCCTRL_DFLLLOCKC, OSCCTRL_DFLLLOCKF,
+void PM_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void MCLK_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void OSCCTRL_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* OSCCTRL_XOSCFAIL_0, OSCCTRL_XOSCRDY_0 */
+void OSCCTRL_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* OSCCTRL_XOSCFAIL_1, OSCCTRL_XOSCRDY_1 */
+void OSCCTRL_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* OSCCTRL_DFLLLOCKC, OSCCTRL_DFLLLOCKF,
                                                                                OSCCTRL_DFLLOOB, OSCCTRL_DFLLRCS,
                                                                                OSCCTRL_DFLLRDY */
 void OSCCTRL_3_Handler(void) __attribute__((
-    weak, alias("Dummy_Handler"))); /* OSCCTRL_DPLLLCKF_0, OSCCTRL_DPLLLCKR_0, OSCCTRL_DPLLLDRTO_0, OSCCTRL_DPLLLTO_0 */
+    weak, alias("Fallback_Handler"))); /* OSCCTRL_DPLLLCKF_0, OSCCTRL_DPLLLCKR_0, OSCCTRL_DPLLLDRTO_0, OSCCTRL_DPLLLTO_0 */
 void OSCCTRL_4_Handler(void) __attribute__((
-    weak, alias("Dummy_Handler"))); /* OSCCTRL_DPLLLCKF_1, OSCCTRL_DPLLLCKR_1, OSCCTRL_DPLLLDRTO_1, OSCCTRL_DPLLLTO_1 */
-void OSC32KCTRL_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void SUPC_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SUPC_B12SRDY, SUPC_B33SRDY, SUPC_BOD12RDY,
+    weak, alias("Fallback_Handler"))); /* OSCCTRL_DPLLLCKF_1, OSCCTRL_DPLLLCKR_1, OSCCTRL_DPLLLDRTO_1, OSCCTRL_DPLLLTO_1 */
+void OSC32KCTRL_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void SUPC_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SUPC_B12SRDY, SUPC_B33SRDY, SUPC_BOD12RDY,
                                                                             SUPC_BOD33RDY, SUPC_VCORERDY, SUPC_VREGRDY
                                                                           */
-void SUPC_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SUPC_BOD12DET, SUPC_BOD33DET */
-void WDT_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void RTC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void EIC_0_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_0 */
-void EIC_1_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_1 */
-void EIC_2_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_2 */
-void EIC_3_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_3 */
-void EIC_4_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_4 */
-void EIC_5_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_5 */
-void EIC_6_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_6 */
-void EIC_7_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_7 */
-void EIC_8_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_8 */
-void EIC_9_Handler(void) __attribute__((weak, alias("Dummy_Handler")));  /* EIC_EXTINT_9 */
-void EIC_10_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EIC_EXTINT_10 */
-void EIC_11_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EIC_EXTINT_11 */
-void EIC_12_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EIC_EXTINT_12 */
-void EIC_13_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EIC_EXTINT_13 */
-void EIC_14_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EIC_EXTINT_14 */
-void EIC_15_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EIC_EXTINT_15 */
-void FREQM_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void NVMCTRL_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* NVMCTRL_0, NVMCTRL_1, NVMCTRL_2,
+void SUPC_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SUPC_BOD12DET, SUPC_BOD33DET */
+void WDT_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void RTC_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void EIC_0_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_0 */
+void EIC_1_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_1 */
+void EIC_2_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_2 */
+void EIC_3_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_3 */
+void EIC_4_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_4 */
+void EIC_5_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_5 */
+void EIC_6_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_6 */
+void EIC_7_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_7 */
+void EIC_8_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_8 */
+void EIC_9_Handler(void) __attribute__((weak, alias("Fallback_Handler")));  /* EIC_EXTINT_9 */
+void EIC_10_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EIC_EXTINT_10 */
+void EIC_11_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EIC_EXTINT_11 */
+void EIC_12_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EIC_EXTINT_12 */
+void EIC_13_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EIC_EXTINT_13 */
+void EIC_14_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EIC_EXTINT_14 */
+void EIC_15_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EIC_EXTINT_15 */
+void FREQM_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void NVMCTRL_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* NVMCTRL_0, NVMCTRL_1, NVMCTRL_2,
                                                                                NVMCTRL_3, NVMCTRL_4, NVMCTRL_5,
                                                                                NVMCTRL_6, NVMCTRL_7 */
-void NVMCTRL_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* NVMCTRL_10, NVMCTRL_8, NVMCTRL_9 */
-void DMAC_0_Handler(void) __attribute__((weak, alias("Dummy_Handler")));    /* DMAC_SUSP_0, DMAC_TCMPL_0, DMAC_TERR_0 */
-void DMAC_1_Handler(void) __attribute__((weak, alias("Dummy_Handler")));    /* DMAC_SUSP_1, DMAC_TCMPL_1, DMAC_TERR_1 */
-void DMAC_2_Handler(void) __attribute__((weak, alias("Dummy_Handler")));    /* DMAC_SUSP_2, DMAC_TCMPL_2, DMAC_TERR_2 */
-void DMAC_3_Handler(void) __attribute__((weak, alias("Dummy_Handler")));    /* DMAC_SUSP_3, DMAC_TCMPL_3, DMAC_TERR_3 */
+void NVMCTRL_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* NVMCTRL_10, NVMCTRL_8, NVMCTRL_9 */
+void DMAC_0_Handler(void) __attribute__((weak, alias("Fallback_Handler")));    /* DMAC_SUSP_0, DMAC_TCMPL_0, DMAC_TERR_0 */
+void DMAC_1_Handler(void) __attribute__((weak, alias("Fallback_Handler")));    /* DMAC_SUSP_1, DMAC_TCMPL_1, DMAC_TERR_1 */
+void DMAC_2_Handler(void) __attribute__((weak, alias("Fallback_Handler")));    /* DMAC_SUSP_2, DMAC_TCMPL_2, DMAC_TERR_2 */
+void DMAC_3_Handler(void) __attribute__((weak, alias("Fallback_Handler")));    /* DMAC_SUSP_3, DMAC_TCMPL_3, DMAC_TERR_3 */
 void DMAC_4_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* DMAC_SUSP_10, DMAC_SUSP_11, DMAC_SUSP_12, DMAC_SUSP_13, DMAC_SUSP_14,
+                   alias("Fallback_Handler"))); /* DMAC_SUSP_10, DMAC_SUSP_11, DMAC_SUSP_12, DMAC_SUSP_13, DMAC_SUSP_14,
                                                 DMAC_SUSP_15, DMAC_SUSP_16, DMAC_SUSP_17, DMAC_SUSP_18, DMAC_SUSP_19,
                                                 DMAC_SUSP_20, DMAC_SUSP_21, DMAC_SUSP_22, DMAC_SUSP_23, DMAC_SUSP_24,
                                                 DMAC_SUSP_25, DMAC_SUSP_26, DMAC_SUSP_27, DMAC_SUSP_28, DMAC_SUSP_29,
@@ -124,76 +124,76 @@ void DMAC_4_Handler(void)
                                                 DMAC_TERR_24, DMAC_TERR_25, DMAC_TERR_26, DMAC_TERR_27, DMAC_TERR_28,
                                                 DMAC_TERR_29, DMAC_TERR_30, DMAC_TERR_31, DMAC_TERR_4, DMAC_TERR_5,
                                                 DMAC_TERR_6, DMAC_TERR_7, DMAC_TERR_8, DMAC_TERR_9 */
-void EVSYS_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EVSYS_EVD_0, EVSYS_OVR_0 */
-void EVSYS_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EVSYS_EVD_1, EVSYS_OVR_1 */
-void EVSYS_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EVSYS_EVD_2, EVSYS_OVR_2 */
-void EVSYS_3_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EVSYS_EVD_3, EVSYS_OVR_3 */
-void EVSYS_4_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* EVSYS_EVD_10, EVSYS_EVD_11, EVSYS_EVD_4,
+void EVSYS_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EVSYS_EVD_0, EVSYS_OVR_0 */
+void EVSYS_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EVSYS_EVD_1, EVSYS_OVR_1 */
+void EVSYS_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EVSYS_EVD_2, EVSYS_OVR_2 */
+void EVSYS_3_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EVSYS_EVD_3, EVSYS_OVR_3 */
+void EVSYS_4_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* EVSYS_EVD_10, EVSYS_EVD_11, EVSYS_EVD_4,
                                                                              EVSYS_EVD_5, EVSYS_EVD_6, EVSYS_EVD_7,
                                                                              EVSYS_EVD_8, EVSYS_EVD_9, EVSYS_OVR_10,
                                                                              EVSYS_OVR_11, EVSYS_OVR_4, EVSYS_OVR_5,
                                                                              EVSYS_OVR_6, EVSYS_OVR_7, EVSYS_OVR_8,
                                                                              EVSYS_OVR_9 */
-void PAC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void RAMECC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void SERCOM0_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM0_0 */
-void SERCOM0_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM0_1 */
-void SERCOM0_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM0_2 */
+void PAC_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void RAMECC_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void SERCOM0_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM0_0 */
+void SERCOM0_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM0_1 */
+void SERCOM0_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM0_2 */
 void SERCOM0_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM0_3, SERCOM0_4, SERCOM0_5, SERCOM0_6 */
-void SERCOM1_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM1_0 */
-void SERCOM1_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM1_1 */
-void SERCOM1_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM1_2 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM0_3, SERCOM0_4, SERCOM0_5, SERCOM0_6 */
+void SERCOM1_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM1_0 */
+void SERCOM1_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM1_1 */
+void SERCOM1_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM1_2 */
 void SERCOM1_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM1_3, SERCOM1_4, SERCOM1_5, SERCOM1_6 */
-void SERCOM2_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM2_0 */
-void SERCOM2_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM2_1 */
-void SERCOM2_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM2_2 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM1_3, SERCOM1_4, SERCOM1_5, SERCOM1_6 */
+void SERCOM2_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM2_0 */
+void SERCOM2_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM2_1 */
+void SERCOM2_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM2_2 */
 void SERCOM2_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM2_3, SERCOM2_4, SERCOM2_5, SERCOM2_6 */
-void SERCOM3_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM3_0 */
-void SERCOM3_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM3_1 */
-void SERCOM3_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM3_2 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM2_3, SERCOM2_4, SERCOM2_5, SERCOM2_6 */
+void SERCOM3_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM3_0 */
+void SERCOM3_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM3_1 */
+void SERCOM3_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM3_2 */
 void SERCOM3_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM3_3, SERCOM3_4, SERCOM3_5, SERCOM3_6 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM3_3, SERCOM3_4, SERCOM3_5, SERCOM3_6 */
 #ifdef ID_SERCOM4
-void SERCOM4_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM4_0 */
-void SERCOM4_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM4_1 */
-void SERCOM4_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM4_2 */
+void SERCOM4_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM4_0 */
+void SERCOM4_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM4_1 */
+void SERCOM4_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM4_2 */
 void SERCOM4_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM4_3, SERCOM4_4, SERCOM4_5, SERCOM4_6 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM4_3, SERCOM4_4, SERCOM4_5, SERCOM4_6 */
 #endif
 #ifdef ID_SERCOM5
-void SERCOM5_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM5_0 */
-void SERCOM5_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM5_1 */
-void SERCOM5_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM5_2 */
+void SERCOM5_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM5_0 */
+void SERCOM5_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM5_1 */
+void SERCOM5_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM5_2 */
 void SERCOM5_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM5_3, SERCOM5_4, SERCOM5_5, SERCOM5_6 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM5_3, SERCOM5_4, SERCOM5_5, SERCOM5_6 */
 #endif
 #ifdef ID_SERCOM6
-void SERCOM6_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM6_0 */
-void SERCOM6_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM6_1 */
-void SERCOM6_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM6_2 */
+void SERCOM6_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM6_0 */
+void SERCOM6_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM6_1 */
+void SERCOM6_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM6_2 */
 void SERCOM6_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM6_3, SERCOM6_4, SERCOM6_5, SERCOM6_6 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM6_3, SERCOM6_4, SERCOM6_5, SERCOM6_6 */
 #endif
 #ifdef ID_SERCOM7
-void SERCOM7_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM7_0 */
-void SERCOM7_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM7_1 */
-void SERCOM7_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM7_2 */
+void SERCOM7_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM7_0 */
+void SERCOM7_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM7_1 */
+void SERCOM7_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM7_2 */
 void SERCOM7_3_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* SERCOM7_3, SERCOM7_4, SERCOM7_5, SERCOM7_6 */
+    __attribute__((weak, alias("Fallback_Handler"))); /* SERCOM7_3, SERCOM7_4, SERCOM7_5, SERCOM7_6 */
 #endif
 #ifdef ID_CAN0
-void CAN0_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void CAN0_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 #ifdef ID_CAN1
-void CAN1_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void CAN1_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 #ifdef ID_USB
 void USB_0_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* USB_EORSM_DNRSM, USB_EORST_RST, USB_LPMSUSP_DDISC, USB_LPM_DCONN,
+                   alias("Fallback_Handler"))); /* USB_EORSM_DNRSM, USB_EORST_RST, USB_LPMSUSP_DDISC, USB_LPM_DCONN,
                                                 USB_MSOF, USB_RAMACER, USB_RXSTP_TXSTP_0, USB_RXSTP_TXSTP_1,
                                                 USB_RXSTP_TXSTP_2, USB_RXSTP_TXSTP_3, USB_RXSTP_TXSTP_4,
                                                 USB_RXSTP_TXSTP_5, USB_RXSTP_TXSTP_6, USB_RXSTP_TXSTP_7,
@@ -207,108 +207,108 @@ void USB_0_Handler(void)
                                                 USB_TRFAIL1_PERR_0, USB_TRFAIL1_PERR_1, USB_TRFAIL1_PERR_2,
                                                 USB_TRFAIL1_PERR_3, USB_TRFAIL1_PERR_4, USB_TRFAIL1_PERR_5,
                                                 USB_TRFAIL1_PERR_6, USB_TRFAIL1_PERR_7, USB_UPRSM, USB_WAKEUP */
-void USB_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* USB_SOF_HSOF */
-void USB_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* USB_TRCPT0_0, USB_TRCPT0_1, USB_TRCPT0_2,
+void USB_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* USB_SOF_HSOF */
+void USB_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* USB_TRCPT0_0, USB_TRCPT0_1, USB_TRCPT0_2,
                                                                            USB_TRCPT0_3, USB_TRCPT0_4, USB_TRCPT0_5,
                                                                            USB_TRCPT0_6, USB_TRCPT0_7 */
-void USB_3_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* USB_TRCPT1_0, USB_TRCPT1_1, USB_TRCPT1_2,
+void USB_3_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* USB_TRCPT1_0, USB_TRCPT1_1, USB_TRCPT1_2,
                                                                            USB_TRCPT1_3, USB_TRCPT1_4, USB_TRCPT1_5,
                                                                            USB_TRCPT1_6, USB_TRCPT1_7 */
 #endif
 #ifdef ID_GMAC
-void GMAC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void GMAC_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 void TCC0_0_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* TCC0_CNT_A, TCC0_DFS_A, TCC0_ERR_A, TCC0_FAULT0_A, TCC0_FAULT1_A,
+                   alias("Fallback_Handler"))); /* TCC0_CNT_A, TCC0_DFS_A, TCC0_ERR_A, TCC0_FAULT0_A, TCC0_FAULT1_A,
                                                 TCC0_FAULTA_A, TCC0_FAULTB_A, TCC0_OVF, TCC0_TRG, TCC0_UFS_A */
-void TCC0_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC0_MC_0 */
-void TCC0_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC0_MC_1 */
-void TCC0_3_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC0_MC_2 */
-void TCC0_4_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC0_MC_3 */
-void TCC0_5_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC0_MC_4 */
-void TCC0_6_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC0_MC_5 */
+void TCC0_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC0_MC_0 */
+void TCC0_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC0_MC_1 */
+void TCC0_3_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC0_MC_2 */
+void TCC0_4_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC0_MC_3 */
+void TCC0_5_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC0_MC_4 */
+void TCC0_6_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC0_MC_5 */
 void TCC1_0_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* TCC1_CNT_A, TCC1_DFS_A, TCC1_ERR_A, TCC1_FAULT0_A, TCC1_FAULT1_A,
+                   alias("Fallback_Handler"))); /* TCC1_CNT_A, TCC1_DFS_A, TCC1_ERR_A, TCC1_FAULT0_A, TCC1_FAULT1_A,
                                                 TCC1_FAULTA_A, TCC1_FAULTB_A, TCC1_OVF, TCC1_TRG, TCC1_UFS_A */
-void TCC1_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC1_MC_0 */
-void TCC1_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC1_MC_1 */
-void TCC1_3_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC1_MC_2 */
-void TCC1_4_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC1_MC_3 */
+void TCC1_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC1_MC_0 */
+void TCC1_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC1_MC_1 */
+void TCC1_3_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC1_MC_2 */
+void TCC1_4_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC1_MC_3 */
 void TCC2_0_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* TCC2_CNT_A, TCC2_DFS_A, TCC2_ERR_A, TCC2_FAULT0_A, TCC2_FAULT1_A,
+                   alias("Fallback_Handler"))); /* TCC2_CNT_A, TCC2_DFS_A, TCC2_ERR_A, TCC2_FAULT0_A, TCC2_FAULT1_A,
                                                 TCC2_FAULTA_A, TCC2_FAULTB_A, TCC2_OVF, TCC2_TRG, TCC2_UFS_A */
-void TCC2_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC2_MC_0 */
-void TCC2_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC2_MC_1 */
-void TCC2_3_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC2_MC_2 */
+void TCC2_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC2_MC_0 */
+void TCC2_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC2_MC_1 */
+void TCC2_3_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC2_MC_2 */
 #ifdef ID_TCC3
 void TCC3_0_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* TCC3_CNT_A, TCC3_DFS_A, TCC3_ERR_A, TCC3_FAULT0_A, TCC3_FAULT1_A,
+                   alias("Fallback_Handler"))); /* TCC3_CNT_A, TCC3_DFS_A, TCC3_ERR_A, TCC3_FAULT0_A, TCC3_FAULT1_A,
                                                 TCC3_FAULTA_A, TCC3_FAULTB_A, TCC3_OVF, TCC3_TRG, TCC3_UFS_A */
-void TCC3_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC3_MC_0 */
-void TCC3_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC3_MC_1 */
+void TCC3_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC3_MC_0 */
+void TCC3_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC3_MC_1 */
 #endif
 #ifdef ID_TCC4
 void TCC4_0_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* TCC4_CNT_A, TCC4_DFS_A, TCC4_ERR_A, TCC4_FAULT0_A, TCC4_FAULT1_A,
+                   alias("Fallback_Handler"))); /* TCC4_CNT_A, TCC4_DFS_A, TCC4_ERR_A, TCC4_FAULT0_A, TCC4_FAULT1_A,
                                                 TCC4_FAULTA_A, TCC4_FAULTB_A, TCC4_OVF, TCC4_TRG, TCC4_UFS_A */
-void TCC4_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC4_MC_0 */
-void TCC4_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* TCC4_MC_1 */
+void TCC4_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC4_MC_0 */
+void TCC4_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* TCC4_MC_1 */
 #endif
-void TC0_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void TC1_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void TC2_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void TC3_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void TC0_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void TC1_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void TC2_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void TC3_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #ifdef ID_TC4
-void TC4_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void TC4_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 #ifdef ID_TC5
-void TC5_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void TC5_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 #ifdef ID_TC6
-void TC6_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void TC6_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 #ifdef ID_TC7
-void TC7_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void TC7_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 void PDEC_0_Handler(void)
-    __attribute__((weak, alias("Dummy_Handler"))); /* PDEC_DIR_A, PDEC_ERR_A, PDEC_OVF, PDEC_VLC_A */
-void PDEC_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* PDEC_MC_0 */
-void PDEC_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* PDEC_MC_1 */
-void ADC0_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* ADC0_OVERRUN, ADC0_WINMON */
-void ADC0_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* ADC0_RESRDY */
-void ADC1_0_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* ADC1_OVERRUN, ADC1_WINMON */
-void ADC1_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* ADC1_RESRDY */
-void AC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+    __attribute__((weak, alias("Fallback_Handler"))); /* PDEC_DIR_A, PDEC_ERR_A, PDEC_OVF, PDEC_VLC_A */
+void PDEC_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* PDEC_MC_0 */
+void PDEC_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* PDEC_MC_1 */
+void ADC0_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* ADC0_OVERRUN, ADC0_WINMON */
+void ADC0_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* ADC0_RESRDY */
+void ADC1_0_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* ADC1_OVERRUN, ADC1_WINMON */
+void ADC1_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* ADC1_RESRDY */
+void AC_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 void DAC_0_Handler(void)
     __attribute__((weak,
-                   alias("Dummy_Handler"))); /* DAC_OVERRUN_A_0, DAC_OVERRUN_A_1, DAC_UNDERRUN_A_0, DAC_UNDERRUN_A_1 */
-void DAC_1_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* DAC_EMPTY_0 */
-void DAC_2_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* DAC_EMPTY_1 */
-void DAC_3_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* DAC_RESRDY_0 */
-void DAC_4_Handler(void) __attribute__((weak, alias("Dummy_Handler"))); /* DAC_RESRDY_1 */
+                   alias("Fallback_Handler"))); /* DAC_OVERRUN_A_0, DAC_OVERRUN_A_1, DAC_UNDERRUN_A_0, DAC_UNDERRUN_A_1 */
+void DAC_1_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* DAC_EMPTY_0 */
+void DAC_2_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* DAC_EMPTY_1 */
+void DAC_3_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* DAC_RESRDY_0 */
+void DAC_4_Handler(void) __attribute__((weak, alias("Fallback_Handler"))); /* DAC_RESRDY_1 */
 #ifdef ID_I2S
-void I2S_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void I2S_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
-void PCC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void AES_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void TRNG_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void PCC_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void AES_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
+void TRNG_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #ifdef ID_ICM
-void ICM_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void ICM_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 #ifdef ID_PUKCC
-void PUKCC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void PUKCC_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
-void QSPI_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void QSPI_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #ifdef ID_SDHC0
-void SDHC0_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void SDHC0_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 #ifdef ID_SDHC1
-void SDHC1_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void SDHC1_Handler(void) __attribute__((weak, alias("Fallback_Handler")));
 #endif
 
 /* Exception Table */
