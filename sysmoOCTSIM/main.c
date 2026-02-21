@@ -40,7 +40,11 @@
 
 volatile bool break_on_panic = false;
 
-static void panic_handler(const char *fmt, va_list args)
+/* To have the panic handler as simple as possible to also call
+ * in cases of stack overflow, etc, have a _panic_handler() with
+ * no arguments.
+ */
+static inline void _panic_handler(void)
 {
 	if (break_on_panic)
 		__asm("BKPT #0"); /* wait for JTAG/SWD */
@@ -48,9 +52,39 @@ static void panic_handler(const char *fmt, va_list args)
 		NVIC_SystemReset();
 }
 
+static void panic_handler(const char *fmt, va_list args)
+{
+	_panic_handler();
+}
+
+/* Use functions to have the fault type available in the backtrace. */
+void NonMaskableInt_Handler(void)
+{
+	_panic_handler();
+}
+
+void HardFault_Handler(void)
+{
+	_panic_handler();
+}
+
+void BusFault_Handler(void)
+{
+	_panic_handler();
+}
+
+void UsageFault_Handler(void)
+{
+	_panic_handler();
+}
+
+void Fallback_Handler(void)
+{
+	_panic_handler();
+}
+
 extern struct ccid_slot_ops iso_fsm_slot_ops;
 static struct ccid_instance g_ci;
-
 
 static void ccid_app_init(void);
 
