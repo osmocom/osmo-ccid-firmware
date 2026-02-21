@@ -199,8 +199,6 @@ static int submit_next_irq(void)
 	if (rc != ERR_NONE) {
 		// ep_q->in_progress = msg;
 		// msgb_enqueue_irqsafe(&ep_q->list, msg);
-		// OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-		// OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
 		printf("EP %s failed: %d\r\n", ep_q->name, rc);
 		return -1;
 	}
@@ -226,10 +224,6 @@ static int submit_next_out(void)
 	if (rc != ERR_NONE) {
 		/* re-add to the list of free msgb's */
 		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
-		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 		return 0;
 	}
 	return 1;
@@ -262,10 +256,6 @@ static void ccid_out_read_compl(const uint8_t ep, enum usb_xfer_code code, uint3
 	msgb_put(msg, transferred);
 	/* append to list of pending-to-be-handed messages */
 	llist_add_tail_at(&msg->list, &g_ccid_s.out_ep.list);
-	OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-	OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-	OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-	OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 	g_ccid_s.out_ep.in_progress = NULL;
 
 	if(code != USB_XFER_DONE)
@@ -283,10 +273,6 @@ static void ccid_in_write_compl(const uint8_t ep, enum usb_xfer_code code, uint3
 	if (msg) {
 		/* return the message back to the queue of free message buffers */
 		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
-		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 		g_ccid_s.in_ep.in_progress = NULL;
 	}
 
@@ -308,10 +294,6 @@ static void ccid_irq_write_compl(const uint8_t ep, enum usb_xfer_code code, uint
 	if (msg) {
 		/* return the message back to the queue of free message buffers */
 		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
-		OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-		OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-		OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 		g_ccid_s.irq_ep.in_progress = NULL;
 	}
 
@@ -513,10 +495,6 @@ static int ccid_ops_send_in(struct ccid_instance *ci, struct msgb *msg)
 
 	/* append to list of pending-to-be-handed messages */
 	llist_add_tail_at(&msg->list, &g_ccid_s.in_ep.list);
-	OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-	OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-	OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-	OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 	submit_next_in();
 	return 0;
 }
@@ -578,10 +556,6 @@ void reset_all_stuff_non_irq(void)
 		while ((msg = msgb_dequeue_irqsafe(&cur_epq->list))) {
 			msgb_reset(msg);
 			llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
-			OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-			OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-			OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-			OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 		}
 #if 0
 		struct msgb *cur_msg = cur_epq->in_progress;
@@ -593,10 +567,6 @@ void reset_all_stuff_non_irq(void)
 
 			msgb_reset(cur_msg);
 			llist_add_tail_at(&cur_msg->list, &g_ccid_s.free_q);
-			OSMO_ASSERT(msg->list.next != LLIST_POISON1)
-			OSMO_ASSERT(msg->list.next->next != LLIST_POISON1)
-			OSMO_ASSERT(msg->list.prev != LLIST_POISON2)
-			OSMO_ASSERT(msg->list.prev->prev != LLIST_POISON2)
 			cur_epq->in_progress = NULL;
 		}
 #endif
