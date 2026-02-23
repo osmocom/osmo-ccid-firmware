@@ -616,6 +616,11 @@ void reset_all_stuff_non_irq(void)
 	ccid_eps_enable();
 }
 
+static inline void user_led_set(bool state)
+{
+	gpio_set_pin_level(USER_LED, state);
+}
+
 int main(void)
 {
 	osmo_set_panic_handler(&bdg_bkptpanic);
@@ -655,6 +660,8 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 	get_rstcause_str(rstcause_buf);
 
 	atmel_start_init();
+	user_led_set(true);
+
 	init_extpower_detect();
 	board_init();
 	usb_init();
