@@ -460,6 +460,13 @@ static int ccid_handle_xfr_block(struct ccid_slot *cs, struct msgb *msg)
 	struct msgb *resp;
 	int rc;
 
+	if (u->xfr_block.hdr.dwLength == 0) {
+		/* CCID Rev 1.1 permits a zero-length XfrBlock on the protocol level, but what should we do
+		 * with a zero-length TPDU? We need to reject it as bError=1 (Bad dwLength) */
+		resp = ccid_gen_data_block(cs, u->xfr_block.hdr.bSeq, CCID_CMD_STATUS_FAILED, 1, 0, 0);
+		goto out;
+	}
+
 	/* handle this asynchronously */
 	rc = cs->ci->slot_ops->xfr_block_async(cs, msg, &u->xfr_block);
 	if (rc <= 0) {
