@@ -359,6 +359,11 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	if (msgb_length(msg) != xfb->hdr.dwLength + 10)
 		return -1;
 
+	/* CCID spec v1.1 Section 6.1.4 states:
+	 *  "the absolute maximum block size for a TPDU T=0 block is 260 * bytes" */
+	if (xfb->hdr.dwLength > 260)
+		return -1;
+
 	/* might be unpowered after failed ppss that led to reset */
 	if (cs->icc_powered != true)
 		return -0;
