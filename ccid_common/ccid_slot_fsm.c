@@ -366,6 +366,10 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 	if (xfb->hdr.dwLength > 260)
 		return -1;
 
+	/* Minimum transfer size of an ISO7816 TPDU T=0 is 5 bytes or else will fail within the ISO7816 fsm */
+	if (xfb->hdr.dwLength < 5)
+		return -1;
+
 	/* might be unpowered after failed ppss that led to reset */
 	if (cs->icc_powered != true)
 		return -0;
