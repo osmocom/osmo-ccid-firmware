@@ -836,8 +836,10 @@ int ccid_handle_out(struct ccid_instance *ci, struct msgb *msg)
 
 short_msg:
 	LOGP(DCCID, LOGL_ERROR, "Short CCID message received: %s; ignoring\n", msgb_hexdump(msg));
+	resp = gen_err_resp(ch->bMessageType, ch->bSlot, get_icc_status(cs), ch->bSeq,
+			    CCID_ERR_CMD_NOT_SUPPORTED);
 	msgb_free(msg);
-	return -1;
+	return ccid_slot_send_unbusy(cs, resp);
 }
 
 /* Section 5.3.1 ABORT */
