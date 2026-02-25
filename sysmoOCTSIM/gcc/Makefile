@@ -164,7 +164,7 @@ vpath %.s ../
 vpath %.S ../
 
 # All Target
-all: $(SUB_DIRS) elf bin ihex eep lss
+all: $(SUB_DIRS) elf bin ihex eep lss check-no-logging
 
 elf: $(OUTPUT_FILE_NAME).elf sysmoOCTSIM.elf
 bin: $(OUTPUT_FILE_NAME).bin sysmoOCTSIM.bin
@@ -245,6 +245,13 @@ clean:
 	rm -f $(OUTPUT_FILE_NAME).a $(OUTPUT_FILE_NAME).hex $(OUTPUT_FILE_NAME).bin \
         $(OUTPUT_FILE_NAME).lss $(OUTPUT_FILE_NAME).eep $(OUTPUT_FILE_NAME).map \
         $(OUTPUT_FILE_NAME).srec
+
+check-no-logging: $(OUTPUT_FILE_PATH)
+	@if $(NM) $< | grep -q ' T logp2'; then \
+		echo "FAIL: logging symbols linked into release ELF (libosmocore --disable-log-macros missing/broken?)"; \
+		$(NM) $< | grep ' T \(logp2\|osmo_vlogp\|log_check_level\|logp_stub\)'; \
+		exit 1; \
+	fi
 
 mrproper: clean
 	rm -f *.o *.d *.a *.elf *.bin *.ihex *.eep *.lss *.map *.srec
