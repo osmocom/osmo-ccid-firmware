@@ -159,19 +159,26 @@ void msgb_enqueue_irqsafe(struct llist_head *q, struct msgb *msg)
 static int submit_next_in(void)
 {
 	struct usb_ep_q *ep_q = &g_ccid_s.in_ep;
-	struct msgb *msg;
+	struct msgb *msg = NULL;
 	int rc;
 
-	if (ep_q->in_progress)
-		return 0;
+	CRITICAL_SECTION_ENTER()
+	if (!ep_q->in_progress) {
+		msg = msgb_dequeue(&ep_q->list);
+		if (msg)
+			ep_q->in_progress = msg;
+	}
+	CRITICAL_SECTION_LEAVE()
 
-	msg = msgb_dequeue_irqsafe(&ep_q->list);
 	if (!msg)
 		return 0;
 
-	ep_q->in_progress = msg;
 	rc = ccid_df_write_in(msgb_data(msg), msgb_length(msg));
 	if (rc != ERR_NONE) {
+		CRITICAL_SECTION_ENTER()
+		ep_q->in_progress = NULL;
+		msgb_enqueue(&g_ccid_s.free_q, msg);
+		CRITICAL_SECTION_LEAVE()
 		printf("EP %s failed: %d\r\n", ep_q->name, rc);
 		return -1;
 	}
@@ -183,22 +190,27 @@ static int submit_next_in(void)
 static int submit_next_irq(void)
 {
 	struct usb_ep_q *ep_q = &g_ccid_s.irq_ep;
-	struct msgb *msg;
+	struct msgb *msg = NULL;
 	int rc;
 
-	if (ep_q->in_progress)
-		return 0;
+	CRITICAL_SECTION_ENTER()
+	if (!ep_q->in_progress) {
+		msg = msgb_dequeue(&ep_q->list);
+		if (msg)
+			ep_q->in_progress = msg;
+	}
+	CRITICAL_SECTION_LEAVE()
 
-	msg = msgb_dequeue_irqsafe(&ep_q->list);
 	if (!msg)
 		return 0;
 
-	ep_q->in_progress = msg;
 	rc = ccid_df_write_irq(msgb_data(msg), msgb_length(msg));
 	/* may return HALTED/ERROR/DISABLED/BUSY/ERR_PARAM/ERR_FUNC/ERR_DENIED */
 	if (rc != ERR_NONE) {
-		// ep_q->in_progress = msg;
-		// msgb_enqueue_irqsafe(&ep_q->list, msg);
+		CRITICAL_SECTION_ENTER()
+		ep_q->in_progress = NULL;
+		msgb_enqueue(&g_ccid_s.free_q, msg);
+		CRITICAL_SECTION_LEAVE()
 		printf("EP %s failed: %d\r\n", ep_q->name, rc);
 		return -1;
 	}
@@ -208,22 +220,29 @@ static int submit_next_irq(void)
 static int submit_next_out(void)
 {
 	struct usb_ep_q *ep_q = &g_ccid_s.out_ep;
-	struct msgb *msg;
+	struct msgb *msg = NULL;
 	int rc;
 
-	if (ep_q->in_progress)
-		return 0;
+	CRITICAL_SECTION_ENTER()
+	if (!ep_q->in_progress) {
+		msg = msgb_dequeue(&g_ccid_s.free_q);
+		if (msg) {
+			msgb_reset(msg);
+			ep_q->in_progress = msg;
+		}
+	}
+	CRITICAL_SECTION_LEAVE()
 
-	msg = msgb_dequeue_irqsafe(&g_ccid_s.free_q);
 	if (!msg)
-		return -1;
-	msgb_reset(msg);
-	ep_q->in_progress = msg;
+		return 0;
 
 	rc = ccid_df_read_out(msgb_data(msg), msgb_tailroom(msg));
 	if (rc != ERR_NONE) {
+		CRITICAL_SECTION_ENTER()
+		ep_q->in_progress = NULL;
 		/* re-add to the list of free msgb's */
-		llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+		msgb_enqueue(&g_ccid_s.free_q, msg);
+		CRITICAL_SECTION_LEAVE()
 		return 0;
 	}
 	return 1;
@@ -494,7 +513,7 @@ static int ccid_ops_send_in(struct ccid_instance *ci, struct msgb *msg)
 	OSMO_ASSERT(msg);
 
 	/* append to list of pending-to-be-handed messages */
-	llist_add_tail_at(&msg->list, &g_ccid_s.in_ep.list);
+	msgb_enqueue_irqsafe(&g_ccid_s.in_ep.list, msg);
 	submit_next_in();
 	return 0;
 }
@@ -557,19 +576,12 @@ void reset_all_stuff_non_irq(void)
 			msgb_reset(msg);
 			llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
 		}
-#if 0
 		struct msgb *cur_msg = cur_epq->in_progress;
 		if (cur_msg) {
-			/*
-			if (i == 2 && usb_d_ep_get_status(/*_ccid_df_funcd.func_ep_out*/ 2, 0) == USB_BUSY)
-			 	continue;
-			*/
-
 			msgb_reset(cur_msg);
-			llist_add_tail_at(&cur_msg->list, &g_ccid_s.free_q);
+			msgb_enqueue(&g_ccid_s.free_q, cur_msg);
 			cur_epq->in_progress = NULL;
 		}
-#endif
 	}
 
 	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
@@ -715,7 +727,8 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 				struct msgb *msg = msgb_alloc(300, "ccid");
 				OSMO_ASSERT(msg);
 				/* return the message back to the queue of free message buffers */
-				llist_add_tail_at(&msg->list, &g_ccid_s.free_q);
+				msgb_enqueue_irqsafe(&g_ccid_s.free_q, msg);
 			}
+		submit_next_out();
 	}
 }
