@@ -333,6 +333,7 @@ enum ccid_clock_status {
 /* Section 6.2.3 RDR_to_PC_Parameters */
 struct ccid_rdr_to_pc_parameters {
 	struct ccid_header_in hdr;
+	uint8_t bProtocolNum;
 	union {
 		struct ccid_proto_data_t0 t0;
 		struct ccid_proto_data_t1 t1;

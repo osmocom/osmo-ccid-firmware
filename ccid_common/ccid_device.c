@@ -264,11 +264,12 @@ static struct msgb *ccid_gen_parameters_t0_nr(uint8_t slot_nr, uint8_t icc_statu
 					      const struct ccid_pars_decoded *dec_par)
 {
 	struct msgb *msg = ccid_msgb_alloc();
-	struct ccid_rdr_to_pc_parameters *par =
-		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(par->abProtocolData.t0));
+	struct ccid_rdr_to_pc_parameters *par = (struct ccid_rdr_to_pc_parameters *)msgb_put(
+		msg, sizeof(par->hdr) + sizeof(par->bProtocolNum) + sizeof(par->abProtocolData.t0));
 	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
 	SET_HDR_IN(par, RDR_to_PC_Parameters, slot_nr, seq, sts, err);
+	par->bProtocolNum = CCID_PROTOCOL_NUM_T0;
 	if (dec_par) {
 		osmo_store32le(sizeof(par->abProtocolData.t0), &par->hdr.hdr.dwLength);
 		encode_ccid_pars_t0(&par->abProtocolData.t0, dec_par);
@@ -286,11 +287,12 @@ static struct msgb *ccid_gen_parameters_t1_nr(uint8_t slot_nr, uint8_t icc_statu
 					      const struct ccid_pars_decoded *dec_par)
 {
 	struct msgb *msg = ccid_msgb_alloc();
-	struct ccid_rdr_to_pc_parameters *par =
-		(struct ccid_rdr_to_pc_parameters *) msgb_put(msg, sizeof(par->hdr)+sizeof(par->abProtocolData.t1));
+	struct ccid_rdr_to_pc_parameters *par = (struct ccid_rdr_to_pc_parameters *)msgb_put(
+		msg, sizeof(par->hdr) + sizeof(par->bProtocolNum) + sizeof(par->abProtocolData.t1));
 	uint8_t sts = (cmd_sts & CCID_CMD_STATUS_MASK) | icc_status;
 
 	SET_HDR_IN(par, RDR_to_PC_Parameters, slot_nr, seq, sts, err);
+	par->bProtocolNum = CCID_PROTOCOL_NUM_T1;
 	if (dec_par) {
 		osmo_store32le(sizeof(par->abProtocolData.t1), &par->hdr.hdr.dwLength);
 		encode_ccid_pars_t1(&par->abProtocolData.t1, dec_par);
