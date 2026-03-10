@@ -402,9 +402,11 @@ struct ccid_rdr_to_pc_notify_slot_change {
 	uint8_t bmSlotCCState[0];	/* as long as bNumSlots/4 padded to next byte */
 } __attribute__ ((packed));
 
-/* Section 6.3.1 */
+/* Section 6.3.2 - Interrupt IN message (4 bytes, NOT bulk header format) */
 struct ccid_rdr_to_pc_hardware_error {
-	struct ccid_header hdr;
+	uint8_t bMessageType; /* 0x51 */
+	uint8_t bSlot;
+	uint8_t bSeq;
 	uint8_t bHardwareErrorCode;
 } __attribute__ ((packed));
 
