@@ -457,17 +457,26 @@ static int ccid_handle_icc_power_off(struct ccid_slot *cs, struct msgb *msg)
 /* Section 6.1.4 */
 static int ccid_handle_xfr_block(struct ccid_slot *cs, struct msgb *msg)
 {
-	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
+	union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
 	const struct ccid_header *ch = (const struct ccid_header *) u;
 	struct msgb *resp;
 	int rc;
 
-	if (u->xfr_block.hdr.dwLength == 0) {
+	/* TODO: The checks below assume TPDU-level exchange and T=0.  When adding
+	 * APDU-level or character level exchange or T=1 support, this needs adjustment */
+	if (u->xfr_block.hdr.dwLength < 4) {
 		/* CCID Rev 1.1 permits a zero-length XfrBlock on the protocol level, but what should we do
-		 * with a zero-length TPDU? We need to reject it as bError=1 (Bad dwLength) */
+		 * with a zero-length or otherwise short TPDU? We need to reject it as bError=1 (Bad dwLength) */
 		resp = ccid_gen_data_block(cs, u->xfr_block.hdr.bSeq, CCID_CMD_STATUS_FAILED, 1, 0, 0);
 		goto out;
+	} else if (u->xfr_block.hdr.dwLength == 4) {
+		/* CCID v1.1 Section 3.2.1:
+		 * Command TPDU = CLA INS P1 P2, the CCID is responsible to add P3=00h */
+		msgb_put(msg, 1);
+		u->xfr_block.hdr.dwLength = 5;
+		u->xfr_block.abData[4] = 0x00;
 	}
+	/* from 5 bytes upwards, we can simply transceive it */
 
 	/* handle this asynchronously */
 	rc = cs->ci->slot_ops->xfr_block_async(cs, msg, &u->xfr_block);
