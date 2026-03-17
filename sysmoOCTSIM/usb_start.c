@@ -121,7 +121,69 @@ static int32_t string_req_cb(uint8_t ep, struct usb_req *req, enum usb_ctrl_stag
 }
 
 
+enum usb_vendor_req_code {
+        USB_VENDOR_REQ_GET     = 0,
+        USB_VENDOR_REQ_SET     = 1,
+};
+
+enum usb_vendor_get_set {
+        GET_SET_DEBUG           = 0,
+};
+
+extern volatile bool break_on_panic;
+
+/* call-back for every control EP request */
+static int32_t vendor_req_cb(uint8_t ep, struct usb_req *req, enum usb_ctrl_stage stage)
+{
+	/* must be at least 8 byte and aligned to allow USB xfers */
+	static uint8_t __attribute__((aligned(4))) buf[8];
+	uint8_t index, type, ret;
+
+	if (stage != USB_SETUP_STAGE)
+		return ERR_NOT_FOUND;
+
+	/* currently only IN transfers */
+	if ((req->bmRequestType & (USB_REQT_TYPE_MASK | USB_REQT_DIR_IN)) !=
+	    (USB_REQT_TYPE_VENDOR | USB_REQT_DIR_IN))
+		return ERR_NOT_FOUND;
+
+	switch (req->bRequest) {
+	case USB_VENDOR_REQ_GET:
+		switch (LE16(req->wIndex)) {
+		case GET_SET_DEBUG:
+			memset(buf, 0, sizeof(buf));
+			buf[0] = break_on_panic;
+			ret = usbdc_xfer(ep, buf, sizeof(buf), false);
+			if (ret >= 0 || ret != ERR_NOT_FOUND)
+				return ERR_NONE;
+			else
+				return ret;
+			break;
+		}
+		break;
+	case USB_VENDOR_REQ_SET:
+		switch (LE16(req->wIndex)) {
+		case GET_SET_DEBUG:
+			memset(buf, 0, sizeof(buf));
+			break_on_panic = LE16(req->wValue) & 0x1;
+			buf[0] = break_on_panic;
+			ret = usbdc_xfer(ep, buf, 8, false);
+			if (ret >= 0 || ret != ERR_NOT_FOUND)
+				return ERR_NONE;
+			else
+				return ret;
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return ERR_NOT_FOUND;
+}
+
 static struct usbdc_handler string_req_h = {NULL, (FUNC_PTR)string_req_cb};
+static struct usbdc_handler vendor_req_h = {NULL, (FUNC_PTR)vendor_req_cb};
 
 /**
  * \brief CDC ACM Init
@@ -131,6 +193,7 @@ void cdc_device_acm_init(void)
 	/* usb stack init */
 	usbdc_init(ctrl_buffer);
 	usbdc_register_handler(USBDC_HDL_REQ, &string_req_h);
+	usbdc_register_handler(USBDC_HDL_REQ, &vendor_req_h);
 
 #ifdef WITH_DEBUG_CDC
 	/* usbdc_register_funcion inside */
