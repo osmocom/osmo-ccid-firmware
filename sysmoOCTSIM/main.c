@@ -22,7 +22,6 @@
 #include <errno.h>
 
 #include <osmocom/core/utils.h>
-#include <osmocom/core/timer.h>
 
 #include <hal_cache.h>
 #include <hri_port_e54.h>
@@ -714,7 +713,6 @@ DWT->FUNCTION1 =    (0b10 << DWT_FUNCTION_DATAVSIZE_Pos) |  /* DATAVSIZE 10 - dw
 			g_ci.slot_ops->handle_fsm_events(&g_ci.slot[i], true);
 		}
 		feed_ccid();
-		osmo_timers_update();
 		int qs = llist_count_at(&g_ccid_s.free_q);
 		if (qs > NUM_OUT_BUF)
 			for (int i = 0; i < qs - NUM_OUT_BUF; i++) {

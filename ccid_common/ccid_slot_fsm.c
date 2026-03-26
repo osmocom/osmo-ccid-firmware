@@ -207,7 +207,7 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable)
 	volatile void * volatile data = cs->event_data;
 
 	if (!event)
-		return 0;
+		goto out;
 //	if(event && !data)
 //		return 0;
 
@@ -340,6 +340,8 @@ static int iso_handle_fsm_events(struct ccid_slot *cs, bool enable)
 		break;
 	}
 
+out:
+	card_uart_wtime_poll(ss->cuart);
 	return 0;
 }
 

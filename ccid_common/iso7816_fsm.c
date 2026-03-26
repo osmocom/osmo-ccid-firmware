@@ -137,12 +137,6 @@ enum tpdu_state {
 	TPDU_S_DONE,
 };
 
-/* FSM timer enumeration */
-enum iso7816_3_timer {
-	T_WAIT_ATR = 1,
-	T_GUARD,
-};
-
 /* forward declarations */
 static struct osmo_fsm iso7816_3_fsm;
 static struct osmo_fsm atr_fsm;
@@ -262,6 +256,17 @@ static struct iso7816_3_priv *get_iso7816_3_priv(struct osmo_fsm_inst *fi)
 	OSMO_ASSERT(fi);
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 	return (struct iso7816_3_priv *) fi->priv;
+}
+
+/* libosmocore fsm timers can't be used to to concurrency issues.
+ * Expiry fires CUART_E_RX_TIMEOUT from main loop -> ISO7816_E_WTIME_EXP
+ */
+static void atr_state_chg_guard(struct osmo_fsm_inst *atr_fi, uint32_t new_state, uint32_t timeout_ms)
+{
+	struct osmo_fsm_inst *parent_fi = atr_fi->proc.parent;
+	struct iso7816_3_priv *ip = get_iso7816_3_priv(parent_fi);
+	osmo_fsm_inst_state_chg(atr_fi, new_state, 0, 0);
+	cuart_set_deadline(ip->uart, timeout_ms ? get_jiffies() + timeout_ms : 0);
 }
 
 /* convert from clock cycles of the CLK line to milli-seconds */
@@ -741,7 +746,7 @@ restart:
 			/* fall-through */
 		case 0x3f: /* inverse convention used and correctly decoded */
 			atr_append_byte(fi, byte);
-			osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_T0, atr_fi_gt_ms(fi), T_GUARD);
+			atr_state_chg_guard(fi, ATR_S_WAIT_T0, atr_fi_gt_ms(fi));
 			break;
 		default:
 			LOGPFSML(fi, LOGL_ERROR, "Invalid TS received: 0x%02X\n", byte);
@@ -783,28 +788,28 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 			atp->y = (byte & 0xf0); /* remember incoming interface bytes */
 			atp->i++;
 			if (atp->y & 0x10) {
-				osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_TA, guard_time_ms, T_GUARD);
+				atr_state_chg_guard(fi, ATR_S_WAIT_TA, guard_time_ms);
 				break;
 			}
 			/* fall-through */
 		case ATR_S_WAIT_TA: /* see ISO/IEC 7816-3:2006 section 8.2.3 */
 			if (atp->y & 0x20) {
-				osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_TB, guard_time_ms, T_GUARD);
+				atr_state_chg_guard(fi, ATR_S_WAIT_TB, guard_time_ms);
 				break;
 			}
 			/* fall-through */
 		case ATR_S_WAIT_TB: /* see ISO/IEC 7816-3:2006 section 8.2.3 */
 			if (atp->y & 0x40) {
-				osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_TC, guard_time_ms, T_GUARD);
+				atr_state_chg_guard(fi, ATR_S_WAIT_TC, guard_time_ms);
 				break;
 			}
 			/* fall-through */
 		case ATR_S_WAIT_TC: /* see ISO/IEC 7816-3:2006 section 8.2.3 */
 			if (atp->y & 0x80) {
-				osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_TD, guard_time_ms, T_GUARD);
+				atr_state_chg_guard(fi, ATR_S_WAIT_TD, guard_time_ms);
 				break;
 			} else if (atp->hist_len) {
-				osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_HIST, guard_time_ms, T_GUARD);
+				atr_state_chg_guard(fi, ATR_S_WAIT_HIST, guard_time_ms);
 				break;
 			}
 			/* fall-through */
@@ -814,8 +819,7 @@ static void atr_wait_tX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 			if (atp->hist_len == 0) {
 				if (atp->protocol_support > 1) {
 					/* wait for check byte */
-					osmo_fsm_inst_state_chg_ms(fi, ATR_S_WAIT_TCK,
-								   guard_time_ms, T_GUARD);
+					atr_state_chg_guard(fi, ATR_S_WAIT_TCK, guard_time_ms);
 					break;
 				} else {
 					/* no TCK present, ATR complete; notify parent */

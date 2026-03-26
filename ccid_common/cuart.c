@@ -21,7 +21,6 @@
 #include <string.h>
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/utils.h>
-#include <osmocom/core/timer.h>
 
 #include "cuart.h"
 
@@ -56,36 +55,37 @@ static int get_etu_in_us(struct card_uart *cuart)
 	return 1e6 / cuart->driver->ops->ctrl(cuart, CUART_CTL_GET_BAUDRATE, 0);
 }
 
-/* software waiting-time timer has expired */
-static void card_uart_wtime_cb(void *data)
-{
-	struct card_uart *cuart = (struct card_uart *) data;
-	card_uart_notification(cuart, CUART_E_RX_TIMEOUT, NULL);
-	/* should we automatically disable the receiver? */
-}
-
 void card_uart_wtime_restart(struct card_uart *cuart)
 {
-	int secs, usecs;
-
 	if (!cuart->current_wtime_byte)
 		return;
 
 	int etu_in_us = get_etu_in_us(cuart) + 1;
 	cuart->wtime_etu = cuart->wtime_etu ? cuart->wtime_etu : 1;
 
-	/* timemout is wtime * ETU * expected number of bytes */
-	usecs = etu_in_us * cuart->wtime_etu * cuart->current_wtime_byte;
+	/* timeout is wtime * ETU * expected number of bytes */
+	uint32_t usecs = etu_in_us * cuart->wtime_etu * cuart->current_wtime_byte;
 
 	/* limit lower wait time to reasonable value */
-	usecs = usecs < 300000 ? 300000 : usecs;
+	if (usecs < 300000)
+		usecs = 300000;
 
-	if (usecs > 1000000) {
-		secs = usecs / 1000000;
-		usecs = usecs % 1000000;
-	} else
-		secs = 0;
-	osmo_timer_schedule(&cuart->wtime_tmr, secs, usecs);
+	uint32_t ms = (usecs + 999) / 1000;
+	cuart_set_deadline(cuart, get_jiffies() + ms);
+}
+
+static inline void card_uart_wtime_stop(struct card_uart *cuart)
+{
+	cuart_set_deadline(cuart, 0);
+}
+
+void card_uart_wtime_poll(struct card_uart *cuart)
+{
+	uint64_t deadline = cuart_get_deadline(cuart);
+	if (deadline && (int64_t)(get_jiffies() - deadline) >= 0) {
+		cuart_set_deadline(cuart, 0);
+		card_uart_notification(cuart, CUART_E_RX_TIMEOUT, NULL);
+	}
 }
 
 int card_uart_open(struct card_uart *cuart, const char *driver_name, const char *device_name)
@@ -99,7 +99,7 @@ int card_uart_open(struct card_uart *cuart, const char *driver_name, const char 
 	cuart->wtime_etu = 9600; /* ISO 7816-3 Section 8.1 */
 	cuart->rx_enabled = true;
 	cuart->rx_threshold = 1;
-	osmo_timer_setup(&cuart->wtime_tmr, card_uart_wtime_cb, cuart);
+	cuart_set_deadline(cuart, 0);
 
 	rc = drv->ops->open(cuart, device_name);
 	if (rc < 0)
@@ -137,16 +137,14 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 	case CUART_CTL_RX:
 		cuart->rx_enabled = arg ? true : false;
 		if (!cuart->rx_enabled)
-			osmo_timer_del(&cuart->wtime_tmr);
-//		else
-//			card_uart_wtime_restart(cuart);
+			card_uart_wtime_stop(cuart);
 		break;
 	case CUART_CTL_RX_TIMER_HINT:
 		cuart->current_wtime_byte = arg;
 		if(arg)
 			card_uart_wtime_restart(cuart);
 		else
-			osmo_timer_del(&cuart->wtime_tmr);
+			card_uart_wtime_stop(cuart);
 		break;
 	case CUART_CTL_POWER_5V0:
 	case CUART_CTL_POWER_3V0:
@@ -154,7 +152,7 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 		/* we have to reset this somewhere, and powering down loses all state
 		 * this is not hw specific so it belongs here, after handling the hw specific part */
 		if (!arg) {
-			osmo_timer_del(&cuart->wtime_tmr);
+			card_uart_wtime_stop(cuart);
 			cuart->tx_busy = false;
 			cuart->rx_threshold = 1;
 			cuart->wtime_etu = 9600; /* ISO 7816-3 Section 8.1 */

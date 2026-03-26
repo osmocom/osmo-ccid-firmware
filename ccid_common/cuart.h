@@ -21,10 +21,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <osmocom/core/linuxlist.h>
-#include <osmocom/core/timer.h>
-
 #include <osmocom/core/select.h>
 #include "utils_ringbuffer.h"
+#include "libosmo_emb.h"
 
 struct usart_async_descriptor;
 
@@ -101,7 +100,9 @@ struct card_uart {
 	uint32_t rx_threshold;
 
 	uint32_t wtime_etu;
-	struct osmo_timer_list wtime_tmr;
+	/* deadline in jiffies (ms) for card response timeout, 0 = inactive.
+	 * Set from IRQ context, checked from main loop  */
+	volatile uint64_t wtime_deadline __attribute__((aligned(8)));
 	/* expected number of bytes, for timeout */
 	uint32_t current_wtime_byte;
 
@@ -133,6 +134,16 @@ struct card_uart {
 	} u;
 };
 
+static inline uint64_t cuart_get_deadline(struct card_uart *cuart)
+{
+	return ldrd_u64(&cuart->wtime_deadline);
+}
+
+static inline void cuart_set_deadline(struct card_uart *cuart, uint64_t deadline)
+{
+	strd_u64(&cuart->wtime_deadline, deadline);
+}
+
 /*! Open the Card UART */
 int card_uart_open(struct card_uart *cuart, const char *driver_name, const char *device_name);
 
@@ -153,6 +164,11 @@ void card_uart_set_rx_threshold(struct card_uart *cuart, size_t rx_threshold);
 /* (re)start the software WTIME timer */
 void card_uart_wtime_restart(struct card_uart *cuart);
 
+/* poll wtime deadline from main loop, fires CUART_E_RX_TIMEOUT if expired */
+void card_uart_wtime_poll(struct card_uart *cuart);
+
 void card_uart_notification(struct card_uart *cuart, enum card_uart_event evt, void *data);
 
 int card_uart_driver_register(struct card_uart_driver *drv);
+
+struct card_uart *cuart4slot_nr(uint8_t slot_nr);
