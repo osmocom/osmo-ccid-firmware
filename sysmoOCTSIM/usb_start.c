@@ -124,6 +124,7 @@ static int32_t string_req_cb(uint8_t ep, struct usb_req *req, enum usb_ctrl_stag
 enum usb_vendor_req_code {
         USB_VENDOR_REQ_GET     = 0,
         USB_VENDOR_REQ_SET     = 1,
+        USB_VENDOR_READ_MEM    = 2,
 };
 
 enum usb_vendor_get_set {
@@ -138,6 +139,7 @@ static int32_t vendor_req_cb(uint8_t ep, struct usb_req *req, enum usb_ctrl_stag
 	/* must be at least 8 byte and aligned to allow USB xfers */
 	static uint8_t __attribute__((aligned(4))) buf[8];
 	uint8_t index, type, ret;
+	uint32_t *ptr;
 
 	if (stage != USB_SETUP_STAGE)
 		return ERR_NOT_FOUND;
@@ -167,13 +169,23 @@ static int32_t vendor_req_cb(uint8_t ep, struct usb_req *req, enum usb_ctrl_stag
 			memset(buf, 0, sizeof(buf));
 			break_on_panic = LE16(req->wValue) & 0x1;
 			buf[0] = break_on_panic;
-			ret = usbdc_xfer(ep, buf, 8, false);
+			ret = usbdc_xfer(ep, buf, sizeof(buf), false);
 			if (ret >= 0 || ret != ERR_NOT_FOUND)
 				return ERR_NONE;
 			else
 				return ret;
 			break;
 		}
+		break;
+	case USB_VENDOR_READ_MEM:
+		ptr = (uint32_t *) ((LE16(req->wValue) << 16) | (LE16(req->wIndex)));
+		memset(buf, 0, sizeof(buf));
+		memcpy(buf, ptr, 4);
+		ret = usbdc_xfer(ep, buf, 8, false);
+		if (ret >= 0 || ret != ERR_NOT_FOUND)
+			return ERR_NONE;
+		else
+			return ret;
 		break;
 	default:
 		break;
