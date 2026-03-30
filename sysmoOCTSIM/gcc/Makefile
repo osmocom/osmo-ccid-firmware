@@ -11,7 +11,10 @@ DISABLE_DFU_DETACH ?= 0
 
 CFLAGS_CPU=-D__SAME54N19A__ -mcpu=cortex-m4 -mfloat-abi=softfp -mfpu=fpv4-sp-d16
 CFLAGS=-x c -mthumb -DDEBUG -Os -ffunction-sections -fdata-sections -mlong-calls \
-       -fno-omit-frame-pointer -ggdb3 -Wall -c -std=gnu99 $(CFLAGS_CPU) -DOCTSIMFWBUILD -DDISABLE_DFU_DETACH=$(DISABLE_DFU_DETACH) -Wno-discarded-qualifiers -Werror=strict-prototypes -fno-common -Wno-unused-variable -Wno-unused-function -Wlarger-than=512 -Wstack-usage=255
+       -fno-omit-frame-pointer -ggdb3 -Wall -c -std=gnu99 $(CFLAGS_CPU) -DOCTSIMFWBUILD \
+	-DDISABLE_DFU_DETACH=$(DISABLE_DFU_DETACH) -Wno-discarded-qualifiers -Werror=strict-prototypes \
+	-fno-common -Wno-unused-variable -Wno-unused-function -Wlarger-than=512 -Wstack-usage=255 \
+	-Werror=return-type
 
 
 CFLAGS += -DLIBOSMOCORE_NO_LOGGING
