@@ -21,7 +21,7 @@ volatile uint64_t jiffies __attribute__((aligned(8)));
 
 uint64_t get_jiffies(void)
 {
-	ldrd_u64(&jiffies);
+	return ldrd_u64(&jiffies);
 }
 
 void store_jiffies(uint64_t j)
