@@ -99,6 +99,8 @@ EOF
 	fi
 fi
 
-echo
-echo "=============== FIRMWARE CLEAN  =============="
-make clean
+if [ -z "$SKIP_FIRMWARE_CLEAN" ]; then
+	echo
+	echo "=============== FIRMWARE CLEAN  =============="
+	make clean
+fi
