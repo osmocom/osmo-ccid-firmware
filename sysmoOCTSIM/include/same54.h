@@ -47,4 +47,10 @@
   #error Library does not support the specified device.
 #endif
 
+#include <stdbool.h>
+
+/* Either reset or break on panic/unknown irq. Default is reset. */
+extern volatile bool break_on_panic;
+void Dummy_Handler(void);
+
 #endif /* _SAME54_ */
