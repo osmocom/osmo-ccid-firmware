@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 . ./test-data
 
 ./get_installed_version.sh

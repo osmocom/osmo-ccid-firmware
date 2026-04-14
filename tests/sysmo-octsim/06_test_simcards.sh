@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 . ./test-data
 
 ./ctl_reset_target.sh
