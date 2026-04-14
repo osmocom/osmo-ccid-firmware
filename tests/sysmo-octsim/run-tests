@@ -24,11 +24,15 @@ for T in $TESTS; do
 	echo "==> Executing Testcase $T"
 	EXPOUT=${T%%.sh}.out
 	rm $TMP
-	./$T > $TMP
-	diff -u $EXPOUT $TMP
-	if [ $? -eq 0 ]; then
+	./$T | tee $TMP
+
+	if diff -q $EXPOUT $TMP; then
 		echo "Test $T passed"
 	else
+		echo "---"
+		echo "Diff with expected output:"
+		diff -u $EXPOUT $TMP
+		echo "---"
 		echo "Test $T FAILED!"
 		NUM_FAIL=$((NUM_FAIL+1))
 	fi
