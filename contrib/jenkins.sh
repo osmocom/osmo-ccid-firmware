@@ -18,7 +18,7 @@ osmo-clean-workspace.sh
 
 echo
 echo "=============== libosmocore host build ==========="
-osmo-build-dep.sh libosmocore "" --disable-doxygen
+osmo-build-dep.sh libosmocore "1.14.0" --disable-doxygen
 export PKG_CONFIG_PATH="$inst/lib/pkgconfig:$PKG_CONFIG_PATH"
 export LD_LIBRARY_PATH="$inst/lib"
 export PATH="$inst/bin:$PATH"
@@ -36,7 +36,7 @@ echo
 echo "=============== libosmocore cross-build ==========="
 mkdir -p "$deps"
 cd "$deps"
-osmo-deps.sh libosmocore master
+osmo-deps.sh libosmocore 1.14.0
 cd libosmocore
 
 CFLAGS="-Os -g3 -ffunction-sections -fdata-sections -nostartfiles -nodefaultlibs"
