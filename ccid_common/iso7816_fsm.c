@@ -1679,6 +1679,10 @@ struct osmo_fsm_inst *iso7816_fsm_alloc(void *ctx, int log_level, const char *id
 
 	ip->user_cb = user_cb;
 	ip->user_priv = user_priv;
+	/* ATR inter-byte WWT starts at 9600 ETU (ISO 7816-3 §8.1), which is
+	 * ~1.43s at 2.5 MHz / Fd=372. 1500ms covers that and is a safe initial
+	 * value that could be adjusted later based on ATR-parsed params. */
+	ip->guard_time_ms = 1500;
 
 	ip->atr_fi = osmo_fsm_inst_alloc_child(&atr_fsm, fi, ISO7816_E_SW_ERR_IND);
 	if (!ip->atr_fi)
