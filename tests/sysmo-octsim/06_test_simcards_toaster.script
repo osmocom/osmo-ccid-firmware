@@ -1,0 +1,50 @@
+select MF/EF.ICCID
+read_binary_decoded
+select MF/DF.TELECOM/EF.MSISDN
+read_records_decoded
+select MF/DF.TELECOM/EF.SMSP
+read_records_decoded
+
+select ADF.USIM
+select EF.IMSI
+read_binary_decoded
+select ADF.USIM/EF.AD
+read_binary_decoded
+select ADF.USIM/EF.ACC
+read_binary_decoded
+select ADF.USIM/EF.UST
+read_binary_decoded
+select ADF.USIM/EF.SPN
+read_binary_decoded
+select ADF.USIM/EF.GID1
+read_binary_decoded
+select ADF.USIM/EF.GID2
+read_binary_decoded
+select ADF.USIM/EF.PLMNwAcT
+read_binary_decoded
+select ADF.USIM/EF.OPLMNwAcT
+read_binary_decoded
+select ADF.USIM/EF.HPLMNwAcT
+read_binary_decoded
+select ADF.USIM/EF.FPLMN
+read_binary_decoded
+select ADF.USIM/EF.EHPLMN
+read_binary_decoded
+select ADF.USIM/EF.ePDGId
+read_binary_decoded
+select ADF.USIM/EF.ePDGSelection
+read_binary_decoded
+
+select ADF.ISIM
+select EF.IMPI
+read_binary_decoded
+select ADF.ISIM/EF.DOMAIN
+read_binary_decoded
+select ADF.ISIM/EF.IMPU
+read_records_decoded
+select ADF.ISIM/EF.P-CSCF
+read_records_decoded
+select ADF.ISIM/EF.UICCIARI
+read_records_decoded
+select ADF.ISIM/EF.IST
+read_binary_decoded
