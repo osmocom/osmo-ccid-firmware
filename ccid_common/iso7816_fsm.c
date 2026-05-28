@@ -1371,8 +1371,8 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 				delay_us(1);
 				gpio_set_pin_level(PIN_PB12, false);
 #endif
-				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu), true);
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_REMAINING, 0, 0);
+				card_uart_tx(ip->uart, msgb_l2(tfp->tpdu), msgb_l2len(tfp->tpdu), true);
 			} else {
 				/* 7816-3 10.3.2 special case outgoing transfer 0 means 256 */
 				int len_expected = tpduh->p3 == 0 ? 256 : tpduh->p3;
@@ -1391,8 +1391,8 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 			if (tfp->is_command) {
 				/* transmit *next*, not first byte */
 				OSMO_ASSERT(msgb_l3len(tfp->tpdu) >= 0);
-				card_uart_tx(ip->uart, msgb_l3(tfp->tpdu), 1, false);
 				osmo_fsm_inst_state_chg(fi, TPDU_S_TX_SINGLE, 0, 0);
+				card_uart_tx(ip->uart, msgb_l3(tfp->tpdu), 1, false);
 			} else {
 				card_uart_set_rx_threshold(ip->uart, 1);
 				card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
