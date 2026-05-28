@@ -63,8 +63,9 @@ void card_uart_wtime_restart(struct card_uart *cuart)
 	int etu_in_us = get_etu_in_us(cuart) + 1;
 	cuart->wtime_etu = cuart->wtime_etu ? cuart->wtime_etu : 1;
 
-	/* timeout is wtime * ETU * expected number of bytes */
-	uint32_t usecs = etu_in_us * cuart->wtime_etu * cuart->current_wtime_byte;
+	/* ISO 7816-3 Section 10.2: WT is the max delay between consecutive
+	 * characters, not a total transfer timeout. Restart on each byte. */
+	uint32_t usecs = etu_in_us * cuart->wtime_etu;
 
 	/* limit lower wait time to reasonable value */
 	if (usecs < 300000)

@@ -32,6 +32,8 @@ static void _SIM_rx_cb(const struct usart_async_descriptor *const io_descr, uint
 	int rc;
 	OSMO_ASSERT(cuart);
 
+	card_uart_wtime_restart(cuart);
+
 	if (cuart->rx_threshold == 1) {
 		/* bypass ringbuffer and report byte directly */
 		uint8_t rx[1];
