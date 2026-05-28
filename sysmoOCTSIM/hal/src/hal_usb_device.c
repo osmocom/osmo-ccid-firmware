@@ -536,6 +536,12 @@ static inline int32_t _usb_d_ep_halt_clr(const uint8_t ep)
 	if (ep_index < 0) {
 		return -USB_ERR_PARAM;
 	}
+	/* USB 2.0 §9.4.5: ClearFeature(ENDPOINT_HALT) MUST reset data toggle.
+	 * This is the only caller that comes from host ClearFeature;
+	 * SETUP-cleanup path in usb_d_cb_trans_setup() which also
+	 * calls _usb_d_dev_ep_stall(STALL_CLR) must NOT touch DTGL */
+	_usb_d_dev_ep_set_toggle(ep, 0);
+
 	if (_usb_d_dev_ep_stall(ep, USB_EP_STALL_GET)) {
 		rc = _usb_d_dev_ep_stall(ep, USB_EP_STALL_CLR);
 		if (rc < 0) {

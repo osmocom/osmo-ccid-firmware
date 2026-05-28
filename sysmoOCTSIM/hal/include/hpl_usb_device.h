@@ -324,6 +324,17 @@ void _usb_d_dev_ep_disable(const uint8_t ep);
 int32_t _usb_d_dev_ep_stall(const uint8_t ep, const enum usb_ep_stall_ctrl ctrl);
 
 /**
+ * \brief Set USB device endpoint data toggle (DTGL) to DATA0 or DATA1
+ * \param[in] ep Endpoint address (with direction bit).
+ * \param[in] tgl 0 = DATA0, non-zero = DATA1.
+ * \return 0 on success, negative on error.
+ *
+ * USB 2.0 §9.4.5: ClearFeature(ENDPOINT_HALT) MUST unconditionally
+ * reinitialize the data toggle to DATA0.
+ */
+int32_t _usb_d_dev_ep_set_toggle(const uint8_t ep, uint8_t tgl);
+
+/**
  * \brief Read setup request data from specific endpoint
  * \param[in] ep Endpoint address.
  * \param[out] req_buf Pointer to buffer to locate the setup packet.
