@@ -102,7 +102,7 @@ struct card_uart {
 	uint32_t wtime_etu;
 	/* deadline in jiffies (ms) for card response timeout, 0 = inactive.
 	 * Set from IRQ context, checked from main loop  */
-	volatile uint64_t wtime_deadline __attribute__((aligned(8)));
+	tearfree_u64_t wtime_deadline;
 	/* expected number of bytes, for timeout */
 	uint32_t current_wtime_byte;
 
