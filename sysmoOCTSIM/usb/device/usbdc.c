@@ -448,13 +448,32 @@ static bool usbdc_set_ftr_req(const uint8_t ep, const struct usb_req *req)
 }
 
 /**
+ * \brief soft session-state reset.
+ *
+ * Called by usbdc_unconfig and usbdc_set_config. Stops
+ * card-side SERCOM USARTs and freezes SysTick driven timeouts.
+ * The was_unconfigured_flag tells the main loop to run the other half of the cleanup/reset.
+ *
+ * This is only the "session state" half of a bus reset.
+ * Bus reset additionally tears down EP existence (EPCFG.EPTYPE) via
+ * usbdc_unconfig's USBDF_DISABLE loop, a SetConfig does not need that (and usually happens after the reset).
+ */
+static void usbdc_softreset(void)
+{
+	reset_all_stuff_irq();
+	was_unconfigured_flag = true;
+}
+
+/**
  * \brief Unconfig, close all interfaces
  */
 static void usbdc_unconfig(void)
 {
-	reset_all_stuff_irq();
-	was_unconfigured_flag = true;
+	usbdc_softreset();
 
+	/* In addition to the soft reset, tear down per-function state: USBDF_DISABLE calls the class driver
+	 * (e.g. ccid_df_disable -> usb_d_ep_deinit per EP), which clears EPCFG.EPTYPE etc.
+	 * Right thing to do for for USB bus reset and for SetConfig(0), but NOT for a same-config SetConfig. */
 	struct usbdf_driver *func = (struct usbdf_driver *)usbdc.func_list.head;
 	while (NULL != func) {
 		func->ctrl(func, USBDF_DISABLE, NULL);
@@ -479,6 +498,11 @@ static bool usbdc_set_config(uint8_t cfg_value)
 	if (cfg_value == 0) {
 		usbdc_unconfig();
 		return true;
+	}
+
+	/* USB 2.0 §9.1.1.5 / §9.4.5 a non-zero SetConfiguration unconditionally resets endpoint state. */
+	if (usbdc.cfg_value != 0) {
+		usbdc_softreset();
 	}
 
 #if CONF_USBD_HS_SP

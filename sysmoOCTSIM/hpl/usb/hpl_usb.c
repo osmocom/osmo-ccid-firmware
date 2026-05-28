@@ -1734,6 +1734,16 @@ int32_t _usb_d_dev_ep_enable(const uint8_t ep)
 		/* By default, IN endpoint will NAK all token. */
 		_usbd_ep_set_in_rdy(epn, 1, false);
 		_usbd_ep_clear_bank_status(epn, 1);
+		/* USB 2.0 §9.4.5: Halt feature reset after SetConfiguration() or SetInterface()
+		 * Bus reset already clears STALLRQ in HW but same-config SetConfiguration
+		 * does not trigger a bus reset, so clear in software. */
+		_usbd_ep_set_stall(epn, 1, false);
+		/* USB 2.0 §9.1.1.5 / §5.8.5: data toggle must start at DATA0
+		 * when the endpoint is configured by SetConfiguration /
+		 * SetInterface. SAM D5x/E5x DS60001507 §38.6.2.4 and §38.6.2.2 list
+		 * what the hardware clears on bus reset and on endpoint
+		 * disable, EPSTATUS.DTGLIN/OUT are NOT in either list, so we must do it. */
+		_usbd_ep_set_toggle(epn, 1, 0);
 
 	} else {
 		/* prevents init->enable->disable->enable again from working without reinit...*/
@@ -1749,6 +1759,10 @@ int32_t _usb_d_dev_ep_enable(const uint8_t ep)
 		/* By default, OUT endpoint will NAK all token. */
 		_usbd_ep_set_out_rdy(epn, 0, false);
 		_usbd_ep_clear_bank_status(epn, 0);
+		/* USB 2.0 §9.4.5: Halt feature reset by every SetConfig / SetInterface */
+		_usbd_ep_set_stall(epn, 0, false);
+		/* USB 2.0 §9.1.1.5 / §5.8.5: data toggle must start at DATA0 when the endpoint is configured. */
+		_usbd_ep_set_toggle(epn, 0, 0);
 	}
 
 	return USB_OK;
@@ -1807,6 +1821,7 @@ static inline int32_t _usb_d_dev_ep_stall_clr(struct _usb_d_dev_ep *ept, bool di
 {
 	uint8_t epn        = USB_EP_GET_N(ept->ep);
 	bool    is_stalled = _usbd_ep_is_stalled(epn, dir);
+
 	if (!is_stalled) {
 		return ERR_NONE;
 	}
@@ -1814,6 +1829,13 @@ static inline int32_t _usb_d_dev_ep_stall_clr(struct _usb_d_dev_ep *ept, bool di
 	_usbd_ep_int_dis(epn, USB_DEVICE_EPINTFLAG_STALL0 << dir);
 	if (_usbd_ep_is_stall_sent(epn, dir)) {
 		_usbd_ep_ack_stall(epn, dir);
+		/* USB 2.0 §9.4.5: ClearFeature(ENDPOINT_HALT) "always results
+		 * in the data toggle being reinitialized to DATA0".  Only on
+		 * actual stall clear -- this function is also called from the
+		 * routine SETUP-packet cleanup in hal_usb_device.c, where
+		 * clearing the toggle would break in-flight control transfer
+		 * sequencing.  Session-state DTGL reset is handled separately
+		 * in _usb_d_dev_ep_enable. */
 		_usbd_ep_set_toggle(epn, dir, 0);
 	}
 	if (_usb_d_dev_ep_is_ctrl(ept)) {
@@ -1845,6 +1867,18 @@ int32_t _usb_d_dev_ep_stall(const uint8_t ep, const enum usb_ep_stall_ctrl ctrl)
 		rc = _usb_d_dev_ep_stall_get(ept, dir);
 	}
 	return rc;
+}
+
+int32_t _usb_d_dev_ep_set_toggle(const uint8_t ep, uint8_t tgl)
+{
+	uint8_t epn = USB_EP_GET_N(ep);
+	bool    dir = USB_EP_GET_DIR(ep);
+
+	if (epn > CONF_USB_D_MAX_EP_N) {
+		return -USB_ERR_PARAM;
+	}
+	_usbd_ep_set_toggle(epn, dir, tgl);
+	return ERR_NONE;
 }
 
 /**
