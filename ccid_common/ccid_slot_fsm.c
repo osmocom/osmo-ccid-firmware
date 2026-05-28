@@ -370,7 +370,7 @@ static int iso_fsm_slot_xfr_block_async(struct ccid_slot *cs, struct msgb *msg,
 
 	/* might be unpowered after failed ppss that led to reset */
 	if (cs->icc_powered != true)
-		return -0;
+		return -CCID_ERR_ICC_MUTE;
 
 	msgb_pull(msg, 10);
 
