@@ -1398,8 +1398,11 @@ static void tpdu_s_procedure_action(struct osmo_fsm_inst *fi, uint32_t event, vo
 				card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 1);
 				osmo_fsm_inst_state_chg(fi, TPDU_S_RX_SINGLE, 0, 0);
 			}
-		} else
-			OSMO_ASSERT(0);
+		} else {
+			LOGPFSML(fi, LOGL_ERROR, "Unexpected byte 0x%02x in procedure state (INS=0x%02x)\n", byte, tpduh->ins);
+			osmo_fsm_inst_state_chg(fi, TPDU_S_DONE, 0, 0);
+			osmo_fsm_inst_dispatch(fi->proc.parent, ISO7816_E_TPDU_FAILED_IND, tfp->tpdu);
+		}
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -1616,7 +1619,8 @@ static const struct osmo_fsm_state tpdu_states[] = {
 				  S(TPDU_S_RX_SINGLE) |
 				  S(TPDU_S_TX_REMAINING) |
 				  S(TPDU_S_TX_SINGLE) |
-				  S(TPDU_S_SW2),
+				  S(TPDU_S_SW2) |
+				  S(TPDU_S_DONE),
 		.action = tpdu_s_procedure_action,
 	},
 	[TPDU_S_TX_REMAINING] = {
