@@ -17,7 +17,7 @@ void *g_msgb_ctx;
 #include "driver_init.h"
 #include "libosmo_emb.h"
 
-volatile uint64_t jiffies __attribute__((aligned(8)));
+tearfree_u64_t jiffies;
 
 uint64_t get_jiffies(void)
 {
@@ -31,7 +31,7 @@ void store_jiffies(uint64_t j)
 
 void SysTick_Handler(void)
 {
-	jiffies++;
+	jiffies._v++;
 }
 
 int _gettimeofday(struct timeval *tv, void *tz)
