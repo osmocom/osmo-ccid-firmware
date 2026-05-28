@@ -153,6 +153,12 @@ int card_uart_close(struct card_uart *cuart);
 /*! Schedule (asynchronous) transmit data via UART; optionally enable Rx after completion */
 int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after_complete);
 
+/*! Abort any in-flight TX. Clears tx_busy + stops WT timer. Used by the
+ *  ISO7816-3 FSM when transitioning to RESET, so subsequent transactions
+ *  don't trip card_uart_tx's "TX already in flight" assertion on the stale
+ *  tx_busy left behind by an aborted transfer. */
+void card_uart_tx_abort(struct card_uart *cuart);
+
 /*! Schedule (asynchronous) receive data via UART (after CUART_E_RX_COMPLETE) */
 int card_uart_rx(struct card_uart *cuart, uint8_t *data, size_t len);
 

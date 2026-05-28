@@ -167,6 +167,24 @@ int card_uart_ctrl(struct card_uart *cuart, enum card_uart_ctl ctl, int arg)
 	return rc;
 }
 
+/*! Abort any in-flight TX on the cuart side.
+ *
+ * Clears tx_busy and rx_after_tx_compl without driving CUART_E_TX_COMPLETE
+ * through the FSM. Use this when the layer above (the ISO 7816-3 FSM) has
+ * given up on the current transaction (e.g. WTIME / HW_ERR / CARD_REMOVAL)
+ * and is moving to reset state. Any in-flight hardware TX is no longer of
+ * interest to the FSM; if the driver-level DMA happens to complete later,
+ * the resulting TX_COMPLETE notification will see tx_busy already false
+ * and rx_after_tx_compl already false, so it won't spuriously re-enable
+ * the receiver. */
+void card_uart_tx_abort(struct card_uart *cuart)
+{
+	OSMO_ASSERT(cuart);
+	card_uart_wtime_stop(cuart);
+	cuart->tx_busy = false;
+	cuart->rx_after_tx_compl = false;
+}
+
 int card_uart_tx(struct card_uart *cuart, const uint8_t *data, size_t len, bool rx_after_complete)
 {
 	OSMO_ASSERT(cuart);

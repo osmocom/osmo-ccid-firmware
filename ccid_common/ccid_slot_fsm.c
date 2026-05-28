@@ -54,6 +54,8 @@ struct iso_fsm_slot_instance {
 
 static struct iso_fsm_slot_instance g_si;
 
+static void iso_fsm_slot_abort(struct ccid_slot *cs);
+
 static struct iso_fsm_slot *ccid_slot2iso_fsm_slot(struct ccid_slot *cs)
 {
 	OSMO_ASSERT(cs->slot_nr < ARRAY_SIZE(g_si.slot));

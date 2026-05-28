@@ -31,6 +31,7 @@
 
 #include "logging.h"
 #include "cuart.h"
+#include "iso7816_3.h"
 #include "iso7816_fsm.h"
 
 /* unionize to ensure at least properly aligned msgb struct */
@@ -312,7 +313,20 @@ static void iso7816_3_reset_onenter(struct osmo_fsm_inst *fi, uint32_t prev_stat
 	struct iso7816_3_priv *ip = get_iso7816_3_priv(fi);
 	OSMO_ASSERT(fi->fsm == &iso7816_3_fsm);
 
+	/* Bring the cuart back to its default per-transaction state, matching
+	 * what card_uart_ctrl(CUART_CTL_POWER_*, 0) does, but without
+	 * power-cycling (warm reset, HW_ERR, WTIME paths reach S_RESET without
+	 * touching power). Any reset path could land here mid-transaction with
+	 * stale state: tx_busy still set from an aborted TX, rx_threshold left
+	 * at e.g. 256 from a multi-byte RX setup, wtime_etu still at a
+	 * PPS-negotiated value rather than the ATR default. Leaving those
+	 * stale breaks the next ATR (next card_uart_tx asserts; or ATR bytes
+	 * pile up in the ringbuffer waiting for a threshold that ATR's max 33
+	 * bytes can never reach). */
 	card_uart_ctrl(ip->uart, CUART_CTL_RX_TIMER_HINT, 0);
+	card_uart_tx_abort(ip->uart);
+	card_uart_set_rx_threshold(ip->uart, 1);
+	card_uart_ctrl(ip->uart, CUART_CTL_WTIME, ISO7816_3_DEFAULT_WT);
 
 	/* go back to initial state in child FSMs */
 	osmo_fsm_inst_state_chg(ip->atr_fi, ATR_S_WAIT_TS, 0, 0);
