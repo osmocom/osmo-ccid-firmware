@@ -1076,8 +1076,22 @@ static void pps_wait_pX_action(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		msgb_put_u8(atp->rx_cmd, byte);
 		switch (fi->state) {
 		case PPS_S_WAIT_PPSX:
-			if (byte == 0xff)
+			/* ISO 7816-3 §9.2: PPSS is fixed at 0xff. Any other
+			 * first byte is an erroneous PPS response and §9.1
+			 * requires deactivation. We must transition out of
+			 * WAIT_PPSX on every byte like every other PPS substate
+			 * so the unconditional msgb_put_u8 above stays
+			 * bounded by the spec's 6-byte maximum. */
+			if (byte == 0xff) {
 				osmo_fsm_inst_state_chg(fi, PPS_S_WAIT_PPS0, 0, 0);
+			} else {
+				LOGPFSML(fi, LOGL_ERROR,
+					 "Invalid PPSS=0x%02x (expected 0xff); failing PPS\n",
+					 byte);
+				osmo_fsm_inst_state_chg(fi, PPS_S_DONE, 0, 0);
+				osmo_fsm_inst_dispatch(fi->proc.parent,
+						       ISO7816_E_PPS_FAILED_IND, atp->tx_cmd);
+			}
 			break;
 		case PPS_S_WAIT_PPS0:
 			atp->pps0_recv = byte;
