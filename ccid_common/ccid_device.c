@@ -601,9 +601,17 @@ static int ccid_handle_icc_clock(struct ccid_slot *cs, struct msgb *msg)
 	const union ccid_pc_to_rdr *u = msgb_ccid_out(msg);
 	const struct ccid_header *ch = (const struct ccid_header *) u;
 	uint8_t seq = u->icc_clock.hdr.bSeq;
+	uint8_t cmd = u->icc_clock.bClockCommand;
 	struct msgb *resp;
 
-	cs->ci->slot_ops->set_clock(cs, u->icc_clock.bClockCommand);
+	/* CCID v1.1 §6.1.9: bClockCommand has only two defined values; reject
+	 * early here */
+	if (cmd != CCID_CLOCK_CMD_RESTART && cmd != CCID_CLOCK_CMD_STOP) {
+		resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_FAILED, offsetof(struct ccid_pc_to_rdr_icc_clock, bClockCommand));
+		return ccid_slot_send_unbusy(cs, resp);
+	}
+
+	cs->ci->slot_ops->set_clock(cs, cmd);
 	resp = ccid_gen_slot_status(cs, seq, CCID_CMD_STATUS_OK, 0);
 	return ccid_slot_send_unbusy(cs, resp);
 }
