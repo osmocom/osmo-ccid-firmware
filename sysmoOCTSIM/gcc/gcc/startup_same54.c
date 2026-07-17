@@ -668,18 +668,11 @@ void Reset_Handler(void)
 		;
 }
 
-volatile bool break_on_panic = false;
-
 /**
  * \brief Default interrupt handler for unused IRQs.
  */
 void Dummy_Handler(void)
 {
-	if (break_on_panic)
-		__asm("BKPT #0"); /* wait for JTAG/SWD */
-	else {
-		NVIC_SystemReset();
-		while (1)
-			;
+	while (1) {
 	}
 }
