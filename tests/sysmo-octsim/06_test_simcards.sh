@@ -5,6 +5,11 @@
 sleep 1
 ./get_installed_version.sh
 
+# OS#7022: restart pcscd right before using it through pySim-read.py, as it may
+# have crashed during flashing
+sudo /etc/osmo-ccid-firmware-tests/restart-pcscd.sh
+sleep 5
+
 echo "card slot 0 - pysimread"
 $PYSIMREAD -p 0
 echo ""
